@@ -1,0 +1,16 @@
+{
+    "name": "my-app",
+    "version": "1.0.0",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "install:backend": "cd backend && npm install",
+        "install:gogh": "cd gogh && npm install",
+        "build:backend": "cd backend && npm run build",
+        "build:gogh": "cd gogh && npm run build",
+        "build": "npm run install:backend && npm run install:gogh && npm run build:backend && npm run build:gogh",
+        "start": "node backend/app.js"
+    },
+    "dependencies": {},
+    "devDependencies": {}
+  }
+  
