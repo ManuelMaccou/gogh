@@ -11,6 +11,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "optionalDependencies": {
+    "canvas": "*"
+  },
   "dependencies": {
     "@elastic/elasticsearch": "^8.12.1",
     "@neynar/nodejs-sdk": "^1.10.0",
