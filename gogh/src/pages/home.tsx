@@ -13,7 +13,7 @@ const HomePage = () => {
         console.log("Sign-in success with data:", data);
         
         try {
-            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}api/user/farcaster_login`, {
+            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/farcaster_login`, {
                 signer_uuid: data.signer_uuid,
                 fid: data.fid
             });
