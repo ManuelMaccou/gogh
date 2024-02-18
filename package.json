@@ -8,6 +8,9 @@
         "build": "npm run install:backend && npm run install:gogh && npm run build:gogh",
         "start": "node backend/app.js"
     },
+    "optionalDependencies": {
+        "canvas": "*"
+      },
     "dependencies": {},
     "devDependencies": {}
   }
