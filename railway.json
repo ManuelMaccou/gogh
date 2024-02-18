@@ -1,0 +1,19 @@
+{
+    "build": {
+        "builder": "NIXPACKS",
+        "nixpacksPlan": {
+            "phases": {
+                "setup": {
+                    "aptPkgs": [
+                        "fontconfig",
+                        "uuid-runtime"
+                    ]
+                }
+            }
+        }
+    },
+    "deploy": {
+        "numReplicas": 1,
+        "restartPolicyType": "NEVER"
+    }
+}
