@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet-async';
 import axios, { AxiosError } from 'axios';
 import '../../src/styles.css';
 
-console.log(`${process.env.REACT_APP_BASE_URL}api/user/farcaster_login`)
 const HomePage = () => {
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState('');
