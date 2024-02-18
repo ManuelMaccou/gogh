@@ -23,7 +23,7 @@ interface NavigationProps {
     const handleImpersonateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/impersonate`, { targetFid: impersonateFid }, {
+            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/impersonate`, { targetFid: impersonateFid }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
 

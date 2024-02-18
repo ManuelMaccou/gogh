@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import axios, { AxiosError } from 'axios';
 import '../../src/styles.css';
 
-console.log(process.env.REACT_APP_BACKEND_URL)
+console.log(process.env.REACT_APP_BASE_URL)
 const HomePage = () => {
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState('');
@@ -13,7 +13,7 @@ const HomePage = () => {
         console.log("Sign-in success with data:", data);
         
         try {
-            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/user/farcaster_login`, {
+            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/farcaster_login`, {
                 signer_uuid: data.signer_uuid,
                 fid: data.fid
             });

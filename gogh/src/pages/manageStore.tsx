@@ -106,7 +106,7 @@ function ManageStore() {
             }
     
             try {
-                const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/merchant/check-merchant-status`, {
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/merchant/check-merchant-status`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
     
@@ -171,7 +171,7 @@ function ManageStore() {
     const handleCreateStoreSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/store/create`, storeData, {
+            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/store/create`, storeData, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             if (response.data.store) {
@@ -206,7 +206,7 @@ function ManageStore() {
                 if (!token) {
                     throw new Error("No token found");
                 }
-                const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products`, {
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/products`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                 });
                 setProducts(response.data);
@@ -233,14 +233,14 @@ function ManageStore() {
                 const token = localStorage.getItem('token');
                 if (!token) throw new Error("No token found");
 
-                const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/merchant/check-page-status`, {
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/merchant/check-page-status`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
                 // Example response structure: { hasPage: true, pageId: "uniqueId" }
                 if (response.data.hasPage) {
                     setIsPageGenerated(true);
-                    setShareableUrl(`${process.env.REACT_APP_BACKEND_URL}/product-page/${response.data.pageId}`);
+                    setShareableUrl(`${process.env.REACT_APP_BASE_URL}/product-page/${response.data.pageId}`);
                 }
             } catch (err) {
                 console.error('Error checking page generation status:', err);
@@ -261,15 +261,15 @@ function ManageStore() {
         }
     
         try {
-            await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/store/update`, {}, {
+            await axios.post(`${process.env.REACT_APP_BASE_URL}/api/store/update`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
     
-            const pageIdResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/merchant/get-page-id`, {
+            const pageIdResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/merchant/get-page-id`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const pageId = pageIdResponse.data.pageId;
-            setShareableUrl(`${process.env.REACT_APP_BACKEND_URL}/product-page/${pageId}`);
+            setShareableUrl(`${process.env.REACT_APP_BASE_URL}/product-page/${pageId}`);
             setIsPageGenerated(true);
         } catch (err) {
             if (axios.isAxiosError(err)) {
@@ -311,7 +311,7 @@ function ManageStore() {
     const deleteSelectedProduct = async () => {
         if (selectedProductForEdit && window.confirm("Are you sure you want to delete this product?")) {
             try {
-                const response = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/products/delete/${selectedProductForEdit._id}`, 
+                const response = await axios.delete(`${process.env.REACT_APP_BASE_URL}/api/products/delete/${selectedProductForEdit._id}`, 
                     { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
     
                 if (response.status === 200) {
@@ -365,7 +365,7 @@ function ManageStore() {
                         url: updatedURL,
                     };
 
-                    const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/products/update/${selectedProductForEdit._id}`, 
+                    const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/api/products/update/${selectedProductForEdit._id}`, 
                         productUpdateData,
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
@@ -384,7 +384,7 @@ function ManageStore() {
                     };
 
                     const response = await axios.post(
-                        `${process.env.REACT_APP_BACKEND_URL}/api/products/add`, 
+                        `${process.env.REACT_APP_BASE_URL}/api/products/add`, 
                         productWithUser,
                         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
                     );
