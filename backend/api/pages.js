@@ -10,8 +10,7 @@ router.get('/:uniqueId', async (req, res) => {
         console.log("Requested Unique ID:", uniqueId);
 
         const store = await Store.findOne({ pageId: uniqueId });
-        console.log("Store found:", store);
-
+        
         if (!store) {
             console.log("No store found for Unique ID:", uniqueId);
             return res.status(404).send('User not found');

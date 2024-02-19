@@ -92,8 +92,8 @@ async function GenerateProductImage(productData) {
 
     wrapText(productData.title, textX, textY, canvasWidth - 40, 28); // Adjust as needed
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    return dataUrl;
+    const imageBuffer = canvas.toBuffer('image/jpeg', 0.8);
+    return imageBuffer;
 }
 
 export default GenerateProductImage;

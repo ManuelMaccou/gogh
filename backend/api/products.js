@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import mongoose from 'mongoose';
 import Product from '../models/product.js';
 import User from '../models/user.js';
+import Image from '../models/image.js';
 import Merchant from '../models/merchant.js';
 import Store from '../models/store.js';
 import pkg from 'jsonwebtoken';
@@ -15,6 +15,15 @@ const { verify } = pkg;
 const findMerchantByUserId = async (userId) => {
   return Merchant.findOne({ user: userId }).populate('user');
 };
+
+async function storeImage(imageBuffer, contentType) {
+  const image = new Image({
+    data: imageBuffer,
+    contentType: contentType,
+  });
+  await image.save();
+  return image._id; // Returns the MongoDB ID of the saved image
+}
 
 // Fetch products related to the current user's store
 router.get('/', async (req, res) => {
@@ -52,15 +61,19 @@ router.post('/add', auth, async (req, res) => {
     let generatedProductImage, generatedDescriptionImage;
 
     try {
-      generatedProductImage = await generateProductImage(productData);
-      console.log("Generated Product Image URL:", generatedProductImage.substring(0, 30));
+      const generatedProductImageBuffer = await generateProductImage(productData);
+      const productImageId = await storeImage(generatedProductImageBuffer, 'image/jpeg');
+
+      generatedProductImage = `${req.protocol}://${req.headers.host}/image/${productImageId}`;
     } catch (error) {
       console.error("Error generating product image:", error);
     } 
 
     try {
-      generatedDescriptionImage = await generateDescriptionImage(productData);
-      console.log("Generated Description Image URL:", generatedDescriptionImage.substring(0, 30));
+      const generatedDescriptionImageBuffer = await generateDescriptionImage(productData);
+      const descriptionImageId = await storeImage(generatedDescriptionImageBuffer, 'image/jpeg');
+
+      generatedDescriptionImage = `${req.protocol}://${req.headers.host}/image/${descriptionImageId}`;
     } catch (error) {
       console.error("Error generating description image:", error);
     }
@@ -69,8 +82,6 @@ router.post('/add', auth, async (req, res) => {
     productData.descriptionFrame = generatedDescriptionImage;
 
     if (productData.productFrame && productData.descriptionFrame) {
-      console.log("Product data with product frame:", productData.productFrame.substring(0, 30));
-      console.log("Product data with description frame:", productData.descriptionFrame.substring(0, 30));
     } else {
       console.error("Product or description frame generation failed.");
     }
@@ -78,7 +89,6 @@ router.post('/add', auth, async (req, res) => {
     const newProduct = new Product(productData);
 
     await newProduct.save();
-    console.log("New product saved:", newProduct.descriptionFrame.substring(0, 30));
 
     // Extract user ID from JWT token
     const token = req.headers.authorization.split(' ')[1];
@@ -112,14 +122,20 @@ router.put('/update/:productId', auth, async (req, res) => {
     let generatedProductImage, generatedDescriptionImage;
 
     try {
-      generatedProductImage = await generateProductImage(productData);
+      const generatedProductImageBuffer = await generateProductImage(productData);
+      const productImageId = await storeImage(generatedProductImageBuffer, 'image/jpeg');
+
+      generatedProductImage = `${req.protocol}://${req.headers.host}/image/${productImageId}`;
     } catch (error) {
       console.error("Error generating product image:", error);
       return res.status(500).send("Error generating product image");
     }
 
     try {
-      generatedDescriptionImage = await generateDescriptionImage(productData);
+      const generatedDescriptionImageBuffer = await generateDescriptionImage(productData);
+      const descriptionImageId = await storeImage(generatedDescriptionImageBuffer, 'image/jpeg');
+
+      generatedDescriptionImage = `${req.protocol}://${req.headers.host}/image/${descriptionImageId}`;
     } catch (error) {
       console.error("Error generating description image:", error);
       return res.status(500).send("Error generating description image");

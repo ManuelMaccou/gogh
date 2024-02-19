@@ -93,7 +93,6 @@ router.post('/frame/:uniqueId', async (req, res) => {
     const buttonIndex = req.body.untrustedData.buttonIndex;
     const fid = req.body.untrustedData.fid
     let productIndex = parseInt(req.query.index) || 0;
-    // let frameType = req.query.frameType || 'productFrame';
     let frameType = req.query.frameType;
     let initial = req.query.initial === 'true';
 
@@ -104,7 +103,6 @@ router.post('/frame/:uniqueId', async (req, res) => {
         }
         const totalProducts = store.products.length;
         const storeName = store.storeName;
-        const storeDescription = store.storeDescription;
 
         let { product } = await getStore(uniqueId, productIndex);
         if (!product) {
@@ -173,7 +171,7 @@ router.post('/frame/:uniqueId', async (req, res) => {
                 }
             }
         }
-        res.status(200).send(generateFrameHtml(product, storeName, storeDescription, uniqueId, productIndex, frameType));
+        res.status(200).send(generateFrameHtml(product, storeName, uniqueId, productIndex, frameType));
     } catch (err) {
         console.error('Error in POST /frame/:uniqueId', err);
         res.status(500).send('Internal Server Error');
@@ -181,7 +179,7 @@ router.post('/frame/:uniqueId', async (req, res) => {
 });
 
 // Helper function to generate frame HTML
-function generateFrameHtml(product, storeName, storeDescription, uniqueId, productIndex, frameType = 'productFrame') {
+function generateFrameHtml(product, storeName, uniqueId, productIndex, frameType = 'productFrame') {
     const postUrl = `${process.env.BASE_URL}/api/frames/frame/${uniqueId}?index=${productIndex}&frameType=${frameType}`;
     
 
@@ -212,7 +210,6 @@ function generateFrameHtml(product, storeName, storeDescription, uniqueId, produ
         <html>
         <head>
             <title>${storeName}</title>
-            <meta name="description" content="${storeDescription}">
             <meta property="og:url" content="${product.url}">
             <meta property="og:image" content="${product.image}">
             <meta property="fc:frame" content="vNext" />

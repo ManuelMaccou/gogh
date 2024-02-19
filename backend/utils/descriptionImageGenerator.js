@@ -93,8 +93,8 @@ async function GenerateDescriptionImage(productData) {
     // Draw the price text
     ctx.fillText(productData.price, priceX, priceY);
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    return dataUrl;
+    const imageBuffer = canvas.toBuffer('image/jpeg', 0.8);
+    return imageBuffer;
 }
 
 export default GenerateDescriptionImage;

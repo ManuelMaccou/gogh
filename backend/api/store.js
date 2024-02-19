@@ -44,7 +44,6 @@ router.post('/update', auth, async (req, res) => {
         const uniqueId = uuidv4();
 
         const merchant = await findMerchantByUserId(userId);
-        console.log('merchant:', merchant);
         if (!merchant) {
             return res.status(404).json({ message: "Merchant not found" });
         }
@@ -55,7 +54,6 @@ router.post('/update', auth, async (req, res) => {
 
         // Fetch the store associated with the user
         const store = await Store.findOne({ storeAdmin: merchant._id });
-        console.log('store:', store);
         if (!store) {
             return res.status(404).send('Store not found');
         }
