@@ -28,6 +28,9 @@ const __dirname = dirname(__filename);
 const app = express();
 app.use(cors());
 
+// Trust the reverse proxy when determining the connection protocol
+app.set('trust proxy', true);
+
 // Connect to Database
 connectDB();
 

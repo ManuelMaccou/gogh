@@ -118,6 +118,7 @@ router.post('/add', auth, async (req, res) => {
 router.put('/update/:productId', auth, async (req, res) => {
   const { productId } = req.params;
   const productData = req.body;
+  
   try {
     let generatedProductImage, generatedDescriptionImage;
 

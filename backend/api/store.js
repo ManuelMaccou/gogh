@@ -1,9 +1,11 @@
 import { Router } from 'express';
+import fetch from 'node-fetch';
+import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import auth from '../middleware/auth.js';
 import Store from '../models/store.js';
 import Merchant from '../models/merchant.js';
-import Product from '../models/product.js';
+import Image from '../models/image.js';
 
 const router = Router();
 
@@ -11,9 +13,34 @@ const findMerchantByUserId = async (userId) => {
     return Merchant.findOne({ user: userId }).populate('user');
 };
 
+const processImageFromUrl = async (imageUrl) => {
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error(`Failed to fetch the image: ${response.statusText}`);
+    const imageBuffer = await response.buffer();
+
+    // Use sharp to resize, convert to JPEG, and compress the image
+    return sharp(imageBuffer)
+        .resize(800, 800, { // Resize to 800x800 max, keeping aspect ratio
+            fit: sharp.fit.inside,
+            withoutEnlargement: true
+        })
+        .jpeg({ quality: 80 }) // Convert to JPEG with 80% quality
+        .toBuffer(); // Return the processed image as a Buffer
+};
+
+async function storeImage(imageBuffer, contentType) {
+    const image = new Image({
+      data: imageBuffer,
+      contentType: contentType,
+    });
+    await image.save();
+    return image._id; // Returns the MongoDB ID of the saved image
+  }
+  
+
 router.post('/create', auth, async (req, res) => {
     const userId = req.user;
-    const { image, storeName, storeDescription } = req.body;
+    const { image: imageUrl, storeName, storeDescription } = req.body;
 
     try {
 
@@ -22,11 +49,16 @@ router.post('/create', auth, async (req, res) => {
             return res.status(404).json({ message: "Merchant not found" });
         }
 
+        const processedImageBuffer = await processImageFromUrl(imageUrl);
+
+        const storeImageId = await storeImage(processedImageBuffer, 'image/jpeg');
+        const storeImageUrl = `${req.protocol}://${req.headers.host}/image/${storeImageId}`;
+
         console.log("Creating store with merchat.id as storeAdmin:", merchant._id);
         const newStore = await Store.create({
             storeName,
             storeDescription,
-            image,
+            image: storeImageUrl,
             storeAdmin: merchant._id
         });
 
@@ -52,7 +84,7 @@ router.post('/update', auth, async (req, res) => {
             return res.status(404).json({ message: "Merchant not found" });
         }
 
-        // Fetch the store associated with the user
+        // Fetch the store associated with the merchant
         const store = await Store.findOne({ storeAdmin: merchant._id });
         if (!store) {
             return res.status(404).send('Store not found');
