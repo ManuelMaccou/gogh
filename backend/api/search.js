@@ -1,16 +1,26 @@
 import { Router } from 'express';
 const router = Router();
-import searchTemplate from './elasticsearch-client.js';
+import Client from './elasticsearch-client.js';
 import { existsSync, mkdirSync, appendFile } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import GenerateBookImage from '../utils/bookImageGenerator.js';
 import { body, query, validationResult } from 'express-validator';
+import Image from '../models/image.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const DATA_DIR = join(__dirname, '..', 'data');
+
+async function storeImage(imageBuffer, contentType) {
+    const image = new Image({
+      data: imageBuffer,
+      contentType: contentType,
+    });
+    await image.save();
+    return image._id; // Returns the MongoDB ID of the saved image
+  }
 
 const ensureDirectoryExists = (dirPath) => {
     if (!existsSync(dirPath)) {
@@ -105,7 +115,7 @@ router.post('/books', [
     }
 
   try {
-    const response = await searchTemplate({
+    const response = await Client.searchTemplate({
       index: 'search-gogh-books',
       body: {
         id: 'gogh-books-search-template',
@@ -129,13 +139,16 @@ router.post('/books', [
             description: selectedResult._source.short_description,
           };
 
-          const generatedImageUrl = await GenerateBookImage(productData);
+          const generateBookImageBuffer = await GenerateBookImage(productData);
+          const bookImageId = await storeImage(generateBookImageBuffer, 'image/jpeg');
+          const generatedBookImage = `${req.protocol}://${req.headers.host}/image/${bookImageId}`;
+
   
         const results = {
           id: selectedResult._id,
           title: selectedResult._source.title,
           description: selectedResult._source.short_description,
-          image: generatedImageUrl,
+          image: generatedBookImage,
           author: selectedResult._source.creator,
           checkoutUrl: selectedResult._source.checkout_url,
           productUrl: selectedResult._source.product_url,

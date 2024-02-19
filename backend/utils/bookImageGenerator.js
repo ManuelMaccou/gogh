@@ -1,5 +1,9 @@
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { createCanvas, loadImage } from 'canvas';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function GenerateBookImage(productData) {
     const dynamicImageUrl = productData.imageUrl;
@@ -68,8 +72,8 @@ async function GenerateBookImage(productData) {
         textYPosition += lineHeight;
     });
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    return dataUrl;
+    const imageBuffer = canvas.toBuffer('image/jpeg', 0.8);
+    return imageBuffer;
 }
 
 export default GenerateBookImage;
