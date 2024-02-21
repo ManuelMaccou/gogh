@@ -20,7 +20,8 @@ import storeRoutes from './api/store.js';
 import impersonateRoutes from './api/impersonate.js';
 import analyticsRoutes from './api/retrieveAnalytics.js';
 // import recommendRoutes from './api/recommend.js';
-// import shopifyRoutes from './api/shopify/products.js';
+import shopifyProductRoutes from './api/shopify/product.js';
+import shopifyFrameRoutes from './api/shopify/frame.js';
 import imageRoutes from './api/image.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -54,7 +55,8 @@ app.use('/api/store', storeRoutes);
 app.use('/api/impersonate', impersonateRoutes);
 app.use('/api/download-csv', analyticsRoutes);
 // app.use('/api/recommend', recommendRoutes);
-// app.use('/webhooks/products', shopifyRoutes);
+app.use('/api/shopify/product', shopifyProductRoutes);
+app.use('/api/shopify/frame', shopifyFrameRoutes);
 app.use('/image', imageRoutes);
 
 app.get('*', (req, res) => {

@@ -68,19 +68,6 @@ const logActionToCSV = async (fid, uniqueId, product, page) => {
     appendToCSV(uniqueId, data);
 };
 
-/*
-router.get('/frame/:uniqueId', async (req, res) => {
-    const productIndex = 0; // Always show the first product initially
-    const { product, username } = await getStore(req.params.uniqueId, productIndex);
-
-    if (!product) {
-        return res.status(404).send('No products found');
-    }
-
-    res.send(generateFrameHtml(product, username, req.params.uniqueId, productIndex));
-});
-*/
-
 
 router.post('/frame/:uniqueId', async (req, res) => {
     const uniqueId = req.params.uniqueId;
