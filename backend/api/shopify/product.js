@@ -1,28 +1,41 @@
 import { Router } from 'express';
 import pkg from 'jsonwebtoken';
+import Image from '../../models/image.js';
 import Merchant from '../../models/merchant.js';
 import ShopifyStore from '../../models/shopify/store.js';
+import createProductFrame from '../../utils/shopify/createProductFrame.js';
+
 
 const router = Router();
 const { verify } = pkg;
 
+async function storeImage(imageBuffer, contentType) {
+    const image = new Image({
+        data: imageBuffer,
+        contentType: contentType,
+    });
+    await image.save();
+    return image._id; // Returns the MongoDB ID of the saved image
+}
 
-async function updateFrameImage(product, productId) {
+
+async function updateFrameImage(updatedProduct) {
     try {
         // Generate frame image for the product
-        const generatedProductFrameBuffer = await createProductFrame(product);
+        const generatedProductFrameBuffer = await createProductFrame(updatedProduct);
         const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
+        const productId = updatedProduct._id
         
         // Update the product with the new frameImage URL
         await ShopifyStore.findOneAndUpdate(
-            { 'products.shopifyProductId': productId },
+            { 'products._id': productId },
             { $set: { 'products.$.frameImage': `${process.env.BASE_URL}/image/${productImageId}` }},
             { new: true }
         );
         
         console.log(`Frame images updated for product ${productId}`);
     } catch (error) {
-        console.error(`Error generating frame images for product ${productId}:`, error);
+        console.error('Error generating frame images', error);
     }
 }
 
@@ -93,7 +106,7 @@ router.put('/update/:productId', async (req, res) => {
 
     try {
         const updateStore = await ShopifyStore.findOneAndUpdate(
-            { storeAdmin: storeAdminId, 'products.shopifyProductId': productId },
+            { storeAdmin: storeAdminId, 'products._id': productId },
             { $set: { 'products.$.description': description }},
             { new: true }
         );
@@ -102,9 +115,9 @@ router.put('/update/:productId', async (req, res) => {
             return res.status(404).json({ message: 'Product or store not found.' });
         }
 
-        const updatedProduct = updateStore.products.find(p => p.shopifyProductId === productId);
+        const updatedProduct = updateStore.products.find(p => p._id.toString() === productId);
 
-        updateFrameImage(updatedProduct, productId);
+        updateFrameImage(updatedProduct);
 
         res.json(updatedProduct || { message: 'Product updated successfully, but unable to retrieve updated details.' });
     } catch (error) {

@@ -184,6 +184,8 @@ function ManageShopifyStore() {
         const productToEdit = products.find(product => product._id === productId);
         console.log("Product selected:", productId);
 
+        console.log('product to edit:',productToEdit)
+
         if (productToEdit) {
             setProductData({
                 description: productToEdit.description,
@@ -203,6 +205,7 @@ function ManageShopifyStore() {
             setErrorMessage("No product selected for editing.");
             return;
         }
+        console.log('Selected product to edit:',selectedProductForEdit);
 
         try {
             const token = localStorage.getItem('token');
@@ -217,6 +220,7 @@ function ManageShopifyStore() {
                 description: productData.description // This is the updated description from the editor
             };
 
+            console.log('selectedProductForEdit ID:', selectedProductForEdit._id);
             const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/api/shopify/product/update/${selectedProductForEdit._id}`,
             updatedProductData,
                 { headers: { Authorization: `Bearer ${token}` } }

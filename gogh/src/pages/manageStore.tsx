@@ -370,7 +370,7 @@ function ManageStore() {
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
                     const updatedProduct = response.data;
-                    setProducts(products.map(p => p._id === updatedProduct._id ? updatedProduct : p));
+                    setProducts(products.map(p => p._id.toString() === updatedProduct._id ? updatedProduct : p));
                     setSelectedProductForEdit(null); // Reset selected product after update
                     resetForm();
                     setConfirmationMessage('Product successfully updated!');

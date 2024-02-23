@@ -49,9 +49,13 @@ const logActionToCSV = async (fid, storeId, product, page) => {
 router.post('/:storeId', async (req, res) => {
 
     const { storeId } = req.params;
-    let { productIndex = 0, variantIndex = 0 } = req.query;
-    productIndex = parseInt(productIndex, 10);
-    variantIndex = parseInt(variantIndex, 10);
+    // let { productIndex = 0, variantIndex = 0 } = req.query;
+
+    let productIndex = parseInt(req.query.productIndex) || 0;
+    let variantIndex = parseInt(req.query.variantIndex) || 0;
+
+    // productIndex = parseInt(productIndex, 10);
+    // variantIndex = parseInt(variantIndex, 10);
 
 
     const buttonIndex = req.body.untrustedData.buttonIndex;
