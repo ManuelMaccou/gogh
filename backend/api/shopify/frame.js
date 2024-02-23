@@ -81,7 +81,8 @@ router.post('/:storeId', async (req, res) => {
 
         const totalProducts = store.products.length;
         const totalVariants = product.variants.length;
-
+        console.log('total proucts:', totalProducts);
+        console.log('total variants:', totalVariants);
 
         // Log initial view of the store
         if (initial) {
@@ -185,16 +186,16 @@ router.post('/:storeId', async (req, res) => {
     }
 
     }
-    res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams));
+    res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalVariants));
     } catch (err) {
         console.error('Error in POST /frame/:uniqueId', err);
         res.status(500).send('Internal Server Error');
     }
 });
 
-function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams) {
+function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalVariants) {
 
-    let metadata = constructMetadata(frameType, variant, storeId, productIndex, variantIndex, cartUrlParams);
+    let metadata = constructMetadata(frameType, variant, storeId, productIndex, variantIndex, cartUrlParams, totalVariants);
 
     // Generate meta tags from metadata
     let metaTags = Object.keys(metadata).map(key => {
@@ -216,7 +217,7 @@ function generateFrameHtml(product, variant, storeId, productIndex, variantIndex
     return htmlResponse;
 }
 
-function constructMetadata(frameType, variant, storeId, productIndex, variantIndex, cartUrlParams) {
+function constructMetadata(frameType, variant, storeId, productIndex, variantIndex, cartUrlParams, totalVariants) {
 
     const baseUrl = process.env.BASE_URL;
     const checkoutUrl = `${process.env.DEFAULT_SHOPIFY_STORE_URL}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
