@@ -58,9 +58,9 @@ router.post('/:storeId', async (req, res) => {
     const fid = req.body.untrustedData.fid
     let frameType = req.query.frameType;
     let initial = req.query.initial === 'true';
-    let cartUrlParams = req.query.cartUrlParams; // Should have the strucutre of VARIANT_ID:QUANTITY,VARIANT_ID:QUANTITY
+    let cartUrlParams = req.query.cartUrlParams || ''; // Should have the strucutre of VARIANT_ID:QUANTITY,VARIANT_ID:QUANTITY
     
-    let variantQuantity = parseInt(req.body.inputText, 10);
+    let variantQuantity = parseInt(req.body.untrustedData.inputText, 10);
     if (isNaN(variantQuantity) || variantQuantity < 1) {
         variantQuantity = 1;
     }
@@ -81,8 +81,6 @@ router.post('/:storeId', async (req, res) => {
 
         const totalProducts = store.products.length;
         const totalVariants = product.variants.length;
-        console.log('total proucts:', totalProducts);
-        console.log('total variants:', totalVariants);
 
         // Log initial view of the store
         if (initial) {
@@ -186,16 +184,16 @@ router.post('/:storeId', async (req, res) => {
     }
 
     }
-    res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalVariants));
+    res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants));
     } catch (err) {
         console.error('Error in POST /frame/:uniqueId', err);
         res.status(500).send('Internal Server Error');
     }
 });
 
-function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalVariants) {
+function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants) {
 
-    let metadata = constructMetadata(frameType, variant, storeId, productIndex, variantIndex, cartUrlParams, totalVariants);
+    let metadata = constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants);
 
     // Generate meta tags from metadata
     let metaTags = Object.keys(metadata).map(key => {
@@ -217,10 +215,10 @@ function generateFrameHtml(product, variant, storeId, productIndex, variantIndex
     return htmlResponse;
 }
 
-function constructMetadata(frameType, variant, storeId, productIndex, variantIndex, cartUrlParams, totalVariants) {
+function constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants) {
 
     const baseUrl = process.env.BASE_URL;
-    const checkoutUrl = `${process.env.DEFAULT_SHOPIFY_STORE_URL}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
+    const checkoutUrl = `${process.env.NOUNS_SHOPIFY_STORE_URL}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
 
     let metadata = {
         "og:url": "https://www.gogh.shopping",
@@ -228,12 +226,19 @@ function constructMetadata(frameType, variant, storeId, productIndex, variantInd
         "fc:frame:post_url": `${baseUrl}/api/shopify/frame/${storeId}?initial=false&productIndex=${productIndex}&variantIndex=${variantIndex}&frameType=${frameType}&cartUrlParams=${cartUrlParams}`,
     };
 
-    const variantImageUrl = variant.image
+    const variantImageUrl = variant.frameImage
+    const productImageUrl = product.frameImage
+
+    console.log('current product name', product.title);
+    console.log('current variant name', variant.title);
+    console.log('total products:', totalProducts);
+    console.log('total variants:', totalVariants);
+
 
 
     switch (frameType) {
         case 'productFrame':
-            metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
+            metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
             metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
             metadata["fc:frame:button:1"] = "Previous";
             metadata["fc:frame:button:2"] = "Next";
