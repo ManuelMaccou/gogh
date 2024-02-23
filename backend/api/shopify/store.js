@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Update store image
+// Update store details
 router.post('/update', async (req, res) => {
 
     const authHeader = req.headers.authorization;
@@ -56,6 +56,18 @@ router.post('/update', async (req, res) => {
     const token = authHeader.split(' ')[1]; // Bearer Token
     const decoded = verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
+
+    // Find the merchant associated with the user
+    const merchant = await Merchant.findOne({ user: userId });
+    if (!merchant) {
+        return res.status(404).json({ message: "Merchant not found." });
+    }
+
+    // Find the store associated with the merchant
+    const store = await ShopifyStore.findOne({ storeAdmin: merchant._id });
+    if (!store) {
+        return res.status(404).json({ message: "Store not found." });
+    }
 
     async function storeImage(imageBuffer, contentType) {
         const image = new Image({
@@ -97,16 +109,35 @@ router.post('/update', async (req, res) => {
         const storeImageId = await storeImage(imageBuffer, mimeType);
         const storeImageUrl = `${process.env.BASE_URL}/image/${storeImageId}`;
 
-        // Find the merchant associated with the user
-        const merchant = await Merchant.findOne({ user: userId });
-        if (!merchant) {
-            return res.status(404).json({ message: "Merchant not found." });
-        }
+        // Construct pageHtml and frameUrl with store._id
+        const pageHtml = `
+        <!DOCTYPE html>
+        <html>
+            <head>
+            <title></title>
+                <meta name="description" content="">
+                <meta property="og:url" content="${store.shopifyStoreUrl}">
+                <meta property="og:image" content="${storeImageUrl}">
+                <meta property="fc:frame" content="vNext">
+                <meta name="fc:frame:post_url" content="${process.env.BASE_URL}/api/shopify/frame/${store._id}?initial=true">
+                <meta property="fc:frame:image" content="${storeImageUrl}">
+                <meta property="fc:frame:image:aspect_ratio" content="">
+                <meta property="fc:frame:button:1" content="Start Shopping">
+            </head>
+        </html>
+        `;
+
+        const frameUrl = `${process.env.BASE_URL}/product-page/shopify/${store._id}`;
+
+        
 
         // Update the Shopify store document with the new image URL
-        const updatedStore = await ShopifyStore.findOneAndUpdate(
-            { storeAdmin: merchant._id },
-            { $set: { 'image': storeImageUrl } },
+        const updatedStore = await ShopifyStore.findOneAndUpdate(store._id,
+            { $set: { 
+                'image': storeImageUrl,
+                'pageHtml': pageHtml,
+                'frameUrl': frameUrl
+            } },
             { new: true }
         );
 
@@ -114,7 +145,7 @@ router.post('/update', async (req, res) => {
             return res.status(404).json({ message: 'Store not found.' });
         }
 
-        res.json({ message: 'Store image updated successfully.', storeImage: storeImageUrl });
+        res.json({ message: 'Store image and pageHtml updated successfully.', storeImage: storeImageUrl, pageHtml, frameUrl });
     } catch (error) {
         if (axios.isAxiosError(error) && error.response.status === 400) {
             return res.status(400).json({ message: "Image URL is too large. Please use an image less than 1MB." });

@@ -26,6 +26,8 @@ export async function findOrCreateStore(baseUrl) {
           });
           await store.save();
 
+
+          /*
           // Construct pageHtml and frameUrl with store._id
           const pageHtml = `
           <!DOCTYPE html>
@@ -50,6 +52,9 @@ export async function findOrCreateStore(baseUrl) {
           store = await ShopifyStore.findByIdAndUpdate(store._id, {
               $set: { pageHtml: pageHtml, frameUrl: frameUrl }
           }, { new: true }); // Option { new: true } will return the updated document
+          */
+
+
 
           console.log('Store created with pageHtml and frameUrl:', store);
       } else {
