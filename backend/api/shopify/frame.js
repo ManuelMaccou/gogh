@@ -252,6 +252,7 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
         case 'variantFrame':
             metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
             metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
+            metadata["fc:frame:input:text"] = "Enter quantity";
             metadata["fc:frame:button:1"] = "Back";
             metadata["fc:frame:button:2"] = "Add to Cart";
             metadata["fc:frame:button:3"] = "Prev option";
@@ -264,7 +265,7 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
             metadata["fc:frame:input:text"] = "Enter quantity";
             metadata["fc:frame:button:1"] = "Keep shopping";
             metadata["fc:frame:button:2"] = "Checkout";
-            metadata["fc:frame:button:2:action"] = "Link";
+            metadata["fc:frame:button:2:action"] = "link";
             metadata["fc:frame:button:2:target"] = checkoutUrl;
             break;
     }
