@@ -66,7 +66,6 @@ router.get('/check-merchant-status', auth, async (req, res) => {
         }
 
         const stores = await Store.find({ storeAdmin: merchant._id });
-        const hasStore = stores.length > 0;
 
         res.json({
             success: true,

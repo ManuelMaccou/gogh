@@ -24,15 +24,23 @@ router.post('/farcaster_login', async (req, res) => {
 
         // Check if a merchant exists for this user, if not create one
         let merchant = await Merchant.findOne({ user: user._id });
-        if (!merchant) {
-            const highestMerchant = await Merchant.findOne().sort('-merchantId');
-            const nextMerchantId = highestMerchant ? parseInt(highestMerchant.merchantId, 10) + 1 : 1;
+        let redirect = '/manage-store';
 
-            merchant = new Merchant({
-                merchantId: nextMerchantId.toString(),
-                user: user._id
-            });
-            await merchant.save();
+        if (merchant && merchant.merchantId.startsWith('spfy')) {
+            redirect = '/manage-shopify-store';
+        
+        } else {
+            if (!merchant) {
+                const highestMerchant = await Merchant.findOne().sort('-merchantId');
+                const nextMerchantId = highestMerchant ? parseInt(highestMerchant.merchantId, 10) + 1 : 1;
+
+                merchant = new Merchant({
+                    merchantId: nextMerchantId.toString(),
+                    user: user._id
+                });
+                redirect = '/manage-store'
+                await merchant.save();
+            }
         }
 
         const token = jwtSign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '48h' });
@@ -43,7 +51,7 @@ router.post('/farcaster_login', async (req, res) => {
             await user.save();
         }
 
-        res.json({ token, message: "Login successful", redirect: '/manage-store' });
+        res.json({ token, message: "Login successful", redirect: redirect });
 
     } catch (err) {
         console.error(err.message);

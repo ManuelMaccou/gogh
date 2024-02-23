@@ -20,7 +20,9 @@ import storeRoutes from './api/store.js';
 import impersonateRoutes from './api/impersonate.js';
 import analyticsRoutes from './api/retrieveAnalytics.js';
 // import recommendRoutes from './api/recommend.js';
+import shopifyInitialRoutes from './api/shopify/initial_sync/fetchProducts.js';
 import shopifyProductRoutes from './api/shopify/product.js';
+import shopifyStoreRoutes from './api/shopify/store.js';
 import shopifyFrameRoutes from './api/shopify/frame.js';
 import imageRoutes from './api/image.js';
 
@@ -55,9 +57,12 @@ app.use('/api/store', storeRoutes);
 app.use('/api/impersonate', impersonateRoutes);
 app.use('/api/download-csv', analyticsRoutes);
 // app.use('/api/recommend', recommendRoutes);
+app.use('/api/shopify/initial_sync', shopifyInitialRoutes);
 app.use('/api/shopify/product', shopifyProductRoutes);
+app.use('/api/shopify/store', shopifyStoreRoutes);
 app.use('/api/shopify/frame', shopifyFrameRoutes);
 app.use('/image', imageRoutes);
+
 
 app.get('*', (req, res) => {
     res.sendFile(join(__dirname, '..', 'gogh', 'build', 'index.html'));

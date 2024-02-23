@@ -1,7 +1,7 @@
-import ShopifyStore from '../../models/shopify/newShopifyModel.js';
-import createOptionsFrame from '../../utils/shopify/createOptionsFrame.js';
-import createProductFrame from '../../utils/shopify/createProductFrame.js';
-import Image from '../../models/image.js';
+import ShopifyStore from '../../../models/shopify/store.js';
+import createOptionsFrame from '../../../utils/shopify/createOptionsFrame.js';
+import createProductFrame from '../../../utils/shopify/createProductFrame.js';
+import Image from '../../../models/image.js';
 
 async function storeImage(imageBuffer, contentType) {
   const image = new Image({
@@ -72,63 +72,6 @@ export async function storeProductData(productsData, storeId) {
       console.error("Store not found:", storeId);
       return;
   }
-
-  
-  /*
-  // Use async/await with Promise.all to handle asynchronous map
-  const products = await Promise.all(productsData.map(async productData => {
-    console.log('Processing product:', productData.id);
-    let productFrameImage;
-    
-    // Generate frame image for the product
-    try {
-      const generatedProductFrameBuffer = await createProductFrame(productData);
-      console.log('Generated frame for product:', productData.id);
-
-      const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
-      console.log('Stored image for product:', productData.id, 'Image ID:', productImageId);
-
-      productFrameImage = `${req.protocol}://${req.headers.host}/image/${productImageId}`;
-      console.log('Frame image URL:', productFrameImage);
-
-    } catch (error) {
-      console.error("Error generating product image:", error);
-    } 
-
-
-    // Generate frame images for each variant asynchronously
-    const variantsWithFrames = await Promise.all(productData.variants.map(async variant => {
-      let variantFrameImage;
-
-      try {
-        const generatedVariantFrameBuffer = await createOptionsFrame(variant);
-        const variantImageId = await storeImage(generatedVariantFrameBuffer, 'image/jpeg');
-
-        variantFrameImage = `${req.protocol}://${req.headers.host}/image/${variantImageId}`;
-      } catch (error) {
-        console.error("Error generating product image:", error);
-      } 
-
-        return {
-            shopifyVariantId: variant.id.toString(),
-            title: variant.title,
-            price: variant.price,
-            image: variant.image_id ? productData.images.find(image => image.id === variant.image_id).src : productData.image.src,
-            frameImage: variantFrameImage, 
-          };
-        }));
-        
-        return {
-        shopifyProductId: productData.id.toString(),
-        title: productData.title,
-        originalDescription: productData.body_html,
-        image: productData.image ? productData.image.src : null,
-        frameImage: productFrameImage, 
-        variants: variantsWithFrames,
-      };
-  }));
-
-  */
 
   // Map through productsData to transform it into the structure needed for storage
   const products = productsData.map(productData => ({

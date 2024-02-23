@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { existsSync, mkdirSync, appendFile } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import ShopifyStore from '../../models/shopify/newShopifyModel.js';
+import ShopifyStore from '../../models/shopify/store.js';
 
 const router = Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -44,6 +44,7 @@ const logActionToCSV = async (fid, storeId, product, page) => {
 
     appendToCSV(storeId, data);
 };
+
 
 router.post('/:storeId', async (req, res) => {
 
@@ -218,7 +219,7 @@ function generateFrameHtml(product, variant, storeId, productIndex, variantIndex
 function constructMetadata(frameType, variant, storeId, productIndex, variantIndex, cartUrlParams) {
 
     const baseUrl = process.env.BASE_URL;
-    const checkoutUrl = `${process.env.DEFAULT_SHOPIFY_STORE_URL}/cart/${cartUrlParams}`;
+    const checkoutUrl = `${process.env.DEFAULT_SHOPIFY_STORE_URL}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
 
     let metadata = {
         "og:url": "https://www.gogh.shopping",

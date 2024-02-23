@@ -24,7 +24,8 @@ const HomePage = () => {
                     localStorage.setItem('isAdmin', JSON.stringify(response.data.isAdmin));
                     console.log("isAdmin:", response.data.isAdmin);
                 }
-                navigate('/manage-store');
+                const redirectUrl = response.data.redirect;
+                navigate(redirectUrl);
             } else {
                 // Handle the case where there is no token in the response
                 setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
