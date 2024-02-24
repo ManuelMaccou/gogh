@@ -37,9 +37,9 @@ const appendToCSV = async (filename, data) => {
     }
 };
 
-const logActionToCSV = async (fid, storeId, product, page) => {
+const logActionToCSV = async (fid, storeId, currentProduct, page) => {
     const now = new Date().toISOString();
-    const productName = product.title.replace(/,/g, '');
+    const productName = currentProduct.title.replace(/,/g, '');
     const data = `${fid},${now},${productName},${page}`;
 
     appendToCSV(storeId, data);
@@ -54,6 +54,8 @@ router.post('/:storeId', async (req, res) => {
     let productIndex = parseInt(req.query.productIndex) || 0;
     let variantIndex = parseInt(req.query.variantIndex) || 0;
 
+    console.log("Product index at beginning:", productIndex)
+
     // productIndex = parseInt(productIndex, 10);
     // variantIndex = parseInt(variantIndex, 10);
 
@@ -62,7 +64,7 @@ router.post('/:storeId', async (req, res) => {
     const fid = req.body.untrustedData.fid
     let frameType = req.query.frameType;
     let initial = req.query.initial === 'true';
-    let cartUrlParams = req.query.cartUrlParams || ''; // Should have the strucutre of VARIANT_ID:QUANTITY,VARIANT_ID:QUANTITY
+    let cartUrlParams = req.query.cartUrlParams || '';
     
     let variantQuantity = parseInt(req.body.untrustedData.inputText, 10);
     if (isNaN(variantQuantity) || variantQuantity < 1) {
@@ -75,12 +77,15 @@ router.post('/:storeId', async (req, res) => {
             return res.status(404).send('Store not found or invalid index for product.');
         }
 
-        const product = store.products[productIndex];
+        let product = store.products[productIndex];
+
+        console.log('Current product beginning of function:', product.title)
+
         if (!product.variants || variantIndex >= product.variants.length || variantIndex < 0) {
             return res.status(404).send('Product found, but invalid index for variant.');
         }
 
-        const variant = product.variants[variantIndex];
+        let variant = product.variants[variantIndex];
 
 
         const totalProducts = store.products.length;
@@ -88,15 +93,10 @@ router.post('/:storeId', async (req, res) => {
 
         // Log initial view of the store
         if (initial) {
-            productIndex = 0;
             frameType = 'productFrame';
-            /*
-            try {
-                await logActionToCSV(fid, storeId, "null", "Opened store");
-            } catch (error) {
-                console.error("Failed to log initial view to CSV:", error);
-            }
-            */
+            
+            console.log('product name 1:', product.title);
+            console.log('variant name 1:', variant.title);
         } else {
             
             // User is browsing products
@@ -104,100 +104,134 @@ router.post('/:storeId', async (req, res) => {
                 if (buttonIndex === 1) { // 'prev' button
                     productIndex = (productIndex - 1 + totalProducts) % totalProducts;
 
+                    console.log('product name 2:', product.title);
+                    console.log('variant name 2:', variant.title);
+                
                 } else if (buttonIndex === 2) { // 'next' button
                     productIndex = (productIndex + 1) % totalProducts;
 
-                }
-                frameType = 'productFrame';
+                    console.log('Product index after change 3:', productIndex)
 
-                if (buttonIndex === 3 && totalVariants > 1) { // User clicks "product info" button
+                    console.log('product name 3:', product.title);
+                    console.log('variant name 3:', variant.title);
+
+                } else if (buttonIndex === 3 && totalVariants > 1) { // User clicks "product info" button
                     frameType = 'variantFrame'
                     variantIndex = 0
 
-                    /*
-                    try {
-                        await logActionToCSV(fid, storeId, product._id, "Product info");
-                    } catch (error) {
-                        console.error("Failed to log product info action to CSV:", error);
-                    }
-                    */
-                } else { // Only one option, have the user go right to the cart
-                    if (buttonIndex === 3 && totalVariants === 1) {
-                        frameType = 'cartFrame';
-                        const variantId = product.variants[variantIndex].shopifyVariantId;
-                        if (cartUrlParams) {
-                            cartUrlParams += `,${variantId}:${variantQuantity}`;
-                        } else {
-                            cartUrlParams = `${variantId}:${variantQuantity}`;
-                        }
-                    }
-                }
+                    console.log('Product index after change 3:', productIndex)
 
-        } else {
+                    console.log('product name 4:', product.title);
+                    console.log('variant name 4:', variant.title);
+                } else if (buttonIndex === 3 && totalVariants === 1) { // Only one option, have the user go right to the cart
+                    frameType = 'cartFrame';
+                    const variantId = product.variants[variantIndex].shopifyVariantId;
 
-            // User is looking at options of a single product
-            if (frameType === 'variantFrame') {
+                    console.log('Product index after change 3:', productIndex)
+
+                    if (cartUrlParams) {
+                        cartUrlParams += `,${variantId}:${variantQuantity}`;
+
+                        console.log('Product index after change 3:', productIndex)
+
+                    } else {
+                        cartUrlParams = `${variantId}:${variantQuantity}`;
+
+                        console.log('Product index after change 3:', productIndex)
+                    }
+                    console.log('product name 5:', product.title);
+                    console.log('variant name 5:', variant.title);
+
+                    console.log('Product index after change 3:', productIndex)
+                } 
+
+            } else if (frameType === 'variantFrame') {
                 if (buttonIndex === 1) { // 'back' button
                     frameType = 'productFrame';
-                    variantIndex = 0;
+
+                    console.log('Product index after change 3:', productIndex)
+
+                    console.log('product name 6:', product.title);
+                    console.log('variant name 6:', variant.title);
 
                 } else if (buttonIndex === 2 ) { // 'add to cart' button
                     frameType = 'cartFrame';
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
-                    /*
-                    try {
-                        await logActionToCSV(fid, storeId, product, "Add to cart");
-                    } catch (error) {
-                        console.error("Failed to log add to cart action to CSV:", error);
-                    }
-                    */
+                    console.log('Product index after change 3:', productIndex)
+
+                    console.log('product name 7:', product.title);
+                    console.log('variant name 7:', variant.title);
 
                     // Constructing cartUrlParams
                     if (cartUrlParams) {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
+
+                        console.log('Product index after change 3:', productIndex)
+
                     } else {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
+
+                        console.log('Product index after change 3:', productIndex)
                     }
                 
                 } else if (buttonIndex === 3) { // 'previous option' button
                     variantIndex = (variantIndex - 1 + totalVariants) % totalVariants;
+
+                    console.log('Product index after change 3:', productIndex)
+
+                    console.log('product name 8:', product.title);
+                    console.log('variant name 8:', variant.title);
+
                 } else if (buttonIndex === 4) { // 'next' button
                     variantIndex = (variantIndex + 1) % totalVariants;
+
+                    console.log('Product index after change 3:', productIndex)
+
+                    console.log('product name 9:', product.title);
+                    console.log('variant name 9:', variant.title);
                 }
             
-            } else {
-
-            // User is on the cart page
-            if (frameType === 'cartFrame') {
+            } else if (frameType === 'cartFrame') {
                 if (buttonIndex === 1) { // 'keep shopping' button
                     frameType = 'productFrame';
-                    variantIndex = '';
+                    variantIndex = 0;
+
+                    console.log('Product index after change 3:', productIndex)
+
+                    console.log('product name 10:', product.title);
+                    console.log('variant name 10:', variant.title);
                 
                 } else if (buttonIndex === 2) { // 'check out' button
-                    /*
-                    try {
-                        await logActionToCSV(fid, storeId, product, "Check out");
-                    } catch (error) {
-                        console.error("Failed to log the checkoug action to CSV:", error);
-                    }
-                    */
+
+                    console.log('Product index after change 3:', productIndex)
+
+                    console.log('product name 11:', product.title);
+                    console.log('variant name 11:', variant.title);
                 }
             }
         }
-    }
 
-    }
-    res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants));
+        console.log('Final product Frame Image:', product.frameImage);
+        console.log('Final variant Frame Image:', variant.frameImage);
+
+        console.log('FINAL Product index after change 3:', productIndex)
+
+        product = store.products[productIndex];
+        variant = product.variants[variantIndex];
+
+        console.log('FINAL product after change 3:', product)
+
+        res.status(200).send(generateFrameHtml(currentProduct, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants));
     } catch (err) {
         console.error('Error in POST /frame/:uniqueId', err);
         res.status(500).send('Internal Server Error');
     }
 });
 
-function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants) {
+function generateFrameHtml(currentProduct, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants) {
 
-    let metadata = constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants);
+    let metadata = constructMetadata(frameType, currentProduct, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants);
 
     // Generate meta tags from metadata
     let metaTags = Object.keys(metadata).map(key => {
@@ -210,7 +244,7 @@ function generateFrameHtml(product, variant, storeId, productIndex, variantIndex
 <!DOCTYPE html>
 <html>
     <head>
-        <title>${product ? product.title : 'Product Page'}</title>
+        <title>${currentProduct ? currentProduct.title : 'Product Page'}</title>
         ${metaTags}
     </head>
 </html>
@@ -219,7 +253,7 @@ function generateFrameHtml(product, variant, storeId, productIndex, variantIndex
     return htmlResponse;
 }
 
-function constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants) {
+function constructMetadata(frameType, currentProduct, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants) {
 
     const baseUrl = process.env.BASE_URL;
     const checkoutUrl = `${process.env.NOUNS_SHOPIFY_STORE_URL}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
@@ -231,9 +265,9 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
     };
 
     const variantImageUrl = variant.frameImage
-    const productImageUrl = product.frameImage
+    const productImageUrl = currentProduct.frameImage
 
-    console.log('current product name', product.title);
+    console.log('current product name', currentProduct.title);
     console.log('current variant name', variant.title);
     console.log('total products:', totalProducts);
     console.log('total variants:', totalVariants);
@@ -261,7 +295,7 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
 
         case 'cartFrame':
             metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
-            metadata["fc:frame:image:aspect_ratio"] = "1:1";
+            metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
             metadata["fc:frame:input:text"] = "Enter quantity";
             metadata["fc:frame:button:1"] = "Keep shopping";
             metadata["fc:frame:button:2"] = "Checkout";

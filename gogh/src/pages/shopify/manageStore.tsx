@@ -226,7 +226,7 @@ function ManageShopifyStore() {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const updatedProduct = response.data;
-            setProducts(prevProducts => prevProducts.map(p => p._id === updatedProduct._id ? updatedProduct : p));
+            setProducts(prevProducts => prevProducts.map(p => p._id.toString() === updatedProduct._id.toString() ? updatedProduct : p));
             resetForm();
             setConfirmationMessage('Product successfully updated!');
 
