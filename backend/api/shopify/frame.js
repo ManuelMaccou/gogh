@@ -159,7 +159,7 @@ router.post('/:storeId', async (req, res) => {
                     console.log('product name 4:', product.title);
                     console.log('variant name 4:', variant.title);
 
-                } else if (buttonIndex === 3 && totalVariants === 1) { // Only one option, have the user go right to the cart
+                } else if (buttonIndex === 3 && totalVariants === 1) { // If only one variant, let user add to cart
                     frameType = 'addToCartFrame';
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
@@ -386,16 +386,24 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
 
 
 
-    switch (frameType) { // SEE IF YOU CAN ADD MULTIPLE SWITCHES OR SOME OTHER WAY
-                        // TO SHOW THE "ENTER QUANTITY" WHEN TOTAL VARIANTS = 1
-                        // OR THINK OF A DIFFERENT EXPERIENCE FOR THE USER.
+    switch (frameType) { 
         case 'productFrame':
-            metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
-            metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
-            metadata["fc:frame:button:1"] = "Previous";
-            metadata["fc:frame:button:2"] = "Next";
-            metadata["fc:frame:button:3"] = totalVariants === 1 ? "Add to Cart" : "View Options";
-            metadata["fc:frame:button:4"] = "View cart";
+            if (totalVariants === 1) {
+                metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
+                metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
+                metadata["fc:frame:input:text"] = "Enter quantity";
+                metadata["fc:frame:button:1"] = "Previous";
+                metadata["fc:frame:button:2"] = "Next";
+                metadata["fc:frame:button:3"] = "Add to Cart";
+                metadata["fc:frame:button:4"] = "View cart";
+            } else {
+                metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
+                metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
+                metadata["fc:frame:button:1"] = "Previous";
+                metadata["fc:frame:button:2"] = "Next";
+                metadata["fc:frame:button:3"] = "View Options";
+                metadata["fc:frame:button:4"] = "View cart";
+            }
             break;
 
         case 'variantFrame':
@@ -422,14 +430,16 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
             metadata["og:image"] = metadata["fc:frame:image"] = cartFrameImage;
             if (!cartUrlParams) {
                 metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
+                metadata["fc:frame:button:1"] = "Keep shopping";
             } else {
                 metadata["fc:frame:image:aspect_ratio"] = "1:1";
+                metadata["fc:frame:button:1"] = "Keep shopping";
+                metadata["fc:frame:button:2"] = "Empty cart";
+                metadata["fc:frame:button:3"] = "Checkout";
+                metadata["fc:frame:button:3:action"] = "link";
+                metadata["fc:frame:button:3:target"] = checkoutUrl;
             }
-            metadata["fc:frame:button:1"] = "Keep shopping";
-            metadata["fc:frame:button:2"] = "Empty cart";
-            metadata["fc:frame:button:3"] = "Checkout";
-            metadata["fc:frame:button:3:action"] = "link";
-            metadata["fc:frame:button:3:target"] = checkoutUrl;
+           
 
     }
     return metadata;

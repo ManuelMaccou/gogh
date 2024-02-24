@@ -1,5 +1,10 @@
 import { createCanvas, loadImage } from 'canvas';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import ShopifyStore from '../../models/shopify/store.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Function to find a variant by Shopify Variant ID
 async function findVariantById(shopifyVariantId) {
@@ -36,19 +41,25 @@ async function createCartFrame(cartUrlParams) {
         const padding = 50;
         const titleImageSpacing = 20; // New variable to control spacing between title and images
         const maxImageWidth = 300; // Maximum width for images
-        const titleFont = 'bold 48px Arial';
+        const titleFont = 'bold 56px Arial';
         const font = '30px Arial'; // Adjusted for quantity text
-        const fontColor = 'black'; // Adjusted for better visibility
+        const titleFontColor = 'white'; // Font color for the title
+        const textFontColor = 'black'; // Font color for other texts
         const spacingBetweenImageAndNumber = 20; // Adjusted for space between image and quantity text
 
         const canvas = createCanvas(canvasWidth, canvasHeight);
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        // Load and draw the background image first
+        const backgroundImageUrl = join(__dirname, '../../data/cart-background.jpg');
+        const backgroundImage = await loadImage(backgroundImageUrl);
+
+        ctx.drawImage(backgroundImage, 0, 0, canvasWidth, canvasHeight);
+
 
         // Add a title at the top
         ctx.font = titleFont;
-        ctx.fillStyle = fontColor;
+        ctx.fillStyle = titleFontColor;
         ctx.fillText("Cart", canvasWidth / 2 - ctx.measureText("Cart").width / 2, padding * 1.5);
 
         // Parse cartUrlParams to get variant IDs and quantities
@@ -87,7 +98,7 @@ async function createCartFrame(cartUrlParams) {
                 // Display "Quantity: <number>" under each product image
                 const quantityText = `Quantity: ${variantImage.quantity}`;
                 ctx.font = font;
-                ctx.fillStyle = fontColor;
+                ctx.fillStyle = textFontColor;
                 // Adjust Y position to display the text under the image
                 const textY = positionY + imgHeight + spacingBetweenImageAndNumber;
                 ctx.fillText(quantityText, positionX, textY);
@@ -95,8 +106,8 @@ async function createCartFrame(cartUrlParams) {
         }));
 
         // Generate and return the image URL
-        const imageUrl = canvas.toDataURL('image/jpeg');
-        return imageUrl;
+        const imageBuffer = canvas.toBuffer('image/jpeg');
+        return imageBuffer;
 
     } catch (error) {
         console.error('Error creating product frame:', error);
