@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const DATA_DIR = join(__dirname, '..', 'data');
 
-const getImageUrl = (imageId) => `https://yourdomain.com/images/${imageId}`;
+const getImageUrl = (imageId) => `${process.env.BASE_URL}/image/${imageId}`;
 
 const ensureDirectoryExists = (dirPath) => {
     if (!existsSync(dirPath)) {
@@ -181,7 +181,7 @@ router.post('/:storeId', async (req, res) => {
                     console.log('Product index after change 3:', productIndex)
 
                 } else if (buttonIndex === 4) { // 'View cart' button
-                    frameType = "cartFrame"
+                    frameType = 'cartFrame';
 
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
@@ -420,7 +420,11 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
 
         case 'cartFrame': 
             metadata["og:image"] = metadata["fc:frame:image"] = cartFrameImage;
-            metadata["fc:frame:image:aspect_ratio"] = "1:1";
+            if (!cartUrlParams) {
+                metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
+            } else {
+                metadata["fc:frame:image:aspect_ratio"] = "1:1";
+            }
             metadata["fc:frame:button:1"] = "Keep shopping";
             metadata["fc:frame:button:2"] = "Empty cart";
             metadata["fc:frame:button:3"] = "Checkout";
