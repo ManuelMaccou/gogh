@@ -36,16 +36,16 @@ async function createCartFrame(cartUrlParams) {
     console.log('Starting cartFrame creation');
 
     try {
-        const canvasWidth = 1000;
-        const canvasHeight = 1000;
+        const canvasWidth = 800;
+        const canvasHeight = 800;
         const padding = 50;
-        const titleImageSpacing = 20; // New variable to control spacing between title and images
-        const maxImageWidth = 300; // Maximum width for images
+        const titleImageSpacing = 20;
+        const maxImageWidth = 250;
         const titleFont = 'bold 56px Arial';
-        const font = '30px Arial'; // Adjusted for quantity text
-        const titleFontColor = 'white'; // Font color for the title
-        const textFontColor = 'black'; // Font color for other texts
-        const spacingBetweenImageAndNumber = 20; // Adjusted for space between image and quantity text
+        const font = '30px Arial'; // Quantity text
+        const titleFontColor = 'white';
+        const textFontColor = 'black';
+        const spacingBetweenImageAndNumber = 20;
 
         const canvas = createCanvas(canvasWidth, canvasHeight);
         const ctx = canvas.getContext('2d');

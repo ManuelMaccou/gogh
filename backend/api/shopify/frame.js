@@ -295,11 +295,6 @@ router.post('/:storeId', async (req, res) => {
                 totalProducts = store.products.length;
                 totalVariants = product.variants.length;
 
-                    if (cartUrlParams) {
-                        cartUrlParams += `,${variantId}:${variantQuantity}`;
-                    } else {
-                        cartUrlParams = `${variantId}:${variantQuantity}`;
-                    }
 
                 if (buttonIndex === 1) { // 'Keep shopping' button
                     frameType = "productFrame";
