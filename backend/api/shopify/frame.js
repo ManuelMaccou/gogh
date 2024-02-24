@@ -37,9 +37,9 @@ const appendToCSV = async (filename, data) => {
     }
 };
 
-const logActionToCSV = async (fid, storeId, currentProduct, page) => {
+const logActionToCSV = async (fid, storeId, product, page) => {
     const now = new Date().toISOString();
-    const productName = currentProduct.title.replace(/,/g, '');
+    const productName = product.title.replace(/,/g, '');
     const data = `${fid},${now},${productName},${page}`;
 
     appendToCSV(storeId, data);
@@ -222,16 +222,16 @@ router.post('/:storeId', async (req, res) => {
 
         console.log('FINAL product after change 3:', product)
 
-        res.status(200).send(generateFrameHtml(currentProduct, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants));
+        res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants));
     } catch (err) {
         console.error('Error in POST /frame/:uniqueId', err);
         res.status(500).send('Internal Server Error');
     }
 });
 
-function generateFrameHtml(currentProduct, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants) {
+function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants) {
 
-    let metadata = constructMetadata(frameType, currentProduct, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants);
+    let metadata = constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants);
 
     // Generate meta tags from metadata
     let metaTags = Object.keys(metadata).map(key => {
@@ -244,7 +244,7 @@ function generateFrameHtml(currentProduct, variant, storeId, productIndex, varia
 <!DOCTYPE html>
 <html>
     <head>
-        <title>${currentProduct ? currentProduct.title : 'Product Page'}</title>
+        <title>${product ? product.title : 'Product Page'}</title>
         ${metaTags}
     </head>
 </html>
@@ -253,7 +253,7 @@ function generateFrameHtml(currentProduct, variant, storeId, productIndex, varia
     return htmlResponse;
 }
 
-function constructMetadata(frameType, currentProduct, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants) {
+function constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants) {
 
     const baseUrl = process.env.BASE_URL;
     const checkoutUrl = `${process.env.NOUNS_SHOPIFY_STORE_URL}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
@@ -265,9 +265,9 @@ function constructMetadata(frameType, currentProduct, variant, storeId, productI
     };
 
     const variantImageUrl = variant.frameImage
-    const productImageUrl = currentProduct.frameImage
+    const productImageUrl = product.frameImage
 
-    console.log('current product name', currentProduct.title);
+    console.log('current product name', product.title);
     console.log('current variant name', variant.title);
     console.log('total products:', totalProducts);
     console.log('total variants:', totalVariants);
