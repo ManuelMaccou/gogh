@@ -88,8 +88,8 @@ router.post('/:storeId', async (req, res) => {
         let variant = product.variants[variantIndex];
 
 
-        const totalProducts = store.products.length;
-        const totalVariants = product.variants.length;
+        let totalProducts = store.products.length;
+        let totalVariants = product.variants.length;
 
         // Log initial view of the store
         if (initial) {
@@ -105,6 +105,8 @@ router.post('/:storeId', async (req, res) => {
                     productIndex = (productIndex - 1 + totalProducts) % totalProducts;
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
 
                     console.log('product name 2:', product.title);
                     console.log('variant name 2:', variant.title);
@@ -113,6 +115,8 @@ router.post('/:storeId', async (req, res) => {
                     productIndex = (productIndex + 1) % totalProducts;
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -124,6 +128,8 @@ router.post('/:storeId', async (req, res) => {
                     variantIndex = 0
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -133,6 +139,9 @@ router.post('/:storeId', async (req, res) => {
                     frameType = 'cartFrame';
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
+
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
                     console.log('Product index after change 3:', productIndex)
@@ -141,6 +150,8 @@ router.post('/:storeId', async (req, res) => {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
                         product = store.products[productIndex];
                         variant = product.variants[variantIndex];
+                        totalProducts = store.products.length;
+                        totalVariants = product.variants.length;
 
                         console.log('Product index after change 3:', productIndex)
 
@@ -148,6 +159,8 @@ router.post('/:storeId', async (req, res) => {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
                         product = store.products[productIndex];
                         variant = product.variants[variantIndex];
+                        totalProducts = store.products.length;
+                        totalVariants = product.variants.length;
 
                         console.log('Product index after change 3:', productIndex)
                     }
@@ -162,6 +175,8 @@ router.post('/:storeId', async (req, res) => {
                     frameType = 'productFrame';
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -172,6 +187,8 @@ router.post('/:storeId', async (req, res) => {
                     frameType = 'cartFrame';
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
 
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
@@ -185,6 +202,8 @@ router.post('/:storeId', async (req, res) => {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
                         product = store.products[productIndex];
                         variant = product.variants[variantIndex];
+                        totalProducts = store.products.length;
+                        totalVariants = product.variants.length;
 
                         console.log('Product index after change 3:', productIndex)
 
@@ -192,6 +211,8 @@ router.post('/:storeId', async (req, res) => {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
                         product = store.products[productIndex];
                         variant = product.variants[variantIndex];
+                        totalProducts = store.products.length;
+                        totalVariants = product.variants.length;
 
                         console.log('Product index after change 3:', productIndex)
                     }
@@ -200,6 +221,8 @@ router.post('/:storeId', async (req, res) => {
                     variantIndex = (variantIndex - 1 + totalVariants) % totalVariants;
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -210,6 +233,8 @@ router.post('/:storeId', async (req, res) => {
                     variantIndex = (variantIndex + 1) % totalVariants;
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -223,6 +248,8 @@ router.post('/:storeId', async (req, res) => {
                     variantIndex = 0;
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -246,6 +273,8 @@ router.post('/:storeId', async (req, res) => {
 
         product = store.products[productIndex];
         variant = product.variants[variantIndex];
+        totalProducts = store.products.length;
+        totalVariants = product.variants.length;
 
         console.log('FINAL product after change 3:', product)
 
