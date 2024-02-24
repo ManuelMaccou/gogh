@@ -103,12 +103,16 @@ router.post('/:storeId', async (req, res) => {
             if (frameType === 'productFrame') {
                 if (buttonIndex === 1) { // 'prev' button
                     productIndex = (productIndex - 1 + totalProducts) % totalProducts;
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
 
                     console.log('product name 2:', product.title);
                     console.log('variant name 2:', variant.title);
                 
                 } else if (buttonIndex === 2) { // 'next' button
                     productIndex = (productIndex + 1) % totalProducts;
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -118,6 +122,8 @@ router.post('/:storeId', async (req, res) => {
                 } else if (buttonIndex === 3 && totalVariants > 1) { // User clicks "product info" button
                     frameType = 'variantFrame'
                     variantIndex = 0
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -125,17 +131,23 @@ router.post('/:storeId', async (req, res) => {
                     console.log('variant name 4:', variant.title);
                 } else if (buttonIndex === 3 && totalVariants === 1) { // Only one option, have the user go right to the cart
                     frameType = 'cartFrame';
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
                     console.log('Product index after change 3:', productIndex)
 
                     if (cartUrlParams) {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
+                        product = store.products[productIndex];
+                        variant = product.variants[variantIndex];
 
                         console.log('Product index after change 3:', productIndex)
 
                     } else {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
+                        product = store.products[productIndex];
+                        variant = product.variants[variantIndex];
 
                         console.log('Product index after change 3:', productIndex)
                     }
@@ -148,6 +160,8 @@ router.post('/:storeId', async (req, res) => {
             } else if (frameType === 'variantFrame') {
                 if (buttonIndex === 1) { // 'back' button
                     frameType = 'productFrame';
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -156,6 +170,9 @@ router.post('/:storeId', async (req, res) => {
 
                 } else if (buttonIndex === 2 ) { // 'add to cart' button
                     frameType = 'cartFrame';
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
+
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
                     console.log('Product index after change 3:', productIndex)
@@ -166,17 +183,23 @@ router.post('/:storeId', async (req, res) => {
                     // Constructing cartUrlParams
                     if (cartUrlParams) {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
+                        product = store.products[productIndex];
+                        variant = product.variants[variantIndex];
 
                         console.log('Product index after change 3:', productIndex)
 
                     } else {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
+                        product = store.products[productIndex];
+                        variant = product.variants[variantIndex];
 
                         console.log('Product index after change 3:', productIndex)
                     }
                 
                 } else if (buttonIndex === 3) { // 'previous option' button
                     variantIndex = (variantIndex - 1 + totalVariants) % totalVariants;
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -185,6 +208,8 @@ router.post('/:storeId', async (req, res) => {
 
                 } else if (buttonIndex === 4) { // 'next' button
                     variantIndex = (variantIndex + 1) % totalVariants;
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
 
                     console.log('Product index after change 3:', productIndex)
 
@@ -196,6 +221,8 @@ router.post('/:storeId', async (req, res) => {
                 if (buttonIndex === 1) { // 'keep shopping' button
                     frameType = 'productFrame';
                     variantIndex = 0;
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
 
                     console.log('Product index after change 3:', productIndex)
 
