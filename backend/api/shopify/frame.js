@@ -2,12 +2,16 @@ import { Router } from 'express';
 import { existsSync, mkdirSync, appendFile } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import createCartFrame from '../../utils/shopify/createCartFrame.js';
 import ShopifyStore from '../../models/shopify/store.js';
+import Image from '../../models/image.js';
 
 const router = Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const DATA_DIR = join(__dirname, '..', 'data');
+
+const getImageUrl = (imageId) => `https://yourdomain.com/images/${imageId}`;
 
 const ensureDirectoryExists = (dirPath) => {
     if (!existsSync(dirPath)) {
@@ -44,27 +48,46 @@ const logActionToCSV = async (fid, storeId, product, page) => {
 
     appendToCSV(storeId, data);
 };
+/*
+try {
+    const cartFrameImageBuffer = await createCartFrame(cartUrlParams);
+    // Here, handle the buffer as needed, e.g., send it in the response
+    console.log('Cart frame image generated successfully.');
+    res.send() //placedholder to send the image buffer to storeImage
+    // Example: res.send(cartFrameImageBuffer);
+} catch (error) {
+    console.error('Failed to generate cart frame image:', error);
+    // Handle the error, e.g., send an error response
+    // Example: res.status(500).send('Failed to generate cart frame image');
+}
+*/
+
+async function storeImage(imageBuffer, contentType) {
+    const image = new Image({
+        data: imageBuffer,
+        contentType: contentType,
+    });
+    await image.save();
+    return image._id; // Returns the MongoDB ID of the saved image
+}
+
 
 
 router.post('/:storeId', async (req, res) => {
 
     const { storeId } = req.params;
-    // let { productIndex = 0, variantIndex = 0 } = req.query;
 
     let productIndex = parseInt(req.query.productIndex) || 0;
     let variantIndex = parseInt(req.query.variantIndex) || 0;
 
     console.log("Product index at beginning:", productIndex)
 
-    // productIndex = parseInt(productIndex, 10);
-    // variantIndex = parseInt(variantIndex, 10);
-
-
     const buttonIndex = req.body.untrustedData.buttonIndex;
     const fid = req.body.untrustedData.fid
     let frameType = req.query.frameType;
     let initial = req.query.initial === 'true';
     let cartUrlParams = req.query.cartUrlParams || '';
+    let cartImageUrl = null;
     
     let variantQuantity = parseInt(req.body.untrustedData.inputText, 10);
     if (isNaN(variantQuantity) || variantQuantity < 1) {
@@ -135,8 +158,9 @@ router.post('/:storeId', async (req, res) => {
 
                     console.log('product name 4:', product.title);
                     console.log('variant name 4:', variant.title);
+
                 } else if (buttonIndex === 3 && totalVariants === 1) { // Only one option, have the user go right to the cart
-                    frameType = 'cartFrame';
+                    frameType = 'addToCartFrame';
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
                     totalProducts = store.products.length;
@@ -148,27 +172,41 @@ router.post('/:storeId', async (req, res) => {
 
                     if (cartUrlParams) {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
-                        product = store.products[productIndex];
-                        variant = product.variants[variantIndex];
-                        totalProducts = store.products.length;
-                        totalVariants = product.variants.length;
-
-                        console.log('Product index after change 3:', productIndex)
-
                     } else {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
-                        product = store.products[productIndex];
-                        variant = product.variants[variantIndex];
-                        totalProducts = store.products.length;
-                        totalVariants = product.variants.length;
-
-                        console.log('Product index after change 3:', productIndex)
                     }
                     console.log('product name 5:', product.title);
                     console.log('variant name 5:', variant.title);
 
                     console.log('Product index after change 3:', productIndex)
-                } 
+
+                } else if (buttonIndex === 4) { // 'View cart' button
+                    frameType = "cartFrame"
+
+                    product = store.products[productIndex];
+                    variant = product.variants[variantIndex];
+                    totalProducts = store.products.length;
+                    totalVariants = product.variants.length;
+
+                    if (cartUrlParams) {                        
+                        try {
+                            const cartFrameImageBuffer = await createCartFrame(cartUrlParams);
+                            const contentType = 'image/jpeg'; 
+                
+                            // Store the image buffer in DB
+                            const imageId = await storeImage(cartFrameImageBuffer, contentType);
+                
+                            // Generate URL for the stored image
+                            cartImageUrl = getImageUrl(imageId);
+                
+                        } catch (error) {
+                            console.error('Failed to generate cart frame image:', error);
+                            cartImageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708806196513x879260076400543000/cart-error.jpg';
+                        }
+                    } else {
+                        cartImageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708805708015x538517546794712300/empty_cart.jpg';
+                    }
+                }
 
             } else if (frameType === 'variantFrame') {
                 if (buttonIndex === 1) { // 'back' button
@@ -184,7 +222,7 @@ router.post('/:storeId', async (req, res) => {
                     console.log('variant name 6:', variant.title);
 
                 } else if (buttonIndex === 2 ) { // 'add to cart' button
-                    frameType = 'cartFrame';
+                    frameType = 'addToCartFrame';
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
                     totalProducts = store.products.length;
@@ -200,21 +238,8 @@ router.post('/:storeId', async (req, res) => {
                     // Constructing cartUrlParams
                     if (cartUrlParams) {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
-                        product = store.products[productIndex];
-                        variant = product.variants[variantIndex];
-                        totalProducts = store.products.length;
-                        totalVariants = product.variants.length;
-
-                        console.log('Product index after change 3:', productIndex)
-
                     } else {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
-                        product = store.products[productIndex];
-                        variant = product.variants[variantIndex];
-                        totalProducts = store.products.length;
-                        totalVariants = product.variants.length;
-
-                        console.log('Product index after change 3:', productIndex)
                     }
                 
                 } else if (buttonIndex === 3) { // 'previous option' button
@@ -242,7 +267,7 @@ router.post('/:storeId', async (req, res) => {
                     console.log('variant name 9:', variant.title);
                 }
             
-            } else if (frameType === 'cartFrame') {
+            } else if (frameType === 'addToCartFrame') {
                 if (buttonIndex === 1) { // 'keep shopping' button
                     frameType = 'productFrame';
                     variantIndex = 0;
@@ -263,6 +288,29 @@ router.post('/:storeId', async (req, res) => {
                     console.log('product name 11:', product.title);
                     console.log('variant name 11:', variant.title);
                 }
+            } else if (frameType === 'cartFrame') {
+                const variantId = product.variants[variantIndex].shopifyVariantId;
+                product = store.products[productIndex];
+                variant = product.variants[variantIndex];
+                totalProducts = store.products.length;
+                totalVariants = product.variants.length;
+
+                    if (cartUrlParams) {
+                        cartUrlParams += `,${variantId}:${variantQuantity}`;
+                    } else {
+                        cartUrlParams = `${variantId}:${variantQuantity}`;
+                    }
+
+                if (buttonIndex === 1) { // 'Keep shopping' button
+                    frameType = "productFrame";
+                    variantIndex = 0;
+                } else if (buttonIndex === 2) { // 'Empty cart' button.
+                    frameType = "productFrame";
+                    variantIndex = 0;
+                    cartUrlParams = '';
+                } else if (buttonIndex === 3) { 
+                    // Placeholder for analytics
+                }
             }
         }
 
@@ -276,18 +324,20 @@ router.post('/:storeId', async (req, res) => {
         totalProducts = store.products.length;
         totalVariants = product.variants.length;
 
-        console.log('FINAL product after change 3:', product)
 
-        res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants));
+        console.log('FINAL product after change 3:', product);
+        console.log('cartImageUrl', cartImageUrl);
+
+        res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants, cartImageUrl));
     } catch (err) {
         console.error('Error in POST /frame/:uniqueId', err);
         res.status(500).send('Internal Server Error');
     }
 });
 
-function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants) {
+function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants, cartImageUrl) {
 
-    let metadata = constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants);
+    let metadata = constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants, cartImageUrl);
 
     // Generate meta tags from metadata
     let metaTags = Object.keys(metadata).map(key => {
@@ -295,7 +345,6 @@ function generateFrameHtml(product, variant, storeId, productIndex, variantIndex
         return `<meta property="${key}" content="${value}">`;
     }).join('\n');
 
-    // Construct the HTML with the meta tags embedded
     const htmlResponse = `
 <!DOCTYPE html>
 <html>
@@ -309,7 +358,7 @@ function generateFrameHtml(product, variant, storeId, productIndex, variantIndex
     return htmlResponse;
 }
 
-function constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants) {
+function constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants, cartImageUrl) {
 
     const baseUrl = process.env.BASE_URL;
     const checkoutUrl = `${process.env.NOUNS_SHOPIFY_STORE_URL}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
@@ -319,6 +368,13 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
         "fc:frame": "vNext",
         "fc:frame:post_url": `${baseUrl}/api/shopify/frame/${storeId}?initial=false&productIndex=${productIndex}&variantIndex=${variantIndex}&frameType=${frameType}&cartUrlParams=${cartUrlParams}`,
     };
+
+    let cartFrameImage;
+    if (frameType === 'cartFrame' && cartImageUrl) {
+        cartFrameImage = cartImageUrl;
+    } else {
+        cartFrameImage = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708805708015x538517546794712300/empty_cart.jpg';
+    }
 
     const variantImageUrl = variant.frameImage
     const productImageUrl = product.frameImage
@@ -330,13 +386,16 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
 
 
 
-    switch (frameType) {
+    switch (frameType) { // SEE IF YOU CAN ADD MULTIPLE SWITCHES OR SOME OTHER WAY
+                        // TO SHOW THE "ENTER QUANTITY" WHEN TOTAL VARIANTS = 1
+                        // OR THINK OF A DIFFERENT EXPERIENCE FOR THE USER.
         case 'productFrame':
             metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
             metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
             metadata["fc:frame:button:1"] = "Previous";
             metadata["fc:frame:button:2"] = "Next";
             metadata["fc:frame:button:3"] = totalVariants === 1 ? "Add to Cart" : "View Options";
+            metadata["fc:frame:button:4"] = "View cart";
             break;
 
         case 'variantFrame':
@@ -349,7 +408,7 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
             metadata["fc:frame:button:4"] = "Next option";
             break;
 
-        case 'cartFrame':
+        case 'addToCartFrame':
             metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
             metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
             metadata["fc:frame:input:text"] = "Enter quantity";
@@ -358,6 +417,16 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
             metadata["fc:frame:button:2:action"] = "link";
             metadata["fc:frame:button:2:target"] = checkoutUrl;
             break;
+
+        case 'cartFrame': 
+            metadata["og:image"] = metadata["fc:frame:image"] = cartFrameImage;
+            metadata["fc:frame:image:aspect_ratio"] = "1:1";
+            metadata["fc:frame:button:1"] = "Keep shopping";
+            metadata["fc:frame:button:2"] = "Empty cart";
+            metadata["fc:frame:button:3"] = "Checkout";
+            metadata["fc:frame:button:3:action"] = "link";
+            metadata["fc:frame:button:3:target"] = checkoutUrl;
+
     }
     return metadata;
 }
