@@ -1,38 +1,302 @@
 import { Router } from 'express';
-import { captureRawBody, verifyShopifyWebhook } from '../../middleware/shopify.js';
+import bodyParser from 'body-parser';
+import { verifyShopifyWebhook, rawBodyBuffer } from '../../middleware/shopify.js';
+import ShopifyStore from '../../models/shopify/store.js';
+import createOptionsFrame from '../../utils/shopify/createOptionsFrame.js';
+import createProductFrame from '../../utils/shopify/createProductFrame.js';
+import Image from '../../models/image.js';
 
 const router = Router();
 
-// Add products from webhook
-router.post('/create', captureRawBody, verifyShopifyWebhook, async (req, res) => {
+async function storeImage(imageBuffer, contentType) {
+    const image = new Image({
+      data: imageBuffer,
+      contentType: contentType,
+    });
+    await image.save();
+    return image._id; // Returns the MongoDB ID of the saved image
+  }
+
+async function deleteProduct(productId) {
+    try {
+        // First, check if any store contains the product to be deleted
+        const storeContainingProduct = await ShopifyStore.findOne({ 'products.shopifyProductId': productId.toString() });
+
+        if (!storeContainingProduct) {
+            console.log('No store found with the product or product not found in any store');
+            return false; // Product does not exist in any store
+        }
+
+        // If the product exists, proceed with deletion
+        const result = await ShopifyStore.updateMany(
+            { 'products.shopifyProductId': productId.toString() },
+            { $pull: { products: { shopifyProductId: productId.toString() } } }
+        );
+
+        console.log(`Product ${productId} deleted successfully`);
+        return true;
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        return false; // Indicating failure to delete the product
+    }
+}
+
+async function createNewProduct(productData, store) {
+    const { id, title, body_html, image, images, variants } = productData;
+
+    // Filter variants with inventory_quantity greater than 0
+    const filteredVariants = variants.filter(variant => variant.inventory_quantity > 0);
+    if (filteredVariants.length === 0) {
+        console.log('No variants with inventory to add');
+        return; // Exit if no variants meet the criteria
+    }
 
     try {
-        console.log('Received webhook:', req.body);
+        const newProduct = {
+            shopifyProductId: id.toString(),
+            title: title,
+            image: image ? image.src : null,
+            originalDescription: body_html,
+            variants: filteredVariants.map(variant => ({
+                shopifyVariantId: variant.id.toString(),
+                title: variant.title,
+                image: variant.image_id ? images.find(image => image.id === variant.image_id)?.src : image?.src,
+                price: variant.price.toString(),
+            })),
+        };
 
-        res.status(200).send('Webhook received');
+        // Save the product in the database
+        store.products.push(newProduct);
+        await store.save();
+        console.log('Product created successfully');
     } catch (error) {
-        console.error('Error processing webhook:', error);
+        console.error('Error processing create product webhook:', error);
+    }
+}
+
+// Update products from webhook
+router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopifyWebhook, async (req, res) => {
+    console.log('Received product update webhook');
+    res.status(200).send('Webhook received');
+
+    const { vendor, id, title, image, images, variants } = req.body;
+
+    try {
+        // Find the relevant store
+        const store = await ShopifyStore.findOne({ storeName: vendor });
+        if (!store) {
+            console.log('Store not found');
+            return;
+        }
+
+        // Check if the product exists
+        const productIndex = store.products.findIndex(product => product.shopifyProductId === id.toString());
+        if (productIndex !== -1) {
+            // Product exists, check for updates and add new variants
+            let productUpdated = false;
+            let needsNewProductFrame = false;
+
+            const existingProduct = store.products[productIndex];
+
+            // Check if all variants in the webhook have a quantity of 0
+            if (variants.every(variant => variant.inventory_quantity <= 0)) {
+                // Delete the product if all variants have 0 inventory
+                const deleteSuccess = await deleteProduct(id);
+                if (deleteSuccess) {
+                    console.log(`Product ${id} with all variants out of stock has been deleted.`);
+                } else {
+                    console.log(`Failed to delete Product ${id} with all variants out of stock.`);
+                }
+                return; // Stop further processing since the product is deleted
+            }
+
+            // Check and update product title
+            if (title && title !== existingProduct.title) {
+                existingProduct.title = title;
+                productUpdated = true;
+                needsNewProductFrame = true;
+            }
+
+            // Check and update product image
+            const newImageSrc = image ? image.src : null;
+            if (newImageSrc && newImageSrc !== existingProduct.image) {
+                existingProduct.image = newImageSrc;
+                productUpdated = true;
+                needsNewProductFrame = true;
+            }
+
+            // Update productFrame if necessary
+            if (needsNewProductFrame) {
+                try {
+                    // Generate frame image for the product
+                    const generatedProductFrameBuffer = await createProductFrame(existingProduct);
+                    const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
+
+                    existingProduct.frameImage = `${process.env.BASE_URL}/image/${productImageId}`;
+                    console.log('Frame images updated for product');
+                } catch (error) {
+                console.error(`Error generating frame images for product ${product.shopifyProductId}:`, error);
+                }
+            }
+
+            // Prepare a list of variant IDs from the webhook with inventory_quantity > 0
+            const variantIdsWithPositiveInventory = variants
+            .filter(variant => variant.inventory_quantity > 0)
+            .map(variant => variant.id.toString());
+
+            // Filter out variants that no longer exist or have inventory_quantity of 0
+            const filteredVariants = existingProduct.variants.filter(existingVariant =>
+                variantIdsWithPositiveInventory.includes(existingVariant.shopifyVariantId) ||
+                variants.some(variant => variant.id.toString() === existingVariant.shopifyVariantId && variant.inventory_quantity > 0)
+            );
+
+            // Check if any variants were removed based on the inventory quantity
+            if (existingProduct.variants.length !== filteredVariants.length) {
+                existingProduct.variants = filteredVariants;
+                productUpdated = true;
+            }
+
+            // Update variants
+            for (const variant of variants) {
+                let needsNewVariantFrame = false;
+
+                const variantIndex = existingProduct.variants.findIndex(v => v.shopifyVariantId === variant.id.toString());
+                if (variantIndex !== -1) {
+                    // Existing variant found, update it
+                    let existingVariant = existingProduct.variants[variantIndex];
+                    let variantUpdated = false;
+            
+                    // Update variant title if it has changed
+                    if (variant.title && variant.title !== existingVariant.title) {
+                        existingVariant.title = variant.title;
+                        variantUpdated = true;
+                        needsNewVariantFrame = true;
+                    }
+            
+                    // Update variant image if it has changed
+                    const variantImageSrc = variant.image_id ? images.find(image => image.id === variant.image_id)?.src : existingVariant.image;
+                    if (variantImageSrc && variantImageSrc !== existingVariant.image) {
+                        existingVariant.image = variantImageSrc;
+                        variantUpdated = true;
+                        needsNewVariantFrame = true;
+                    }
+            
+                    // Update variant inventory quantity if it has changed
+                    if (variant.inventory_quantity !== undefined && variant.inventory_quantity !== existingVariant.inventory_quantity) {
+                        existingVariant.inventory_quantity = variant.inventory_quantity;
+                        variantUpdated = true;
+                        needsNewVariantFrame = true;
+                    }
+
+                    // Update variantFrame if necessary
+                    if (variantUpdated && needsNewVariantFrame) {
+                        try {
+                            // Generate frame images for each variant
+                            const generatedVariantFrameBuffer = await createOptionsFrame(existingProduct, existingVariant);
+                            const variantImageId = await storeImage(generatedVariantFrameBuffer, 'image/jpeg');
+                            existingVariant.frameImage = `${process.env.BASE_URL}/image/${variantImageId}`;
+                            console.log('Frame images updated for variant');
+                        } catch (error) {
+                        console.error('Error generating frame images for variant', error);
+                        }
+                    }
+            
+                    // Mark the product as updated if any variant was updated
+                    if (variantUpdated) {
+                        productUpdated = true;
+                    }
+                } else if (variant.inventory_quantity > 0) {
+                    // Add the new variant with positive inventory if it doesn't already exist
+                    existingProduct.variants.push({
+                        shopifyVariantId: variant.id.toString(),
+                        title: variant.title,
+                        image: variant.image_id ? images.find(image => image.id === variant.image_id)?.src : existingProduct.image,
+                        price: variant.price.toString(),
+                    });
+                    productUpdated = true;
+                }
+            }
+
+            if (productUpdated) {
+                await store.save();
+                console.log('Product updated successfully');
+            } else {
+                console.log('No updates detected');
+            }
+        } else {
+            // Product not found, create it with variants having inventory_quantity > 0
+            console.log('Product not found, creating new product');
+            // Product doesnt exist, create it.
+            await createNewProduct({ id, title, body_html: req.body.body_html, image, images, variants }, store);
+        }
+    } catch (error) {
+        console.error('Error processing product update webhook:', error);
         res.status(500).send('An error occurred');
     }
 });
 
-
-
-// Update products from webhook
-router.post('/update/:productId', async (req, res) => { 
-
-
-
-
-});
-
-
 // Delete products from webhook
-router.post('/delete/:productId', async (req, res) => { 
+router.post('/delete', bodyParser.json({ verify: rawBodyBuffer }), verifyShopifyWebhook, async (req, res) => {
+    console.log('Received product delete webhook:', req.body);
+    res.status(200).send('Webhook received');    
 
+    const { id } = req.body;
+    const success = await deleteProduct(id);
 
-
-
+    if (success) {
+        console.log(`Product ${id} deletion processed successfully.`);
+    } else {
+        console.log(`Failed to process deletion for Product ${id}.`);
+    }
 });
+
+//Removing this for now because it seems that every time a product is added,
+// a product update webhook is also sent at the same time.
+
+/*
+// Add products from webhook
+router.post('/create', bodyParser.json({ verify: rawBodyBuffer }), verifyShopifyWebhook, async (req, res) => {
+    console.log('Received product create webhook');
+    res.status(200).send('Webhook received');
+
+    const { vendor, id, title, body_html, image, images, variants } = req.body;
+    try {
+        // 1. Find the store with the matching "storeName"
+        const store = await ShopifyStore.findOne({ storeName: vendor });
+        if (!store) {
+            console.log('Store not found');
+            return;
+        }
+
+        // 2. Check if the ShopifyProductId already exists
+        const existingProductIndex = store.products.findIndex(product => product.shopifyProductId === id.toString());
+        if (existingProductIndex !== -1) {
+            console.log('Product already exists');
+            return;
+        }
+
+        // 3. Create the product
+        const newProduct = {
+            shopifyProductId: id.toString(),
+            title: title,
+            image: image ? image.src : null,
+            originalDescription: body_html,
+            variants: variants.map(variant => ({
+                shopifyVariantId: variant.id.toString(),
+                title: variant.title,
+                image: variant.image_id ? images.find(image => image.id === variant.image_id)?.src : image?.src,
+                price: variant.price.toString(),
+            })),
+        };
+
+        // 4. Save the product in the database
+        store.products.push(newProduct);
+        await store.save();
+        console.log('Product created successfully');
+    } catch (error) {
+        console.error('Error processing create product webhook:', error);
+    }
+});
+*/
 
 export default router;

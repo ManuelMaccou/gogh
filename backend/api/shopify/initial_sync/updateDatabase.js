@@ -26,36 +26,6 @@ export async function findOrCreateStore(baseUrl) {
           });
           await store.save();
 
-
-          /*
-          // Construct pageHtml and frameUrl with store._id
-          const pageHtml = `
-          <!DOCTYPE html>
-          <html>
-              <head>
-              <title></title>
-                  <meta name="description" content="">
-                  <meta property="og:url" content="">
-                  <meta property="og:image" content="">
-                  <meta property="fc:frame" content="vNext">
-                  <meta name="fc:frame:post_url" content="${process.env.BASE_URL}/api/shopify/frame/${store._id}?initial=true">
-                  <meta property="fc:frame:image" content="">
-                  <meta property="fc:frame:image:aspect_ratio" content="">
-                  <meta property="fc:frame:button:1" content="Start Shopping">
-              </head>
-          </html>
-          `;
-
-          const frameUrl = `${process.env.BASE_URL}/product-page/shopify/${store._id}`;
-
-          // Update the store with pageHtml and frameUrl
-          store = await ShopifyStore.findByIdAndUpdate(store._id, {
-              $set: { pageHtml: pageHtml, frameUrl: frameUrl }
-          }, { new: true }); // Option { new: true } will return the updated document
-          */
-
-
-
           console.log('Store created with pageHtml and frameUrl:', store);
       } else {
           console.log('Existing store found.');
