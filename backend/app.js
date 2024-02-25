@@ -26,6 +26,9 @@ import shopifyStoreRoutes from './api/shopify/store.js';
 import shopifyFrameRoutes from './api/shopify/frame.js';
 import imageRoutes from './api/image.js';
 
+import shopifyProductWebhooks from './webhooks/shopify/product.js';
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const app = express();
@@ -62,6 +65,9 @@ app.use('/api/shopify/product', shopifyProductRoutes);
 app.use('/api/shopify/store', shopifyStoreRoutes);
 app.use('/api/shopify/frame', shopifyFrameRoutes);
 app.use('/image', imageRoutes);
+
+app.use('/webhooks/shopify/product', shopifyProductWebhooks);
+
 
 
 app.get('*', (req, res) => {

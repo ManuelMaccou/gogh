@@ -126,22 +126,4 @@ router.put('/update/:productId', async (req, res) => {
     }
 });
 
-// Add products via the webhook
-router.post('/webhook/add', async (req, res) => { 
-
-
-
-
-});
-
-
-
-// Update products via received webhook
-router.post('/webhook/update/:productId', async (req, res) => { 
-
-
-
-
-});
-
 export default router;
