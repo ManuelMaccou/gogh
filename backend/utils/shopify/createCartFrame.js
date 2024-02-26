@@ -41,9 +41,7 @@ async function createCartFrame(cartUrlParams) {
         const padding = 50;
         const titleImageSpacing = 20;
         const maxImageWidth = 250;
-        const titleFont = 'bold 56px Arial';
         const font = '30px Arial'; // Quantity text
-        const titleFontColor = 'white';
         const textFontColor = 'black';
         const spacingBetweenImageAndNumber = 20;
 
@@ -51,16 +49,13 @@ async function createCartFrame(cartUrlParams) {
         const ctx = canvas.getContext('2d');
 
         // Load and draw the background image first
-        const backgroundImageUrl = join(__dirname, '../../data/cart-background.jpg');
+        const backgroundImageUrl = join(__dirname, '../../data/nouns-cart-background.jpg');
         const backgroundImage = await loadImage(backgroundImageUrl);
 
         ctx.drawImage(backgroundImage, 0, 0, canvasWidth, canvasHeight);
 
 
-        // Add a title at the top
-        ctx.font = titleFont;
-        ctx.fillStyle = titleFontColor;
-        ctx.fillText("Cart", canvasWidth / 2 - ctx.measureText("Cart").width / 2, padding * 1.5);
+
 
         // Parse cartUrlParams to get variant IDs and quantities
         const variants = cartUrlParams.split(',').map(param => {
