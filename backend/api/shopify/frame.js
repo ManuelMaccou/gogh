@@ -159,7 +159,7 @@ router.post('/:storeId', async (req, res) => {
                     try {
                         await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Viewed product");
                     } catch (error) {
-                        console.error("Failed to log initial view to CSV:", error);
+                        console.error("Failed to log 'viewed product' to CSV:", error);
                     }
 
                 } else if (buttonIndex === 3 && totalVariants === 1) { // If only one variant, let user add to cart
@@ -180,7 +180,7 @@ router.post('/:storeId', async (req, res) => {
                     try {
                         await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Added product to cart");
                     } catch (error) {
-                        console.error("Failed to log initial view to CSV:", error);
+                        console.error("Failed to log 'Added product to cart' to CSV:", error);
                     }
 
                 } else if (buttonIndex === 4) { // 'View cart' button
@@ -236,7 +236,7 @@ router.post('/:storeId', async (req, res) => {
                     try {
                         await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Added product to cart");
                     } catch (error) {
-                        console.error("Failed to log initial view to CSV:", error);
+                        console.error("Failed to log 'Added product to cart' to CSV:", error);
                     }
 
                     // Constructing cartUrlParams
@@ -290,7 +290,7 @@ router.post('/:storeId', async (req, res) => {
                     try {
                         await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Went to Shopify checkout page");
                     } catch (error) {
-                        console.error("Failed to log initial view to CSV:", error);
+                        console.error("Failed to log 'Went to Shopify checkout page' to CSV:", error);
                     }
                 }
             } else if (frameType === 'cartFrame') {
@@ -312,7 +312,7 @@ router.post('/:storeId', async (req, res) => {
                     try {
                         await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Emptied cart");
                     } catch (error) {
-                        console.error("Failed to log initial view to CSV:", error);
+                        console.error("Failed to log 'Emptied cart' to CSV:", error);
                     }
                 }
             }
