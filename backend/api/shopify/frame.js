@@ -1,10 +1,12 @@
 import { Router } from 'express';
+import fetch from 'node-fetch';
 import { existsSync, mkdirSync, appendFile } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import createCartFrame from '../../utils/shopify/createCartFrame.js';
 import ShopifyStore from '../../models/shopify/store.js';
 import Image from '../../models/image.js';
+import { validateMessage } from '../../utils/shopify/validateFrameMessage.js'
 
 const router = Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -41,26 +43,15 @@ const appendToCSV = async (filename, data) => {
     }
 };
 
-const logActionToCSV = async (fid, storeId, product, page) => {
+const logActionToCSV = async (fid, storeName, storeId, productName, page) => {
     const now = new Date().toISOString();
-    const productName = product.title.replace(/,/g, '');
-    const data = `${fid},${now},${productName},${page}`;
+    const storeNameCsv = storeName.replace(/,/g, '');
+    const productNameCsv = productName.replace(/,/g, '');
+    const data = `${now},${storeNameCsv},${productNameCsv},${page},${fid}`;
 
     appendToCSV(storeId, data);
 };
-/*
-try {
-    const cartFrameImageBuffer = await createCartFrame(cartUrlParams);
-    // Here, handle the buffer as needed, e.g., send it in the response
-    console.log('Cart frame image generated successfully.');
-    res.send() //placedholder to send the image buffer to storeImage
-    // Example: res.send(cartFrameImageBuffer);
-} catch (error) {
-    console.error('Failed to generate cart frame image:', error);
-    // Handle the error, e.g., send an error response
-    // Example: res.status(500).send('Failed to generate cart frame image');
-}
-*/
+
 
 async function storeImage(imageBuffer, contentType) {
     const image = new Image({
@@ -71,25 +62,40 @@ async function storeImage(imageBuffer, contentType) {
     return image._id; // Returns the MongoDB ID of the saved image
 }
 
-
-
 router.post('/:storeId', async (req, res) => {
-
     const { storeId } = req.params;
-
-    let productIndex = parseInt(req.query.productIndex) || 0;
-    let variantIndex = parseInt(req.query.variantIndex) || 0;
-
-    console.log("Product index at beginning:", productIndex)
-
-    const buttonIndex = req.body.untrustedData.buttonIndex;
-    const fid = req.body.untrustedData.fid
     let frameType = req.query.frameType;
     let initial = req.query.initial === 'true';
     let cartUrlParams = req.query.cartUrlParams || '';
     let cartImageUrl = null;
+
+    let productIndex = parseInt(req.query.productIndex) || 0;
+    let variantIndex = parseInt(req.query.variantIndex) || 0;
+
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    let buttonIndex, fid, variantQuantity;
+
+    // Validate frame interaction first
+    if (isProduction) {
+        try {
+            const messageBytes = req.body.trustedData.messageBytes;
+            const validatedFrameData = await validateMessage(messageBytes);
+            // Extract data from the validatedFrameData for production
+            buttonIndex = validatedFrameData.action?.tapped_button?.index;
+            fid = validatedFrameData.action?.interactor?.fid;
+            variantQuantity = parseInt(validatedFrameData.action?.input?.text, 10);
+        } catch (error) {
+            console.error('Error validating message:', error);
+            return res.status(500).send('An error occurred during message validation.');
+        }
+    } else {
+        // Directly use untrustedData in development, with a different data structure
+        buttonIndex = req.body.untrustedData.buttonIndex;
+        fid = req.body.untrustedData.fid;
+        variantQuantity = parseInt(req.body.untrustedData.inputText, 10);
+    }
     
-    let variantQuantity = parseInt(req.body.untrustedData.inputText, 10);
     if (isNaN(variantQuantity) || variantQuantity < 1) {
         variantQuantity = 1;
     }
@@ -117,9 +123,13 @@ router.post('/:storeId', async (req, res) => {
         // Log initial view of the store
         if (initial) {
             frameType = 'productFrame';
+
+            try {
+                await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Opened store");
+            } catch (error) {
+                console.error("Failed to log initial view to CSV:", error);
+            }
             
-            console.log('product name 1:', product.title);
-            console.log('variant name 1:', variant.title);
         } else {
             
             // User is browsing products
@@ -130,9 +140,6 @@ router.post('/:storeId', async (req, res) => {
                     variant = product.variants[variantIndex];
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
-
-                    console.log('product name 2:', product.title);
-                    console.log('variant name 2:', variant.title);
                 
                 } else if (buttonIndex === 2) { // 'next' button
                     productIndex = (productIndex + 1) % totalProducts;
@@ -140,11 +147,6 @@ router.post('/:storeId', async (req, res) => {
                     variant = product.variants[variantIndex];
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
-
-                    console.log('Product index after change 3:', productIndex)
-
-                    console.log('product name 3:', product.title);
-                    console.log('variant name 3:', variant.title);
 
                 } else if (buttonIndex === 3 && totalVariants > 1) { // User clicks "product info" button
                     frameType = 'variantFrame'
@@ -154,10 +156,11 @@ router.post('/:storeId', async (req, res) => {
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
 
-                    console.log('Product index after change 3:', productIndex)
-
-                    console.log('product name 4:', product.title);
-                    console.log('variant name 4:', variant.title);
+                    try {
+                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Viewed product");
+                    } catch (error) {
+                        console.error("Failed to log initial view to CSV:", error);
+                    }
 
                 } else if (buttonIndex === 3 && totalVariants === 1) { // If only one variant, let user add to cart
                     frameType = 'addToCartFrame';
@@ -168,17 +171,17 @@ router.post('/:storeId', async (req, res) => {
 
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
-                    console.log('Product index after change 3:', productIndex)
-
                     if (cartUrlParams) {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
                     } else {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
                     }
-                    console.log('product name 5:', product.title);
-                    console.log('variant name 5:', variant.title);
 
-                    console.log('Product index after change 3:', productIndex)
+                    try {
+                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Added product to cart");
+                    } catch (error) {
+                        console.error("Failed to log initial view to CSV:", error);
+                    }
 
                 } else if (buttonIndex === 4) { // 'View cart' button
                     frameType = 'cartFrame';
@@ -230,10 +233,11 @@ router.post('/:storeId', async (req, res) => {
 
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
-                    console.log('Product index after change 3:', productIndex)
-
-                    console.log('product name 7:', product.title);
-                    console.log('variant name 7:', variant.title);
+                    try {
+                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Added product to cart");
+                    } catch (error) {
+                        console.error("Failed to log initial view to CSV:", error);
+                    }
 
                     // Constructing cartUrlParams
                     if (cartUrlParams) {
@@ -283,10 +287,11 @@ router.post('/:storeId', async (req, res) => {
                 
                 } else if (buttonIndex === 2) { // 'check out' button
 
-                    console.log('Product index after change 3:', productIndex)
-
-                    console.log('product name 11:', product.title);
-                    console.log('variant name 11:', variant.title);
+                    try {
+                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Went to Shopify checkout page");
+                    } catch (error) {
+                        console.error("Failed to log initial view to CSV:", error);
+                    }
                 }
             } else if (frameType === 'cartFrame') {
                 const variantId = product.variants[variantIndex].shopifyVariantId;
@@ -304,24 +309,19 @@ router.post('/:storeId', async (req, res) => {
                     variantIndex = 0;
                     cartUrlParams = '';
                 } else if (buttonIndex === 3) { 
-                    // Placeholder for analytics
+                    try {
+                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Emptied cart");
+                    } catch (error) {
+                        console.error("Failed to log initial view to CSV:", error);
+                    }
                 }
             }
         }
-
-        console.log('Final product Frame Image:', product.frameImage);
-        console.log('Final variant Frame Image:', variant.frameImage);
-
-        console.log('FINAL Product index after change 3:', productIndex)
 
         product = store.products[productIndex];
         variant = product.variants[variantIndex];
         totalProducts = store.products.length;
         totalVariants = product.variants.length;
-
-
-        console.log('FINAL product after change 3:', product);
-        console.log('cartImageUrl', cartImageUrl);
 
         res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants, cartImageUrl));
     } catch (err) {
