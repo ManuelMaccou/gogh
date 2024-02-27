@@ -15,7 +15,6 @@ router.get('/:filename', (req, res) => {
     if (!filename.includes('..') && !filename.includes('/') && !filename.includes('\\')) {
         res.download(filePath, (err) => {
             if (err) {
-                // Handle error, but don't reveal too much to the client
                 console.error('Error downloading the file:', err);
                 res.status(500).send('Error downloading the file');
             }

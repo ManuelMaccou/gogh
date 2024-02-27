@@ -21,7 +21,6 @@ export async function validateMessage(messageBytes) {
         const response = await fetch(frameValidateUrl, options);
         const data = await response.json();
         if (data.valid === true) {
-            console.log(data);
             return data;
         } else {
             console.error('Validation failed');

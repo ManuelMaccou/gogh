@@ -109,8 +109,6 @@ router.post('/:storeId', async (req, res) => {
 
         let product = store.products[productIndex];
 
-        console.log('Current product beginning of function:', product.title)
-
         if (!product.variants || variantIndex >= product.variants.length || variantIndex < 0) {
             return res.status(404).send('Product found, but invalid index for variant.');
         }
@@ -123,10 +121,6 @@ router.post('/:storeId', async (req, res) => {
 
         // Log initial view of the store
         if (initial) {
-
-            console.log('Store Name:', store.storeName);
-            console.log('Shopify Product ID:', product.shopifyProductId);
-            console.log('Product Title:', product.title);
 
             frameType = 'productFrame';
 
@@ -225,11 +219,6 @@ router.post('/:storeId', async (req, res) => {
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
 
-                    console.log('Product index after change 3:', productIndex)
-
-                    console.log('product name 6:', product.title);
-                    console.log('variant name 6:', variant.title);
-
                 } else if (buttonIndex === 2 ) { // 'add to cart' button
                     frameType = 'addToCartFrame';
                     product = store.products[productIndex];
@@ -259,22 +248,12 @@ router.post('/:storeId', async (req, res) => {
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
 
-                    console.log('Product index after change 3:', productIndex)
-
-                    console.log('product name 8:', product.title);
-                    console.log('variant name 8:', variant.title);
-
                 } else if (buttonIndex === 4) { // 'next' button
                     variantIndex = (variantIndex + 1) % totalVariants;
                     product = store.products[productIndex];
                     variant = product.variants[variantIndex];
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
-
-                    console.log('Product index after change 3:', productIndex)
-
-                    console.log('product name 9:', product.title);
-                    console.log('variant name 9:', variant.title);
                 }
             
             } else if (frameType === 'addToCartFrame') {
@@ -285,11 +264,6 @@ router.post('/:storeId', async (req, res) => {
                     variant = product.variants[variantIndex];
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
-
-                    console.log('Product index after change 3:', productIndex)
-
-                    console.log('product name 10:', product.title);
-                    console.log('variant name 10:', variant.title);
                 
                 } else if (buttonIndex === 2) { // 'check out' button
 
@@ -379,13 +353,6 @@ function constructMetadata(store, frameType, product, variant, storeId, productI
 
     const variantImageUrl = variant.frameImage
     const productImageUrl = product.frameImage
-
-    console.log('current product name', product.title);
-    console.log('current variant name', variant.title);
-    console.log('total products:', totalProducts);
-    console.log('total variants:', totalVariants);
-
-
 
     switch (frameType) { 
         case 'productFrame':
