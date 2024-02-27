@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const DATA_DIR = join(__dirname, 'api', 'data');
+const DATA_DIR = join(__dirname, '..', 'data');
 
 router.get('/:filename', (req, res) => {
     const { filename } = req.params;
