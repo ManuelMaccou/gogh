@@ -148,6 +148,7 @@ function ManageShopifyStore() {
                 
                 setStore(storeResponse.data);
                 setProducts(storeResponse.data.products);
+                setFrameUrl(storeResponse.data.frameUrl);
                 
             } catch (err) {
                 if (axios.isAxiosError(err)) {
