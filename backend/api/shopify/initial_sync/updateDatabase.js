@@ -51,7 +51,8 @@ export async function storeProductData(productsData, storeId) {
 
   // Filter products by vendor and status before mapping
   const filteredProducts = productsData.filter(product => 
-    product.vendor === store.storeName && product.status === 'active'
+    // product.vendor === store.storeName && product.status === 'active'
+    product.status === 'active'
   );
 
   const defaultProductImageSrc = store.defaultProductImage;
