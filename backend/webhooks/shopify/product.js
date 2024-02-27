@@ -119,8 +119,8 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
 
             // Check and update product image
             const newImageSrc = image ? image.src : null;
-            if (newImageSrc && newImageSrc !== existingProduct.image) {
-                existingProduct.image = newImageSrc;
+            if (newImageSrc !== null && newImageSrc !== existingProduct.image) {
+                existingProduct.image = newImageSrc || existingProduct.image; // Fallback to existing image if newImageSrc is null
                 productUpdated = true;
                 needsNewProductFrame = true;
             }
@@ -168,15 +168,19 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
             
                     // Update variant title if it has changed
                     if (variant.title && variant.title !== existingVariant.title) {
-                        existingVariant.title = variant.title;
+                        if (variant.title === "Default Title") {
+                            existingVariant.title = "Only option"
+                        } else {
+                            existingVariant.title = variant.title;
+                        }
                         variantUpdated = true;
                         needsNewVariantFrame = true;
                     }
             
                     // Update variant image if it has changed
                     const variantImageSrc = variant.image_id ? images.find(image => image.id === variant.image_id)?.src : existingVariant.image;
-                    if (variantImageSrc && variantImageSrc !== existingVariant.image) {
-                        existingVariant.image = variantImageSrc;
+                    if (variantImageSrc !== null && variantImageSrc !== existingVariant.image) {
+                        existingVariant.image = variantImageSrc || existingVariant.image; // Fallback to existing image if variantImageSrc is null
                         variantUpdated = true;
                         needsNewVariantFrame = true;
                     }

@@ -12,7 +12,7 @@ async function storeImage(imageBuffer, contentType) {
   return image._id; // Returns the MongoDB ID of the saved image
 }
 
-export async function findOrCreateStore(baseUrl) {
+export async function findOrCreateStore(baseUrl, storeName) {
   try {
       let store = await ShopifyStore.findOne({ shopifyStoreUrl: baseUrl });
 
@@ -22,6 +22,7 @@ export async function findOrCreateStore(baseUrl) {
           // Create and save store without pageHtml and frameUrl
           store = new ShopifyStore({
               shopifyStoreUrl: baseUrl,
+              storeName: storeName,
               products: []
           });
           await store.save();
@@ -48,27 +49,54 @@ export async function storeProductData(productsData, storeId) {
       return;
   }
 
-  // Map through productsData to transform it into the structure needed for storage
-  const products = productsData.map(productData => ({
-    shopifyProductId: productData.id.toString(),
-    title: productData.title,
-    originalDescription: productData.body_html,
-    image: productData.image ? productData.image.src : null,
-    // Initially, do not include frameImage
-    variants: productData.variants.map(variant => ({
-      shopifyVariantId: variant.id.toString(),
-      title: variant.title,
-      price: variant.price,
-      image: variant.image_id ? productData.images.find(image => image.id === variant.image_id)?.src : productData.image?.src,
-      // Initially, do not include frameImage for variants either
-    }))
-  }));
+  // Filter products by vendor and status before mapping
+  const filteredProducts = productsData.filter(product => 
+    product.vendor === store.storeName && product.status === 'active'
+  );
 
-  // Update the store with embedded products
-  store.products.push(...products);
-  await store.save();
+  const defaultProductImageSrc = store.defaultProductImage;
 
-  console.log('Products and variants added successfully to store:', storeId);
+  const products = filteredProducts.map(productData => {
+    // Use default image if needed
+    const productImageSrc = productData.image ? productData.image.src : defaultProductImageSrc;
+
+    // Filter out variants with inventory_quantity of 0
+    const filteredVariants = productData.variants.filter(variant => variant.inventory_quantity > 0);
+
+    return {
+      shopifyProductId: productData.id.toString(),
+      title: productData.title,
+      originalDescription: productData.body_html,
+      image: productImageSrc,
+      variants: filteredVariants.map(variant => {
+
+        // Use the product image as fallback if the variant does not have its own image
+        const variantImageSrc = variant.image_id 
+          ? productData.images.find(image => image.id === variant.image_id)?.src 
+          : productImageSrc;
+
+        // Check if variant title is "Default Title" and replace it with "Only option"
+        const variantTitle = variant.title === "Default Title" ? "Only option" : variant.title;
+
+        return {
+          shopifyVariantId: variant.id.toString(),
+          title: variantTitle,
+          price: variant.price,
+          image: variantImageSrc,
+        };
+      })
+    };
+  });
+
+  if (products.length > 0) {
+    // Update the store with embedded products
+    store.products.push(...products);
+    await store.save();
+
+    console.log('Products and variants added successfully to store:', storeId);
+  } else {
+    console.log('No matching products found to add for store:', storeId);
+  }
 }
 
 export async function updateProductFrames(storeId) {

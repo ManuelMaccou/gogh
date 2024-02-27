@@ -101,7 +101,8 @@ router.post('/:storeId', async (req, res) => {
     }
 
     try {
-        const store = await ShopifyStore.findById(storeId);
+        let store;
+        store = await ShopifyStore.findById(storeId);
         if (!store || !store.products || productIndex >= store.products.length || productIndex < 0) {
             return res.status(404).send('Store not found or invalid index for product.');
         }
@@ -122,10 +123,15 @@ router.post('/:storeId', async (req, res) => {
 
         // Log initial view of the store
         if (initial) {
+
+            console.log('Store Name:', store.storeName);
+            console.log('Shopify Product ID:', product.shopifyProductId);
+            console.log('Product Title:', product.title);
+
             frameType = 'productFrame';
 
             try {
-                await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Opened store");
+                await logActionToCSV(fid, store.storeName, store._id, product.title, "Opened store");
             } catch (error) {
                 console.error("Failed to log initial view to CSV:", error);
             }
@@ -157,7 +163,7 @@ router.post('/:storeId', async (req, res) => {
                     totalVariants = product.variants.length;
 
                     try {
-                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Viewed product");
+                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Viewed product");
                     } catch (error) {
                         console.error("Failed to log 'viewed product' to CSV:", error);
                     }
@@ -178,7 +184,7 @@ router.post('/:storeId', async (req, res) => {
                     }
 
                     try {
-                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Added product to cart");
+                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Added product to cart");
                     } catch (error) {
                         console.error("Failed to log 'Added product to cart' to CSV:", error);
                     }
@@ -193,7 +199,7 @@ router.post('/:storeId', async (req, res) => {
 
                     if (cartUrlParams) {                        
                         try {
-                            const cartFrameImageBuffer = await createCartFrame(cartUrlParams);
+                            const cartFrameImageBuffer = await createCartFrame(cartUrlParams, store);
                             const contentType = 'image/jpeg'; 
                 
                             // Store the image buffer in DB
@@ -234,7 +240,7 @@ router.post('/:storeId', async (req, res) => {
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
                     try {
-                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Added product to cart");
+                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Added product to cart");
                     } catch (error) {
                         console.error("Failed to log 'Added product to cart' to CSV:", error);
                     }
@@ -288,7 +294,7 @@ router.post('/:storeId', async (req, res) => {
                 } else if (buttonIndex === 2) { // 'check out' button
 
                     try {
-                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Went to Shopify checkout page");
+                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Went to Shopify checkout page");
                     } catch (error) {
                         console.error("Failed to log 'Went to Shopify checkout page' to CSV:", error);
                     }
@@ -310,7 +316,7 @@ router.post('/:storeId', async (req, res) => {
                     cartUrlParams = '';
                 } else if (buttonIndex === 3) { 
                     try {
-                        await logActionToCSV(fid, store.name, store.shopifyProductId, product.title, "Emptied cart");
+                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Emptied cart");
                     } catch (error) {
                         console.error("Failed to log 'Emptied cart' to CSV:", error);
                     }
@@ -323,16 +329,16 @@ router.post('/:storeId', async (req, res) => {
         totalProducts = store.products.length;
         totalVariants = product.variants.length;
 
-        res.status(200).send(generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants, cartImageUrl));
+        res.status(200).send(generateFrameHtml(store, product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants, cartImageUrl));
     } catch (err) {
         console.error('Error in POST /frame/:uniqueId', err);
         res.status(500).send('Internal Server Error');
     }
 });
 
-function generateFrameHtml(product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants, cartImageUrl) {
+function generateFrameHtml(store, product, variant, storeId, productIndex, variantIndex, frameType, cartUrlParams, totalProducts, totalVariants, cartImageUrl) {
 
-    let metadata = constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants, cartImageUrl);
+    let metadata = constructMetadata(store, frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants, cartImageUrl);
 
     // Generate meta tags from metadata
     let metaTags = Object.keys(metadata).map(key => {
@@ -353,10 +359,10 @@ function generateFrameHtml(product, variant, storeId, productIndex, variantIndex
     return htmlResponse;
 }
 
-function constructMetadata(frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants, cartImageUrl) {
+function constructMetadata(store, frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants, cartImageUrl) {
 
     const baseUrl = process.env.BASE_URL;
-    const checkoutUrl = `${process.env.NOUNS_SHOPIFY_STORE_URL}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
+    const checkoutUrl = `${store.shopifyStoreUrl}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
 
     let metadata = {
         "og:url": "https://www.gogh.shopping",
@@ -402,19 +408,22 @@ function constructMetadata(frameType, product, variant, storeId, productIndex, v
             break;
 
         case 'variantFrame':
-            metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
-            metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
-            metadata["fc:frame:input:text"] = "Enter quantity";
-            metadata["fc:frame:button:1"] = "Back";
-            metadata["fc:frame:button:2"] = "Add to Cart";
-            metadata["fc:frame:button:3"] = "Prev option";
-            metadata["fc:frame:button:4"] = "Next option";
+            if (totalVariants === 1) {
+                metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
+            } else {
+                metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
+            }
+                metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
+                metadata["fc:frame:input:text"] = "Enter quantity";
+                metadata["fc:frame:button:1"] = "Back";
+                metadata["fc:frame:button:2"] = "Add to Cart";
+                metadata["fc:frame:button:3"] = "Prev option";
+                metadata["fc:frame:button:4"] = "Next option";
             break;
 
         case 'addToCartFrame':
             metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
             metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
-            metadata["fc:frame:input:text"] = "Enter quantity";
             metadata["fc:frame:button:1"] = "Keep shopping";
             metadata["fc:frame:button:2"] = "Checkout";
             metadata["fc:frame:button:2:action"] = "link";

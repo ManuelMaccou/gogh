@@ -32,7 +32,7 @@ async function findVariantById(shopifyVariantId) {
 }
 
 // Function to create canvas and return buffer
-async function createCartFrame(cartUrlParams) {
+async function createCartFrame(cartUrlParams, store) {
     console.log('Starting cartFrame creation');
 
     try {
@@ -49,13 +49,10 @@ async function createCartFrame(cartUrlParams) {
         const ctx = canvas.getContext('2d');
 
         // Load and draw the background image first
-        const backgroundImageUrl = join(__dirname, '../../data/nouns-cart-background.jpg');
+        const backgroundImageUrl = join(__dirname, `../../files/${store.cartBackgroundImageName}`);
         const backgroundImage = await loadImage(backgroundImageUrl);
 
         ctx.drawImage(backgroundImage, 0, 0, canvasWidth, canvasHeight);
-
-
-
 
         // Parse cartUrlParams to get variant IDs and quantities
         const variants = cartUrlParams.split(',').map(param => {

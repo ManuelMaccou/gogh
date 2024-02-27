@@ -1,19 +1,27 @@
 import { Router } from 'express';
 import fetch from 'node-fetch';
 import { findOrCreateStore, storeProductData, updateProductFrames } from './updateDatabase.js';
+import ShopifyStore from '../../../models/shopify/store.js';
 
 const router = Router();
 
 // Get all products from Shopify
 router.get('/', async (req, res) => {
-    const baseUrl = "https://nounsesports.myshopify.com"
+    // const storeId = req.params.storeId;
+    const storeUrl = req.body.shopifyStoreUrl;
+    const storeName = req.body.storeName;
+    // const store = await ShopifyStore.findOne({ shopifyStoreUrl: storeUrl });
+
+    const baseUrl = storeUrl
     const fields = [
         'id',
         'title',
         'body_html',
+        'status', // Only accept products with "active" status
         'variants', // "variants.title" will have the different names for the sizes. 
         'images', // The image for each varient is images.src with the matching varient id in the "varient_ids" object. If there is only one varient, get this value without looking for a matching varient. There is only one for each product with not other varient. The varient object in the response will be empty.
-        'image' // This is where the product main image is - "image.src"
+        'image', // This is where the product main image is - "image.src"
+        'vendor' // vendor must match what you have in the db
     ];
 
     const createQueryString = (fields) => {
@@ -24,7 +32,12 @@ router.get('/', async (req, res) => {
     };
 
     const url = `${baseUrl}/admin/api/2024-01/products.json?${createQueryString(fields)}`;
-    const accessToken = process.env.NOUNS_SHOPIFY_ACCESS_TOKEN;
+    const accessToken = req.headers['x-shopify-access-token'];
+
+    if (!accessToken) {
+        return res.status(401).json({ error: 'Access token is required' });
+    }
+    
     console.log(url);
 
     const options = {
@@ -41,7 +54,7 @@ router.get('/', async (req, res) => {
         const { products } = await response.json();
 
         // Process Shopify store and products
-        const store = await findOrCreateStore(baseUrl);
+        const store = await findOrCreateStore(baseUrl, storeName);
 
         // Store product data in the database
         console.log('Adding products to the store without frames')

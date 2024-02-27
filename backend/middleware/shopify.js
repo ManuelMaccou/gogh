@@ -1,7 +1,5 @@
 import { createHmac, timingSafeEqual } from 'crypto';
-
-// Shopify app's client secret, loaded from environment variables for security
-const CLIENT_SECRET = process.env.SHOPIFY_API_SECRET_TEST;
+import ShopifyStore from '../models/shopify/store.js';
 
 // Middleware for raw body buffer
 export function rawBodyBuffer(req, res, buf, encoding) {
@@ -12,23 +10,36 @@ export function rawBodyBuffer(req, res, buf, encoding) {
 }
 
 // Shopify webhook verification middleware
-export const verifyShopifyWebhook = (req, res, next) => {
-  const hmacHeader = req.get('X-Shopify-Hmac-SHA256');
-  console.log('Received HMAC header');
+export const verifyShopifyWebhook = async (req, res, next) => {
+  const shopifyDomain = req.headers['x-shopify-shop-domain'];
 
-  if (!hmacHeader) {
-    console.log('No HMAC header found');
-    // Optionally, log this event as suspicious for further investigation.
-    return res.status(400).send('Bad Request: Missing security header.');
-  }
   try {
+    const store = await ShopifyStore.findOne({ shopifyStoreUrl: shopifyDomain });
+    console.log('Store found during webhook validation');
+    if (!store) {
+      console.log('Store not found during webhook validation');
+      return res.status(404).json({ message: "Store not found." });
+    }
+
+    const CLIENT_SECRET = process.env[store.webhookSig];
+    if (!CLIENT_SECRET) {
+      console.error('CLIENT_SECRET not found for store:', store.webhookSig);
+      return res.status(500).send('Configuration error.');
+    }
+    const hmacHeader = req.get('X-Shopify-Hmac-SHA256');
+    console.log('Received HMAC header');
+
+    if (!hmacHeader) {
+      console.log('No HMAC header found');
+      return res.status(400).send('Bad Request: Missing security header.');
+    }
     const digest = createHmac('sha256', CLIENT_SECRET)
       .update(req.rawBody, 'utf8')
       .digest('base64');
       console.log('Computed digest');
 
-    if (timingSafeEqual(Buffer.from(digest), Buffer.from(hmacHeader || ''))) {
-      console.log('Shopify webhook verified successfully');      
+    if (timingSafeEqual(Buffer.from(digest), Buffer.from(hmacHeader))) {
+      console.log('Shopify webhook verified successfully');
       next();
     } else {
       console.log('Shopify webhook verification failed');
