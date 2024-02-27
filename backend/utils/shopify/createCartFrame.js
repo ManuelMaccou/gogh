@@ -102,7 +102,7 @@ async function createCartFrame(cartUrlParams, store) {
         return imageBuffer;
 
     } catch (error) {
-        console.error('Error creating product frame:', error);
+        console.error('Error creating cart frame:', error);
         throw error; // Or handle more gracefully
     }
 }

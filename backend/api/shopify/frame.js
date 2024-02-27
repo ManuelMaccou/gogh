@@ -390,7 +390,7 @@ function constructMetadata(store, frameType, product, variant, storeId, productI
     switch (frameType) { 
         case 'productFrame':
             if (totalVariants === 1) {
-                metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
+                metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
                 metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
                 metadata["fc:frame:input:text"] = "Enter quantity";
                 metadata["fc:frame:button:1"] = "Previous";
