@@ -55,7 +55,7 @@ async function createProductFrame(product) {
         ctx.fillStyle = textConfig.title.color;
         let currentY = 100; // Starting Y position for the text
         wrapText(ctx, product.title, textSectionStart, currentY, textMaxWidth, textConfig.title.lineHeight);
-        currentY += textConfig.title.lineHeight + 20; // Adjust gap after title based on title's line height
+        currentY += textConfig.title.lineHeight + 40; // Adjust gap after title based on title's line height
 
 
         // Draw product description
@@ -81,7 +81,7 @@ async function createProductFrame(product) {
             ctx.fillStyle = textConfig.price.color;
             ctx.textAlign = 'right';
             const priceRightMargin = 40;
-            const priceBottomMargin = 30;
+            const priceBottomMargin = 0;
             const priceX = canvas.width - priceRightMargin;
             const priceY = canvas.height - priceBottomMargin;
             ctx.fillText(product.price, priceX, priceY); // No line height needed for single line text like price
