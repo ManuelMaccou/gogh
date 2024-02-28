@@ -55,7 +55,7 @@ async function createProductFrame(product) {
         ctx.fillStyle = textConfig.title.color;
         let currentY = 100; // Starting Y position for the text
         wrapText(ctx, product.title, textSectionStart, currentY, textMaxWidth, textConfig.title.lineHeight);
-        currentY += textConfig.title.lineHeight + 40; // Adjust gap after title based on title's line height
+        currentY += textConfig.title.lineHeight + 0; // Adjust gap after title based on title's line height
 
 
         // Draw product description
@@ -67,7 +67,7 @@ async function createProductFrame(product) {
             const lines = [];
             processNode(body, lines, ctx, textMaxWidth);
 
-            let descriptionStartY = (canvasHeight - (lines.length * textConfig.description.lineHeight)) / 2; // Center vertically
+            let descriptionStartY = (canvasHeight - (lines.length * textConfig.description.lineHeight) + currentY) / 2; // Center vertically
 
             lines.forEach(line => {
                 wrapText(ctx, line, textSectionStart, descriptionStartY, textMaxWidth, textConfig.description.lineHeight);
@@ -76,16 +76,17 @@ async function createProductFrame(product) {
         }
 
         // Draw price
-        if (product.price && product.price.trim() !== '') {
+        if (product.variants[0].price && product.variants[0].price.trim() !== '') {
             ctx.font = textConfig.price.font;
             ctx.fillStyle = textConfig.price.color;
             ctx.textAlign = 'right';
             const priceRightMargin = 40;
-            const priceBottomMargin = 0;
+            const priceBottomMargin = 30;
             const priceX = canvas.width - priceRightMargin;
             const priceY = canvas.height - priceBottomMargin;
-            ctx.fillText(product.price, priceX, priceY); // No line height needed for single line text like price
+            ctx.fillText(product.variants[0].price, priceX, priceY); // No line height needed for single line text like price 
         }
+
 
         // Generate and return the image URL
         const imageBuffer = canvas.toBuffer('image/jpeg');
