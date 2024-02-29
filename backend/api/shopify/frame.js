@@ -389,7 +389,11 @@ function constructMetadata(store, frameType, product, variant, storeId, productI
             break;
 
         case 'addToCartFrame':
-            metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
+            if (totalVariants === 1) {
+                metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
+            } else {
+                metadata["og:image"] = metadata["fc:frame:image"] = variantImageUrl;
+            }
             metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
             metadata["fc:frame:button:1"] = "Keep shopping";
             metadata["fc:frame:button:2"] = "Checkout";
