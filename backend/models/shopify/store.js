@@ -7,7 +7,7 @@ const ShopifyVariantSchema = new Schema({
     image: { type: String },
     frameImage: { type: String },
     price: { type: String },
-    quantity: { type: String },
+    inventory_quantity: { type: String },
 }); // Optionally disable _id for subdocuments if not needed
 
 // Define Product Schema

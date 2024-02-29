@@ -12,7 +12,7 @@ async function storeImage(imageBuffer, contentType) {
   return image._id; // Returns the MongoDB ID of the saved image
 }
 
-export async function findOrCreateStore(baseUrl, storeName) {
+export async function findOrCreateStore(baseUrl, storeName, defaultProductImage) {
   try {
       let store = await ShopifyStore.findOne({ shopifyStoreUrl: baseUrl });
 
@@ -23,6 +23,7 @@ export async function findOrCreateStore(baseUrl, storeName) {
           store = new ShopifyStore({
               shopifyStoreUrl: baseUrl,
               storeName: storeName,
+              defaultProductImage: defaultProductImage,
               products: []
           });
           await store.save();
@@ -51,49 +52,49 @@ export async function storeProductData(productsData, storeId) {
 
   // Filter products by vendor and status before mapping
   const filteredProducts = productsData.filter(product => 
-    // product.vendor === store.storeName && product.status === 'active'
-    product.status === 'active'
+    product.vendor === store.storeName && product.status === 'active'
+    // product.status === 'active'
   );
 
   const defaultProductImageSrc = store.defaultProductImage;
 
-  const products = filteredProducts.map(productData => {
-    // Use default image if needed
+  const products = filteredProducts.reduce((acc, productData) => {
     const productImageSrc = productData.image ? productData.image.src : defaultProductImageSrc;
 
-    // Filter out variants with inventory_quantity of 0
-    const filteredVariants = productData.variants.filter(variant => variant.inventory_quantity > 0);
+    const filteredVariants = productData.variants.filter(variant => 
+      variant.inventory_management === null || variant.inventory_quantity > 0
+    );
 
-    return {
-      shopifyProductId: productData.id.toString(),
-      title: productData.title,
-      originalDescription: productData.body_html,
-      image: productImageSrc,
-      variants: filteredVariants.map(variant => {
+    // Ensure product is added only if it doesn't result in an empty variants array
+    if (filteredVariants.length > 0) {
+      const productToAdd = {
+        shopifyProductId: productData.id.toString(),
+        title: productData.title,
+        originalDescription: productData.body_html,
+        image: productImageSrc,
+        variants: filteredVariants.map(variant => {
+          const variantImageSrc = variant.image_id 
+            ? productData.images.find(image => image.id === variant.image_id)?.src 
+            : productImageSrc;
 
-        // Use the product image as fallback if the variant does not have its own image
-        const variantImageSrc = variant.image_id 
-          ? productData.images.find(image => image.id === variant.image_id)?.src 
-          : productImageSrc;
+          const variantTitle = variant.title === "Default Title" ? "Only option" : variant.title;
 
-        // Check if variant title is "Default Title" and replace it with "Only option"
-        const variantTitle = variant.title === "Default Title" ? "Only option" : variant.title;
-
-        return {
-          shopifyVariantId: variant.id.toString(),
-          title: variantTitle,
-          price: variant.price,
-          image: variantImageSrc,
-        };
-      })
-    };
-  });
+          return {
+            shopifyVariantId: variant.id.toString(),
+            title: variantTitle,
+            price: variant.price,
+            image: variantImageSrc,
+          };
+        })
+      };
+      acc.push(productToAdd);
+    }
+    return acc;
+  }, []);
 
   if (products.length > 0) {
-    // Update the store with embedded products
     store.products.push(...products);
     await store.save();
-
     console.log('Products and variants added successfully to store:', storeId);
   } else {
     console.log('No matching products found to add for store:', storeId);

@@ -45,7 +45,7 @@ async function createNewProduct(productData, store) {
     const { id, title, body_html, image, images, variants } = productData;
 
     // Filter variants with inventory_quantity greater than 0
-    const filteredVariants = variants.filter(variant => variant.inventory_quantity > 0);
+    const filteredVariants = variants.filter(variant => variant.inventory_quantity > 0 || variant.inventory_management === null);
     if (filteredVariants.length === 0) {
         console.log('No variants with inventory to add');
         return; // Exit if no variants meet the criteria
@@ -95,19 +95,23 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
             // Product exists, check for updates and add new variants
             let productUpdated = false;
             let needsNewProductFrame = false;
-
             const existingProduct = store.products[productIndex];
 
-            // Check if all variants in the webhook have a quantity of 0
-            if (variants.every(variant => variant.inventory_quantity <= 0)) {
-                // Delete the product if all variants have 0 inventory
+            // Only keep variants with inventory or are unmanaged.
+            const variantsToKeep = variants.filter(variant =>
+                variant.inventory_quantity > 0 || variant.inventory_management === null
+            );
+
+            // Check if product should be deleted based on new conditions
+            if (variants.length > 0 && variantsToKeep.length === 0) {
+                // All variants have inventory_quantity <= 0 and inventory_management is not null
                 const deleteSuccess = await deleteProduct(id);
                 if (deleteSuccess) {
-                    console.log(`Product ${id} with all variants out of stock has been deleted.`);
+                    console.log(`Product ${id} deleted as all variants are out of stock or not managed.`);
                 } else {
-                    console.log(`Failed to delete Product ${id} with all variants out of stock.`);
+                    console.log(`Failed to delete Product ${id}.`);
                 }
-                return; // Stop further processing since the product is deleted
+                return; // Stop further processing
             }
 
             // Check and update product title
@@ -141,13 +145,13 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
 
             // Prepare a list of variant IDs from the webhook with inventory_quantity > 0
             const variantIdsWithPositiveInventory = variants
-            .filter(variant => variant.inventory_quantity > 0)
+            .filter(variant => variant.inventory_quantity > 0 || variant.inventory_management === null)
             .map(variant => variant.id.toString());
 
             // Filter out variants that no longer exist or have inventory_quantity of 0
             const filteredVariants = existingProduct.variants.filter(existingVariant =>
                 variantIdsWithPositiveInventory.includes(existingVariant.shopifyVariantId) ||
-                variants.some(variant => variant.id.toString() === existingVariant.shopifyVariantId && variant.inventory_quantity > 0)
+                variants.some(variant => variant.id.toString() === existingVariant.shopifyVariantId && variant.inventory_quantity > 0 || variant.inventory_management === null)
             );
 
             // Check if any variants were removed based on the inventory quantity
@@ -209,7 +213,7 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
                     if (variantUpdated) {
                         productUpdated = true;
                     }
-                } else if (variant.inventory_quantity > 0) {
+                } else if (variant.inventory_quantity > 0 || variant.inventory_management === null) {
                     // Add the new variant with positive inventory if it doesn't already exist
                     existingProduct.variants.push({
                         shopifyVariantId: variant.id.toString(),
