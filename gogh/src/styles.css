@@ -182,7 +182,8 @@
 }
 
 .product-modal-header, .product-modal-footer {
-    display: flex;
+    /*display: flex;*/
+    display: none;
     align-items: center;
 }
 
@@ -269,6 +270,8 @@
 .fc-profile-url {
     display: flex;
     align-items: center;
+    color: #000000;
+    text-decoration: none;
 }
 
 
@@ -438,6 +441,8 @@ input[type="checkbox"] {
 }
 
 .marketplace-products-grid {
+    max-width: 1000px;
+    margin: auto;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
@@ -445,8 +450,9 @@ input[type="checkbox"] {
 }
   
 .marketplace-product-card {
-    border: 1px solid #ccc;
+    border: 1px solid rgb(240, 240, 240);
     border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     cursor: pointer;
 }
