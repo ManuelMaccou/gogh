@@ -244,7 +244,7 @@ const HomePage = () => {
                 <h2>Featured Stores</h2>
                 <div className="featured-store-masonry">
                 {featuredStoreImages.map((image, index) => (
-                    <a key={index} href={image.link} className="featured-store-card">
+                    <a key={index} href={image.link} target="_blank" className="featured-store-card">
                     <img src={image.src} alt={`Store ${index}`} />
                 </a>
                 ))}
