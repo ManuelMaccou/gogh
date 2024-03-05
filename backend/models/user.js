@@ -1,9 +1,11 @@
-import mongoose, { model } from 'mongoose';
-const { Schema } = mongoose;
+import { Schema, model } from 'mongoose';
 
 const userSchema = new Schema({
     fid: { type: String, unique: true },
     signer_uuid: { type: String },
+    fc_pfp: { type: String },
+    fc_username: { type: String },
+    fc_profile: { type: String },
 });
 
 const User = model('User', userSchema);

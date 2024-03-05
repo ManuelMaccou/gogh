@@ -64,7 +64,7 @@ interface NavigationProps {
                     placeholder="Enter user's FID"
                     required
                     />
-                    <button type="submit">Impersonate</button>
+                    <button type="submit">Simulate</button>
                 </form>
                 <p>Current FID: {currentFid}</p>
                 </>

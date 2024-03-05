@@ -22,7 +22,7 @@ async function storeImage(imageBuffer, contentType) {
     contentType: contentType,
   });
   await image.save();
-  return image._id; // Returns the MongoDB ID of the saved image
+  return image._id;
 }
 
 // Fetch products related to the current user's store

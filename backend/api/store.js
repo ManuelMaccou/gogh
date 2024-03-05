@@ -35,7 +35,7 @@ async function storeImage(imageBuffer, contentType) {
     });
     await image.save();
     return image._id; // Returns the MongoDB ID of the saved image
-  }
+}
   
 
 router.post('/create', auth, async (req, res) => {
