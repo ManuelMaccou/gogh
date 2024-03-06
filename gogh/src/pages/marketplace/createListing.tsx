@@ -3,7 +3,7 @@ import Modal from 'react-modal';
 
 interface CreateListingProps {
     isLoggedIn: boolean;
-    onFormSubmit: (formData: FormDataState) => Promise<void>;
+    onFormSubmit: (formData: FormData, file: File | null) => Promise<void>;
     formError: string;
     clearFormError: () => void;
     supportedCities: string[];
@@ -13,7 +13,7 @@ interface FormDataState {
     location: string;
     title: string;
     description: string;
-    image: string;
+    // image: string;
     price: string;
 }
 
@@ -31,9 +31,11 @@ const CreateListing: React.FC<CreateListingProps> = ({
         location: '',
         title: '',
         description: '',
-        image: '',
+        // image: '',
         price: '',
     });
+
+    const [file, setFile] = useState<File | null>(null);
 
     const handleButtonClick = () => {
         if (!isLoggedIn) {
@@ -51,24 +53,37 @@ const CreateListing: React.FC<CreateListingProps> = ({
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = event.target;
-        setFormData(prevState => ({ ...prevState, [name]: value }));
+    
+        if (event.target instanceof HTMLInputElement && event.target.type === 'file') {
+            setFile(event.target.files && event.target.files.length > 0 ? event.target.files[0] : null);
+        } else {
+            setFormData(prevState => ({ ...prevState, [name]: value }));
+        }
     };
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        console.log(formData);
+        const data = new FormData();
+        data.append('location', formData.location);
+        data.append('title', formData.title);
+        data.append('description', formData.description);
+        if (file) data.append('image', file); // Add file if selected
+        data.append('price', formData.price);
+
         try {
-            await onFormSubmit(formData);
+            await onFormSubmit(data, file); // Adjust this call
             setShowForm(false);
+            // Reset form and file states
             setFormData({
                 location: '',
                 title: '',
                 description: '',
-                image: '',
                 price: '',
             });
+            setFile(null); // Reset file state
             clearFormError();
         } catch (error) {
+            // Handle submission error
         }
     };
 
@@ -105,7 +120,7 @@ const CreateListing: React.FC<CreateListingProps> = ({
                     </select>
                     <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
                     <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
-                    <input name="image" type="text" value={formData.image} onChange={handleChange} placeholder="Image URL" required />
+                    <input type="file" onChange={handleChange} required />
                     <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price" />
                     <button className="submit-button" type="submit">Submit</button>
                 </form>

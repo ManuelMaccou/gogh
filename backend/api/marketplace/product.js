@@ -2,6 +2,7 @@ import { Router } from 'express';
 import Image from '../../models/image.js';
 import pkg from 'jsonwebtoken';
 import sharp from 'sharp';
+import multer from 'multer';
 // import createProductPreview from '../../utils/marketplace/createProductPreview.js';
 import MarketplaceProduct from'../../models/marketplace/product.js';
 import auth from '../../middleware/auth.js';
@@ -10,20 +11,8 @@ import auth from '../../middleware/auth.js';
 const router = Router();
 const { verify } = pkg;
 
-const processImageFromUrl = async (imageUrl) => {
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error(`Failed to fetch the image: ${response.statusText}`);
-    const imageBuffer = await response.arrayBuffer();
-
-    // convert to JPEG, and compress the image
-    return sharp(imageBuffer)
-        .resize(800, 800, { // Resize to 800x800 max, keeping aspect ratio
-            fit: sharp.fit.inside,
-            withoutEnlargement: true
-        })
-        .jpeg()
-        .toBuffer();
-};
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 async function storeImage(imageBuffer, contentType) {
     const image = new Image({
@@ -34,16 +23,26 @@ async function storeImage(imageBuffer, contentType) {
     return image._id; // Returns the MongoDB ID of the saved image
 }
 
-router.post('/add', auth, async (req, res) => {
+router.post('/add', auth, upload.single('image'), async (req, res) => {
     if (!req.user) {
         return res.status(401).send('User not authenticated');
     }
 
+    if (!req.file) {
+        return res.status(400).send('No image uploaded');
+    }
+
     try {
-        const {location, title, description, image, price } = req.body;
-        console.log('image before processing:', image)
+        const {location, title, description, price } = req.body;
         
-        const processedImageBuffer = await processImageFromUrl(image);
+        const processedImageBuffer = await sharp(req.file.buffer)
+            .resize(800, 800, {
+                fit: sharp.fit.inside,
+                withoutEnlargement: true
+            })
+            .jpeg()
+            .toBuffer();
+            
         const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
         const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;
 

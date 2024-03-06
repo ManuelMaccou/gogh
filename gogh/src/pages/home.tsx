@@ -10,14 +10,6 @@ interface FeaturedStoreImage {
     link: string;
 }
 
-interface FormDataState {
-    location: string;
-    title: string;
-    description: string;
-    image: string;
-    price: string;
-}
-
 interface User {
     _id: string;
     fc_username: string;
@@ -139,7 +131,7 @@ const HomePage = () => {
         fetchProducts();
     }, []);
 
-    const onFormSubmit = async (formData: FormDataState) => {
+    const onFormSubmit = async (formData: FormData) => {
         console.log('Submitting:', formData);
         
         try {
