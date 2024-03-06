@@ -16,12 +16,6 @@ router.post('/farcaster_login', async (req, res) => {
     }
 
     try {
-        let user = await User.findOne({ fid });
-
-        if (!user) {
-            return res.status(404).json();
-        }
-
         // Fetch user details from Neynar API
         const neynarUrl = `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`;
         const neynarOptions = {
@@ -31,17 +25,31 @@ router.post('/farcaster_login', async (req, res) => {
 
         const neynarResponse = await axios(neynarUrl, neynarOptions);
         const neynarData = neynarResponse.data;
-        
-        if (neynarData && neynarData.users && neynarData.users.length > 0) {
+
+        let user = await User.findOne({ fid });
+
+        // If user not found, create a new user
+        if (!user && neynarData && neynarData.users && neynarData.users.length > 0) {
             const fcUserData = neynarData.users[0];
+
+            // Create a new user with data from Neynar API
+            user = new User({
+                fid,
+                fc_username: fcUserData.display_name,
+                fc_pfp: fcUserData.pfp_url,
+                fc_profile: `https://warpcast.com/${fcUserData.username}`,
+                signer_uuid
+            });
+
+            await user.save();
+        } else if (user) {
+            const fcUserData = neynarData.users[0];
+            
             user.fc_username = fcUserData.display_name;
             user.fc_pfp = fcUserData.pfp_url;
             user.fc_profile = `https://warpcast.com/${fcUserData.username}`;
             await user.save();
         }
-
-        // Check if a merchant exists for this user, if not create one
-        let merchant = await Merchant.findOne({ user: user._id });
 
         const token = jwtSign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '48h' });
 

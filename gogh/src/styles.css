@@ -91,6 +91,12 @@
     margin-bottom: 1rem;
 }
 
+@media (max-width: 768px) {
+    .featured-stores h2 {
+        font-size: 30px;
+    }
+}
+
 .featured-store-masonry {
     max-width: 1000px;
     margin-left: auto;

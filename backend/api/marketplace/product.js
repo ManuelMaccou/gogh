@@ -2,7 +2,7 @@ import { Router } from 'express';
 import Image from '../../models/image.js';
 import pkg from 'jsonwebtoken';
 import sharp from 'sharp';
-import createProductFrame from '../../utils/shopify/createProductFrame.js';
+// import createProductPreview from '../../utils/marketplace/createProductPreview.js';
 import MarketplaceProduct from'../../models/marketplace/product.js';
 import auth from '../../middleware/auth.js';
 
@@ -46,6 +46,8 @@ router.post('/add', auth, async (req, res) => {
         const processedImageBuffer = await processImageFromUrl(image);
         const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
         const imageUrl = `${process.env.BASE_URL}/image/${processedImage}`;
+
+        // const marketplaceProductPreviewImg = await createProductPreview(imageUrl); // This is the placeholder
 
         console.log('image after processing:', imageUrl)
         

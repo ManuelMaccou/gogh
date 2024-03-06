@@ -110,7 +110,11 @@ const HomePage = () => {
                 setUser(response.data);
             }).catch(error => {
                 console.error('Error fetching user details:', error);
-                setIsLoggedIn(false);
+                if (axios.isAxiosError(error) && error.response && error.response.status === 401) {
+                    localStorage.removeItem('token');
+                    setIsLoggedIn(false);
+                    setUser(null);
+                }
             });
         }
     }, []);
@@ -130,21 +134,6 @@ const HomePage = () => {
             console.error('Failed to fetch products:', error);
         }
     };
-
-    React.useEffect(() => {
-        const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token);
-        if (token) {
-            // Assuming you have an endpoint to get user details by token
-            axios.get(`${process.env.REACT_APP_BASE_URL}/api/user/`, {
-                headers: { Authorization: `Bearer ${token}` }
-            }).then(response => {
-                setUser(response.data); // Update user state with fetched data
-            }).catch(error => {
-                console.error('Error fetching user details:', error);
-            });
-        }
-    }, []);
 
     React.useEffect(() => {
         fetchProducts();

@@ -63,42 +63,6 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         </div>
     </Modal>
   );
-
-
-
-
-/*
-  return (
-    <Modal
-        isOpen={isOpen}
-        onRequestClose={onRequestClose}
-        contentLabel="Product Details"
-        className="product-modal"
-        overlayClassName="modal-overlay"
-    >
-        
-        <div className='fc-user-tag'>
-            <img src={product.user.fc_pfp} alt="User profile" className='fc-pfp'  />
-            <p>{product.user.fc_username}</p>
-        </div>
-        <h2>{product.title}</h2>
-        <div className='marketplace-product-details' >
-        <img src={product.imageUrl} alt={product.title} className='marketplace-product-feat-img'/>
-        <div>
-            <div className='marketplace-product-details'>
-                <p>{product.description}</p>
-            </div>
-            <p>Price: {product.price}</p>
-        <div className='product-share-button'>
-            <a href={shareUrl} target="_blank" rel="noopener noreferrer">
-                Share
-            </a>
-        </div>   
-        </div>
-      </div>
-    </Modal>
-  );
-  */
 };
 
 export default ProductDetailsModal;
