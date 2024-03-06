@@ -45,7 +45,7 @@ router.post('/add', auth, async (req, res) => {
         
         const processedImageBuffer = await processImageFromUrl(image);
         const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
-        const imageUrl = `${process.env.BASE_URL}/image/${processedImage}`;
+        const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;
 
         // const marketplaceProductPreviewImg = await createProductPreview(imageUrl); // This is the placeholder
 

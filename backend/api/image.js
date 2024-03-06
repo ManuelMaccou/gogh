@@ -1,3 +1,6 @@
+
+// This will be deprecated and image files will use images.js an save with a .jpg ext.
+
 import { Router } from 'express';
 import Image from '../models/image.js';
 

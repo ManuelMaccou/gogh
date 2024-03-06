@@ -47,7 +47,6 @@ router.post('/farcaster_login', async (req, res) => {
             
             user.fc_username = fcUserData.display_name;
             user.fc_pfp = fcUserData.pfp_url;
-            user.fc_profile = `https://warpcast.com/${fcUserData.username}`;
             await user.save();
         }
 

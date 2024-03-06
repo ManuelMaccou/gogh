@@ -29,7 +29,11 @@ import shopifyProductWebhooks from './webhooks/shopify/product.js';
 
 import marketplaceProductRoutes from './api/marketplace/product.js';
 
+// This will soon be removed
 import imageRoutes from './api/image.js';
+
+// This will soon replace the image route above
+import imagesRoutes from './api/images.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -69,7 +73,11 @@ app.use('/api/shopify/frame', shopifyFrameRoutes);
 
 app.use('/webhooks/shopify/product', shopifyProductWebhooks);
 
+// This will soon be removed
 app.use('/image', imageRoutes);
+
+// This will soon replace the image route above
+app.use('/images', imagesRoutes);
 
 app.use('/api/marketplace/product', marketplaceProductRoutes);
 
