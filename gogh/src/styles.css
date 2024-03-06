@@ -188,8 +188,7 @@
 }
 
 .product-modal-header, .product-modal-footer {
-    /*display: flex;*/
-    display: none;
+    display: flex;
     align-items: center;
 }
 
