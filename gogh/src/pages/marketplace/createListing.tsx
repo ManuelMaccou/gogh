@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import React, { useState, ChangeEvent, FormEvent, forwardRef } from 'react';
 import Modal from 'react-modal';
 
 interface CreateListingProps {
@@ -19,13 +19,13 @@ interface FormDataState {
 
 Modal.setAppElement('#root'); 
 
-const CreateListing: React.FC<CreateListingProps> = ({
+const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
     isLoggedIn,
     onFormSubmit,
     formError,
     clearFormError,
     supportedCities,
-}) => {
+}, ref) => {
     const [showForm, setShowForm] = useState<boolean>(false);
     const [formData, setFormData] = useState<FormDataState>({
         location: '',
@@ -89,46 +89,48 @@ const CreateListing: React.FC<CreateListingProps> = ({
 
 
     return (
-        <div className="create-listing-container">
-            {!isLoggedIn ? (
-            <>
-                <p>Log in to list your product.</p>
-                <div className="neynar_signin" data-client_id={process.env.REACT_APP_NEYNAR_CLIENT_ID} data-success-callback="onSignInSuccess" data-variant="warpcast"></div>
-            </>
-        ) : (
-            <>
-                <div className="create-listing">
-                    <p>List your product for sale</p>
-                </div>
-                <button onClick={handleButtonClick}>Create Listing</button>
+        <div ref={ref}>
+            <div className="create-listing-container">
+                {!isLoggedIn ? (
+                <>
+                    <p>Log in to list your product.</p>
+                    <div className="neynar_signin" data-client_id={process.env.REACT_APP_NEYNAR_CLIENT_ID} data-success-callback="onSignInSuccess" data-variant="warpcast"></div>
+                </>
+            ) : (
+                <>
+                    <div className="create-listing">
+                        <p>List your product for sale</p>
+                    </div>
+                    <button onClick={handleButtonClick}>Create Listing</button>
 
-            <Modal 
-            isOpen={showForm} 
-            onRequestClose={handleCloseModal}
-            className="add-product-modal"
-            overlayClassName="modal-overlay"
-            >
-                <button className="close-button" onClick={handleCloseModal}>&times;</button>
-                <h2>Add Product</h2>
-                <form onSubmit={handleSubmit}>
-                    {formError && <p className="form-error">{formError}</p>}
-                    <select name="location" value={formData.location} onChange={handleChange} required>
-                        <option value="">Select your city</option>
-                        {supportedCities.map((city, index) => (
-                            <option key={index} value={city}>{city}</option>
-                        ))}
-                    </select>
-                    <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
-                    <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
-                    <input type="file" onChange={handleChange} required />
-                    <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price" />
-                    <button className="submit-button" type="submit">Submit</button>
-                </form>
-            </Modal>
-            </>
-        )}
+                <Modal 
+                isOpen={showForm} 
+                onRequestClose={handleCloseModal}
+                className="add-product-modal"
+                overlayClassName="modal-overlay"
+                >
+                    <button className="close-button" onClick={handleCloseModal}>&times;</button>
+                    <h2>Add Product</h2>
+                    <form onSubmit={handleSubmit}>
+                        {formError && <p className="form-error">{formError}</p>}
+                        <select name="location" value={formData.location} onChange={handleChange} required>
+                            <option value="">Select your city</option>
+                            {supportedCities.map((city, index) => (
+                                <option key={index} value={city}>{city}</option>
+                            ))}
+                        </select>
+                        <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
+                        <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
+                        <input type="file" onChange={handleChange} required />
+                        <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price" />
+                        <button className="submit-button" type="submit">Submit</button>
+                    </form>
+                </Modal>
+                </>
+            )}
+            </div>
         </div>
     );
-};
+});
 
 export default CreateListing;

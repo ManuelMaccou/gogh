@@ -58,7 +58,6 @@ function ManageShopifyStore() {
             const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/user`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            console.log('response data:', response.data)
             setCurrentUser(response.data);
             } catch (error) {
             console.error("Error fetching user:", error);

@@ -4,14 +4,12 @@
 
 .site-header {
     height: 30px;
-    position: sticky;
     top: 0;
-    z-index: 1000;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
-    background: #ffffff86;
+    background: #ffffff;
 }
 
 @media (max-width: 320px) {
@@ -43,13 +41,14 @@
 }
 
 .hero-section {
-    height: 70vh;
-    margin-top: -70px;
+    max-height: 40vh;
+    padding-bottom: 20px;
     background-image: url('https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1706765527028x348080221894961500/Gogh_bg.jpg');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
@@ -59,7 +58,6 @@
         height: 45vh;
     }
 }
-
 
 .hero-section .title {
     max-width: 800px;
@@ -74,6 +72,17 @@
     .hero-section .title {
         font-size: 46px;
     }
+}
+
+.list-item {
+    padding: 10px 40px;
+    font-weight: 700;
+    font-size: 20px;
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
 }
 
 .featured-stores-section {

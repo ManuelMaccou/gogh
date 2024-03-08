@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 import CreateListing from './marketplace/createListing';
@@ -42,6 +42,7 @@ const supportedCities = [
 
 const HomePage = () => {
     const navigate = useNavigate();
+
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [formError, setFormError] = useState<string>('');
     const [products, setProducts] = useState<Product[]>([]);
@@ -53,12 +54,21 @@ const HomePage = () => {
     const openModalWithProduct = (product: Product) => {
         setSelectedProduct(product);
         setIsProductModalOpen(true);
-      };
-      
-      const closeModal = () => {
+    };
+
+    const closeModal = () => {
         setIsProductModalOpen(false);
         setSelectedProduct(null);
+    };
+
+    const createListingRef = useRef<HTMLDivElement | null>(null);
+
+    const scrollToListProduct = () => {
+        if (createListingRef.current) {
+          createListingRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       };
+
 
     React.useEffect(() => {
         const scriptId = 'neynar-script';
@@ -219,65 +229,68 @@ const HomePage = () => {
             </header>
             <section className="hero-section">
                 <h1 className="title">Buy and sell products on Farcaster</h1>
+                <button className='list-item' onClick={scrollToListProduct}>List an item for sale</button>
             </section>
+            <section className="submitted-products">
+                <div className="marketplace-products-grid">
+                {products.map((product) => (
+                    <div key={product._id} className="marketplace-product-card" onClick={() => openModalWithProduct(product)}>
+                    <img src={product.imageUrl} alt={product.title} className='marketplace-img'/>
+                    <h3>{product.title}</h3>
+                    <p>Location: {product.location}</p>
+                    <p>Price: {product.price}</p>
+                    <div className='fc-user-tag'>
+                        {product.user && (
+                            <>
+                                <a href={product.user.fc_profile} className="fc-profile-url" target="_blank" rel="noopener noreferrer">
+                                <img src={product.user.fc_pfp} alt="User profile" className='fc-pfp'/>
+                                <span>{product.user.fc_username}</span>
+                                </a>
+                            </>
+                            )}
+                        </div>
+                    </div>
+                    ))}
+                    <ProductDetailsModal
+                    isOpen={isModalOpen}
+                    onRequestClose={closeModal}
+                    product={selectedProduct}
+                    />
+                </div>
+            </section>
+            <section className="local-section">
+                <h2>Local Marketplace</h2>
+                <h3>Current cities supported:</h3>
+                <div className="cities-container">
+                    {supportedCities.map((city, index) => (
+                        <div key={index} className="cities-item">
+                            <p>{city}</p>
+                        </div>
+                    ))}
+                </div>
+                <CreateListing 
+                    isLoggedIn={isLoggedIn}
+                    onFormSubmit={onFormSubmit} 
+                    formError={formError} 
+                    clearFormError={() => setFormError('')} 
+                    supportedCities={supportedCities}
+                    ref={createListingRef}
+                />
+            </section>
+            
             <section className="featured-stores-section">
                 <div className="featured-stores">
-                <h2>Featured Stores</h2>
-                <div className="featured-store-masonry">
-                {featuredStoreImages.map((image, index) => (
-                    <a key={index} href={image.link} target="_blank" className="featured-store-card">
-                    <img src={image.src} alt={`Store ${index}`} />
-                </a>
-                ))}
-                </div>
-                </div>
-        </section>
-        <section className="local-section">
-            <h2>Local Marketplace</h2>
-            <h3>Current cities supported:</h3>
-            <div className="cities-container">
-                {supportedCities.map((city, index) => (
-                    <div key={index} className="cities-item">
-                        <p>{city}</p>
-                    </div>
-                ))}
-            </div>
-            <CreateListing 
-                isLoggedIn={isLoggedIn}
-                onFormSubmit={onFormSubmit} 
-                formError={formError} 
-                clearFormError={() => setFormError('')} 
-                supportedCities={supportedCities}
-            />
-      </section>
-      <section className="submitted-products">
-        <div className="marketplace-products-grid">
-          {products.map((product) => (
-            <div key={product._id} className="marketplace-product-card" onClick={() => openModalWithProduct(product)}>
-              <img src={product.imageUrl} alt={product.title} className='marketplace-img'/>
-              <h3>{product.title}</h3>
-              <p>Location: {product.location}</p>
-              <p>Price: {product.price}</p>
-              <div className='fc-user-tag'>
-                {product.user && (
-                    <>
-                        <a href={product.user.fc_profile} className="fc-profile-url" target="_blank" rel="noopener noreferrer">
-                        <img src={product.user.fc_pfp} alt="User profile" className='fc-pfp'/>
-                        <span>{product.user.fc_username}</span>
+                    <h2>Featured Stores</h2>
+                    <div className="featured-store-masonry">
+                        {featuredStoreImages.map((image, index) => (
+                        <a key={index} href={image.link} target="_blank" className="featured-store-card">
+                            <img src={image.src} alt={`Store ${index}`} />
                         </a>
-                    </>
-                    )}
+                        ))}
+                    </div>
                 </div>
-            </div>
-            ))}
-            <ProductDetailsModal
-            isOpen={isModalOpen}
-            onRequestClose={closeModal}
-            product={selectedProduct}
-            />
+            </section>
         </div>
-      </section>
-    </div>
     );
 };
 
