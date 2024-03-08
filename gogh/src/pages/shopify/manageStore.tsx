@@ -2,6 +2,7 @@ import { useState, useEffect, ChangeEvent, FormEvent, useCallback } from 'react'
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
+import SimulateUser from '../../SimulateUser'
 
 
 interface ProductData {
@@ -29,9 +30,43 @@ interface Store {
     products: Product[]; 
 }
 
+interface User {
+    _id: string;
+    fid:string;
+    fc_username: string;
+    fc_pfp: string;
+    fc_profile: string;
+}
+
+
+
+
+
+
+const onSimulationSuccess = (fid: string) => {
+    console.log(`Simulated FID: ${fid}`);
+};
+
 
 function ManageShopifyStore() {
     const navigate = useNavigate();
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/user`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            });
+            console.log('response data:', response.data)
+            setCurrentUser(response.data);
+            } catch (error) {
+            console.error("Error fetching user:", error);
+            }
+        };
+        
+        fetchUser();
+        }, []);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -51,6 +86,7 @@ function ManageShopifyStore() {
     const [lineCount, setLineCount] = useState(0);
     const [lineLimitExceeded, setLineLimitExceeded] = useState(false);
     const [selectedProductForEdit, setSelectedProductForEdit] = useState<Product | null>(null);
+    
 
     const handleEditorChange = useCallback((content: string, editor: any) => {
         const textContent = editor.getContent({ format: "text" });
@@ -251,6 +287,11 @@ function ManageShopifyStore() {
 
     return (
         <div>
+             <div>
+            {currentUser && currentUser.fid === '8587' && (
+                <SimulateUser onSimulationSuccess={onSimulationSuccess} />
+            )}
+            </div>
             <div className="submit-product-container">
                 <div className="product-form-section">
                     <div className="product-form-box">
