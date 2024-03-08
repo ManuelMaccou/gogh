@@ -57,13 +57,11 @@ router.post('/update', async (req, res) => {
     const decoded = verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
-    // Find the merchant associated with the user
     const merchant = await Merchant.findOne({ user: userId });
     if (!merchant) {
         return res.status(404).json({ message: "Merchant not found." });
     }
 
-    // Find the store associated with the merchant
     const store = await ShopifyStore.findOne({ storeAdmin: merchant._id });
     if (!store) {
         return res.status(404).json({ message: "Store not found." });
@@ -75,7 +73,7 @@ router.post('/update', async (req, res) => {
         contentType: contentType,
     });
         await image.save();
-        return image._id; // Returns the MongoDB ID of the saved image
+        return image._id;
       }
 
     const { storeImage: storeImageUrlFromReq } = req.body;
@@ -88,28 +86,23 @@ router.post('/update', async (req, res) => {
             maxContentLength: 1 * 1024 * 1024,
         });
 
-        // After fetching the image, define `mimeType` from the response headers
         const mimeType = response.headers['content-type'];
 
-        // Check if the MIME type is supported
         if (!["image/jpeg", "image/png", "image/gif"].includes(mimeType)) {
             return res.status(400).json({ message: "Unsupported image format." });
         }
 
         let imageBuffer = Buffer.from(response.data, 'binary');
 
-        // Resize the image if it's larger than 150KB
         if (Buffer.byteLength(imageBuffer) > 225 * 1024) {
             imageBuffer = await sharp(imageBuffer)
-                .resize({ width: 800 }) // Adjust this as needed
+                .resize({ width: 800 }) 
                 .toBuffer();
         }
 
-        // Store the resized image and get an ID or path
         const storeImageId = await storeImage(imageBuffer, mimeType);
         const storeImageUrl = `${process.env.BASE_URL}/image/${storeImageId}`;
 
-        // Construct pageHtml and frameUrl with store._id
         const pageHtml = `
         <!DOCTYPE html>
         <html>
@@ -129,9 +122,6 @@ router.post('/update', async (req, res) => {
 
         const frameUrl = `${process.env.BASE_URL}/product-page/shopify/${store._id}`;
 
-        
-
-        // Update the Shopify store document with the new image URL
         const updatedStore = await ShopifyStore.findOneAndUpdate(store._id,
             { $set: { 
                 'image': storeImageUrl,
@@ -147,11 +137,14 @@ router.post('/update', async (req, res) => {
 
         res.json({ message: 'Store image and pageHtml updated successfully.', storeImage: storeImageUrl, pageHtml, frameUrl });
     } catch (error) {
-        if (axios.isAxiosError(error) && error.response.status === 400) {
-            return res.status(400).json({ message: "Image URL is too large. Please use an image less than 1MB." });
+        // Check if this is an AxiosError
+        if (axios.isAxiosError(error)) {
+            if (error.response && error.response.status === 400) {
+                return res.status(400).json({ message: "Image URL is too large. Please use an image less than 1MB." });
+            }
+            console.error('Error updating store image:', error);
+            res.status(500).json({ message: 'Failed to update store image.' });
         }
-        console.error('Error updating store image:', error);
-        res.status(500).json({ message: 'Failed to update store image.' });
     }
 
 });

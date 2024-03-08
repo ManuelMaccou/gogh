@@ -145,7 +145,7 @@ function ManageShopifyStore() {
     const handleSubmitImageUrl = async () => {
         setSubmitting(true);
         try {
-            const token = localStorage.getItem('token'); // Ensure you have the token stored
+            const token = localStorage.getItem('token');
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/shopify/store/update`, 
                 { storeImage: storeImage }, 
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -153,11 +153,9 @@ function ManageShopifyStore() {
 
             const { storeImageUrl, frameUrl } = response.data;
 
-            // Update the state with the new store image URL and frame URL
             setStoreImage(storeImageUrl);
             setFrameUrl(frameUrl);
 
-            // Handle successful image update here, e.g., fetch the updated store info or show a success message
             alert('Image updated successfully!');
         } catch (error) {
             console.error('Failed to update store image:', error);

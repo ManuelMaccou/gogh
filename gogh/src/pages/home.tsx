@@ -183,22 +183,18 @@ const HomePage = () => {
                 window.location.reload();
                 navigate(redirectUrl);
             } else {
-                // Handle the case where there is no token in the response
                 setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
             }
         } catch (error: unknown) {
             console.error("Error during Farcaster login:", error);
-            if (axios.isAxiosError(error)) { // Type guard to narrow down to AxiosError
-                const axiosError = error as AxiosError; // Now we know it's an AxiosError
-                // Display a specific error message if the user does not exist
+            if (axios.isAxiosError(error)) { 
+                const axiosError = error as AxiosError;
                 if (axiosError.response && axiosError.response.status === 404) {
                     setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
                 } else {
-                    // Handle other types of Axios errors
                     setErrorMessage("An error occurred during the sign-in process.");
                 }
             } else {
-                // Handle non-Axios errors
                 setErrorMessage("An unexpected error occurred.");
             }
         }
