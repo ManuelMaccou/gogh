@@ -5,6 +5,7 @@ const router = Router();
 import Product from '../../../models/marketplace/product.js';
 import Web3 from 'web3';
 import fetchEthPriceInUSDC from '../../../utils/crypto/fetchCryptoPrices.js'
+import validateMessage from '../../../utils/validateFrameMessage.js'
 
 const web3 = new Web3(`https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 
