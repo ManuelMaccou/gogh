@@ -253,13 +253,17 @@
 @media (max-width: 768px) {
     .product-modal-body {
         flex-direction: column;
-        align-items: center;
-        width: 90%;
+        align-items: start;
+    }
+
+    .product-modal {
+        width: 95%;
     }
 
     .product-image {
         max-width: 100%; 
         min-width: 0;
+        margin-right: 0;
     }
 
     .product-info {
@@ -365,6 +369,7 @@ input[type="checkbox"] {
 
 .product-modal {
     width: 60%;
+    max-width: 1000px;
     padding: 20px;
     margin: auto;
     background-color: white;
