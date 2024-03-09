@@ -57,7 +57,7 @@ router.post('/:productId', async (req, res) => {
     const weiEquivalent = await cryptoConversions(sanitizedPrice);
 
     const response = {
-      chainId: "eip155:84532", // Base testnet
+      chainId: "eip155:8453", // Base
       method: "eth_sendTransaction",
       params: {
         to: "0x4A6737Da9668D09aCE702c3ff5e0dA33a84d28F7",
