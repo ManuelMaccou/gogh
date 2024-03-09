@@ -5,6 +5,7 @@ import sharp from 'sharp';
 import multer from 'multer';
 // import createProductPreview from '../../utils/marketplace/createProductPreview.js';
 import MarketplaceProduct from'../../models/marketplace/product.js';
+import createMarketplaceProductFrame from '../../utils/marketplace/createMarketplaceProductFrame.js';
 import auth from '../../middleware/auth.js';
 
 
@@ -42,11 +43,16 @@ router.post('/add', auth, upload.single('image'), async (req, res) => {
             })
             .jpeg()
             .toBuffer();
-            
+        
+        // Process user submitted image
         const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
         const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;
 
-        // const marketplaceProductPreviewImg = await createProductPreview(imageUrl); // This is the placeholder
+        // Create sharable frame
+        const generatedProductFrameBuffer = await createMarketplaceProductFrame(location, title, description, price, imageUrl);
+        const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
+        const productFrame = `${process.env.BASE_URL}/image/${productImageId}`;
+
 
         console.log('image after processing:', imageUrl)
         
@@ -54,6 +60,7 @@ router.post('/add', auth, upload.single('image'), async (req, res) => {
             location,
             title,
             description,
+            productFrame,
             imageUrl,
             price,
             user: req.user

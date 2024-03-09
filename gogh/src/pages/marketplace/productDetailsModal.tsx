@@ -31,7 +31,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 }) => {
   if (!product) return null;
 
-  const shareUrl = `https://warpcast.com/~/compose?text=I%20just%20listed%20a%20product%20for%20sale%20on%20Gogh%20Marketplace.%20%0A%0A${product.title}.%0ALocated%20in%20${product.location}.%0A%0ADM%20me%20if%20you%27re%20interested%21&embeds[]=${product.imageUrl}&embeds[]=https://www.gogh.shopping`;
+  const shareUrl = `https://warpcast.com/~/compose?embeds[]=https://www.gogh.shopping/marketplace/frame/share/product/${product._id}`;
 
 
   return (

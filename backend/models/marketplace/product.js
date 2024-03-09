@@ -4,7 +4,7 @@ const marketplaceProductSchema = new Schema({
     location: { type: String, required: true },
     title: { type: String, required: true },
     description: { type: String, required: true },
-    productFrame: { type: String },
+    productFrame: { type: String, required: true },
     imageUrl: { type: String, required: true },
     price: { type: String, required: false },
     user: { type: Schema.Types.ObjectId, ref: 'User' }

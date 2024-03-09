@@ -28,6 +28,9 @@ import shopifyFrameRoutes from './api/shopify/frame.js';
 import shopifyProductWebhooks from './webhooks/shopify/product.js';
 
 import marketplaceProductRoutes from './api/marketplace/product.js';
+// import marketplaceTransactionFrameRoutes from './api/marketplace/frame/transactionFrame.js'; // delete if it works without this
+import marketplaceSendTransactionRoutes from './api/marketplace/frame/sendTransaction.js';
+import marketplaceShareRoutes from './api/marketplace/frame/share.js';
 
 // This will soon be removed
 import imageRoutes from './api/image.js';
@@ -80,6 +83,9 @@ app.use('/image', imageRoutes);
 app.use('/images', imagesRoutes);
 
 app.use('/api/marketplace/product', marketplaceProductRoutes);
+// app.use('/api/marketplace/frame/transaction', marketplaceTransactionFrameRoutes); // delete if it works without this
+app.use('/api/marketplace/frame/send_transaction', marketplaceSendTransactionRoutes);
+app.use('/marketplace/frame/share', marketplaceShareRoutes);
 
 
 app.get('*', (req, res) => {

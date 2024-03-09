@@ -77,7 +77,7 @@ const HomePage = () => {
             if (!document.getElementById(scriptId)) {
                 const script = document.createElement('script');
                 script.id = scriptId;
-                script.src = "https://neynarxyz.github.io/siwn/raw/1.0.0/index.js";
+                script.src = "https://neynarxyz.github.io/siwn/raw/1.2.0/index.js";
                 script.async = true;
                 document.body.appendChild(script);
             }

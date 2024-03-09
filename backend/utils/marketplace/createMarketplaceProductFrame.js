@@ -1,0 +1,142 @@
+import { createCanvas, loadImage } from 'canvas';
+import Jimp from 'jimp';
+
+async function createProductFrame(location, title, description, price, imageUrl) {
+    console.log('Starting product frame generation.');
+    try {
+        const canvasWidth = 1450;
+        const canvasHeight = 760;
+        const canvas = createCanvas(canvasWidth, canvasHeight);
+        const ctx = canvas.getContext('2d');
+
+        // Set the canvas background to white
+        ctx.fillStyle = '#FFFFFF'; // White color
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        // Configuration for the shape and text section
+        const shapeWidthRatio = 0.45; // % of the canvas for the shape
+        const leftPadding = 60;
+        const rightPadding = 40;
+
+        // Load the product image
+        console.log('Attempt to load product image:', imageUrl);
+        if (imageUrl && imageUrl.trim() !== '') {
+            const productImage = await loadImage(imageUrl).catch(err => { throw new Error('Failed to load image'); });
+
+            // Use JIMP to extract the color of the top-left pixel
+            const image = await Jimp.read(imageUrl);
+            const topLeftPixelColor = image.getPixelColor(0, 0);
+            const rgbColor = Jimp.intToRGBA(topLeftPixelColor);
+            const shapeColor = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${rgbColor.a / 255})`;
+
+            // Draw the shape on the left half
+            ctx.fillStyle = shapeColor;
+            ctx.fillRect(0, 0, canvasWidth * shapeWidthRatio, canvasHeight);
+
+            // Adjust image drawing to fit within the new shape size
+            const imageMargin = 40;
+            const imageTargetWidth = (canvasWidth * shapeWidthRatio) - 2 * imageMargin;
+            const imageAspectRatio = productImage.width / productImage.height;
+            const imageTargetHeight = imageTargetWidth / imageAspectRatio;
+            ctx.drawImage(productImage, imageMargin, (canvasHeight - imageTargetHeight) / 2, imageTargetWidth, imageTargetHeight);
+        }
+
+        // Adjust these values to change the split ratio and spacing
+        const textSectionStart = canvasWidth * shapeWidthRatio + leftPadding;
+        const textMaxWidth = canvasWidth - textSectionStart - rightPadding;
+
+        // Draw product title
+        ctx.font = textConfig.title.font;
+        ctx.fillStyle = textConfig.title.color;
+        let currentY = 100; // Starting Y position for the text
+        currentY += wrapText(ctx, title, textSectionStart, currentY, textMaxWidth, textConfig.title.lineHeight);
+
+        // Print location underneath the title in italics
+        const locationGap = -40; // Gap between title and location
+        currentY += locationGap; // Move currentY down to create a gap
+        const fullLocation = `Located in ${location}`;
+        ctx.font = 'italic 30px Arial';
+        ctx.fillText(fullLocation, textSectionStart, currentY);
+        currentY += 80; // Move currentY down after location, creating space before the description
+
+        // Reset font to non-italics
+        ctx.font = textConfig.description.font;
+
+        // Draw product description if available
+        if (description && description.trim() !== '') {
+            const maxDescriptionLength = 60; // Maximum number of words for the description
+            let words = description.split(' ');
+            let shouldShowViewMore = words.length > maxDescriptionLength;
+            let trimmedDescription = shouldShowViewMore ? words.slice(0, maxDescriptionLength).join(' ') + "..." : description;
+        
+            // Draw the trimmed description and update currentY based on the text height
+            currentY = wrapText(ctx, trimmedDescription, textSectionStart, currentY, textMaxWidth, textConfig.description.lineHeight);
+            
+            // If the description was trimmed, add the "view more" text with appropriate spacing
+            if (shouldShowViewMore) {
+                currentY += textConfig.description.lineHeight; // Ensure spacing between description and "view more" text
+                ctx.fillStyle = 'blue'; // Set color for "...view product for full description"
+                ctx.fillText("view product for full description.", textSectionStart, currentY);
+                currentY += textConfig.description.lineHeight; // Update currentY in case more text follows
+            }
+        }
+        // Draw price
+        if (price && price.trim() !== '') {
+            ctx.font = textConfig.price.font;
+            ctx.fillStyle = textConfig.price.color;
+            ctx.textAlign = 'right';
+            const priceRightMargin = 40;
+            const priceBottomMargin = 30;
+            const priceX = canvas.width - priceRightMargin;
+            const priceY = canvas.height - priceBottomMargin;
+            ctx.fillText(price, priceX, priceY);
+        }
+
+        // Generate and return the image URL
+        const imageBuffer = canvas.toBuffer('image/jpeg');
+        return imageBuffer;
+    } catch (error) {
+        console.error('Error creating product frame:', error);
+        throw error; // Or handle more gracefully
+    }
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    let lastY = y;
+
+    for (let n = 0; n < words.length; n++) {
+        let testLine = line + words[n] + ' ';
+        let metrics = ctx.measureText(testLine);
+        let testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, x, lastY);
+            line = words[n] + ' ';
+            lastY += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    ctx.fillText(line, x, lastY); // Ensure the last line is drawn
+    return lastY; // Adjusted to return the Y position for the next line
+}
+
+const textConfig = {
+    title: {
+        font: 'bold 45px Arial',
+        color: 'black',
+        lineHeight: 60
+    },
+    description: {
+        font: '30px Arial',
+        color: 'black',
+        lineHeight: 40
+    },
+    price: {
+        font: 'bold 45px Arial',
+        color: 'black'
+    }
+};
+
+export default createProductFrame;

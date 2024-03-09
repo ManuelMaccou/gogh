@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import createCartFrame from '../../utils/shopify/createCartFrame.js';
 import ShopifyStore from '../../models/shopify/store.js';
 import Image from '../../models/image.js';
-import { validateMessage } from '../../utils/shopify/validateFrameMessage.js'
+import { validateMessage } from '../../utils/validateFrameMessage.js'
 
 const router = Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -59,7 +59,7 @@ async function storeImage(imageBuffer, contentType) {
         contentType: contentType,
     });
     await image.save();
-    return image._id; // Returns the MongoDB ID of the saved image
+    return image._id;
 }
 
 router.post('/:storeId', async (req, res) => {
