@@ -31,3 +31,5 @@ export async function validateMessage(messageBytes) {
         throw new Error('Validation failed');
     }
 }
+
+export default validateMessage;
