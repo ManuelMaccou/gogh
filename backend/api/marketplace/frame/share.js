@@ -5,7 +5,7 @@ import MarketplaceProduct from'../../../models/marketplace/product.js';
 
 const router = Router();
 
-router.post('/product/:productId', async (req, res) => {
+router.get('/product/:productId', async (req, res) => {
     const { productId } = req.params;
 
     try {
