@@ -37,13 +37,13 @@ function generateFrameHtml(product) {
             <meta property="fc:frame:image:aspect_ratio" content="" />
             <meta property="fc:frame:button:1" content="View online" />
             <meta property="fc:frame:button:1:action" content="link" />
-            <meta property="fc:frame:button:1:target" content="https:www.gogh.shopping" />
+            <meta property="fc:frame:button:1:target" content="https://www.gogh.shopping" />
             <meta property="fc:frame:button:2" content="Buy now" />
             <meta property="fc:frame:button:2:action" content="tx" />
             <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${product._id}" />
             <meta property="fc:frame:button:3" content="Creating listing" />
             <meta property="fc:frame:button:3:action" content="link" />
-            <meta property="fc:frame:button:3:target" content="https:www.gogh.shopping" />
+            <meta property="fc:frame:button:3:target" content="https://www.gogh.shopping" />
         </head>
     </html>
     `;

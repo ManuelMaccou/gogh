@@ -1,5 +1,5 @@
-import { useState, useEffect, ChangeEvent, FormEvent, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, ChangeEvent, FormEvent, useCallback } from 'react';
+import axios, { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
 import '../../src/styles.css';
@@ -29,6 +29,14 @@ interface Store {
     storeName: string;
     storeDescription: string;
     storeAdmin: string;
+}
+
+interface User {
+    _id: string;
+    fid:string;
+    fc_username: string;
+    fc_pfp: string;
+    fc_profile: string;
 }
 
 function parseJwt(token: string) {
@@ -64,6 +72,65 @@ function ManageStore() {
     const [lineCount, setLineCount] = useState(0);
     const [lineLimitExceeded, setLineLimitExceeded] = useState(false);
     const [selectedProductForEdit, setSelectedProductForEdit] = useState<Product | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    React.useEffect(() => {
+        const scriptId = 'neynar-script';
+
+        const loadNeynarScript = () => {
+            if (!document.getElementById(scriptId)) {
+                const script = document.createElement('script');
+                script.id = scriptId;
+                script.src = "https://neynarxyz.github.io/siwn/raw/1.2.0/index.js";
+                script.async = true;
+                document.body.appendChild(script);
+            }
+        };
+
+        const removeNeynarScript = () => {
+            const script = document.getElementById(scriptId);
+            if (script) {
+                document.body.removeChild(script);
+            }
+        };
+
+        if (!isLoggedIn) {
+            loadNeynarScript();
+        } else {
+            removeNeynarScript();
+        }
+
+        return () => {
+            removeNeynarScript();
+        };
+    }, [isLoggedIn]);
+
+    React.useEffect(() => {
+        const token = localStorage.getItem('token');
+        setIsLoggedIn(!!token);
+    
+        if (token) {
+            axios.get(`${process.env.REACT_APP_BASE_URL}/api/user/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }).then(response => {
+                setUser(response.data);
+            }).catch(error => {
+                console.error('Error fetching user details:', error);
+                if (axios.isAxiosError(error) && error.response && error.response.status === 401) {
+                    localStorage.removeItem('token');
+                    setIsLoggedIn(false);
+                    setUser(null);
+                }
+            });
+        }
+    }, []);
+
+    const logout = () => {
+        localStorage.removeItem('token');
+        setIsLoggedIn(false);
+        setUser(null);
+    };
 
     const handleEditorChange = useCallback((content: string, editor: any) => {
         const textContent = editor.getContent({ format: "text" });
@@ -100,8 +167,6 @@ function ManageStore() {
         const checkStoreExistence = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
-                setErrorMessage("Please log in to continue");
-                navigate('/login');
                 return;
             }
     
@@ -411,8 +476,82 @@ function ManageStore() {
             }
         };
 
+        const onSignInSuccess = async (data: any) => {
+            console.log("Sign-in success with data:", data);
+            
+            try {
+                const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/farcaster_login`, {
+                    signer_uuid: data.signer_uuid,
+                    fid: data.fid
+                });
+    
+                if (response.data.token) {
+                    localStorage.setItem('token', response.data.token);
+    
+                    if (response.data.isAdmin !== undefined) {
+                        localStorage.setItem('isAdmin', JSON.stringify(response.data.isAdmin));
+                        console.log("isAdmin:", response.data.isAdmin);
+                    }
+                    const redirectUrl = response.data.redirect;
+                    window.location.reload();
+                    navigate(redirectUrl);
+                } else {
+                    setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
+                }
+            } catch (error: unknown) {
+                console.error("Error during Farcaster login:", error);
+                if (axios.isAxiosError(error)) { 
+                    const axiosError = error as AxiosError;
+                    if (axiosError.response && axiosError.response.status === 404) {
+                        setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
+                    } else {
+                        setErrorMessage("An error occurred during the sign-in process.");
+                    }
+                } else {
+                    setErrorMessage("An unexpected error occurred.");
+                }
+            }
+        };
+    
+        React.useEffect(() => {
+            (window as any).onSignInSuccess = onSignInSuccess;
+            return () => {
+                delete (window as any).onSignInSuccess;
+            };
+        }, [navigate]);
+
+        if (!isLoggedIn) {
+            return (
+              <div className='main-container'>
+                <header className="site-header">
+                  <h1>Gogh</h1>
+                  <div className="neynar_signin" data-client_id={process.env.REACT_APP_NEYNAR_CLIENT_ID} data-success-callback="onSignInSuccess" data-variant="warpcast"></div>
+                </header>
+                <div className="login-message">
+                  <p>You must be logged in to access this page.</p>
+                </div>
+              </div>
+            );
+          }
+
         return (
             <div>
+                <div>
+                    <header className="site-header">
+                        <h1>Gogh</h1>
+                        {!user ? (
+                            <div className="neynar_signin" data-client_id={process.env.REACT_APP_NEYNAR_CLIENT_ID} data-success-callback="onSignInSuccess" data-variant="warpcast"></div>
+                        ) : (
+                            <>
+                                <div className="fc-user-tag">
+                                    <img src={user.fc_pfp} alt="User profile" className="fc-pfp" />
+                                    <p>{user.fc_username}</p>
+                                </div>
+                                <button onClick={logout} className="logout-button">Logout</button>
+                            </>
+                        )}
+                    </header>
+                </div>
                 {!hasStore ? (
                     <div className="create-store-container">
                         <div className="create-store-box">

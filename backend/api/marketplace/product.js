@@ -34,7 +34,7 @@ router.post('/add', auth, upload.single('image'), async (req, res) => {
     }
 
     try {
-        const {location, title, description, price } = req.body;
+        const {location, title, description, price, walletAddress } = req.body;
         
         const processedImageBuffer = await sharp(req.file.buffer)
             .resize(800, 800, {
@@ -63,6 +63,7 @@ router.post('/add', auth, upload.single('image'), async (req, res) => {
             productFrame,
             imageUrl,
             price,
+            walletAddress,
             user: req.user
         });
 

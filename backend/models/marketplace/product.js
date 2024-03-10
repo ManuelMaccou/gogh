@@ -7,6 +7,7 @@ const marketplaceProductSchema = new Schema({
     productFrame: { type: String, required: true },
     imageUrl: { type: String, required: true },
     price: { type: String, required: false },
+    walletAddress: { type: String, required: true },
     user: { type: Schema.Types.ObjectId, ref: 'User' }
 });
 

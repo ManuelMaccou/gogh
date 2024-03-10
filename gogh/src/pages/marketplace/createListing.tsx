@@ -13,6 +13,7 @@ interface FormDataState {
     location: string;
     title: string;
     description: string;
+    walletAddress: string;
     // image: string;
     price: string;
 }
@@ -32,6 +33,7 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
         title: '',
         description: '',
         // image: '',
+        walletAddress: '',
         price: '',
     });
 
@@ -67,11 +69,12 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
         data.append('location', formData.location);
         data.append('title', formData.title);
         data.append('description', formData.description);
-        if (file) data.append('image', file); // Add file if selected
+        if (file) data.append('image', file);
+        data.append('walletAddress', formData.walletAddress);
         data.append('price', formData.price);
 
         try {
-            await onFormSubmit(data, file); // Adjust this call
+            await onFormSubmit(data, file);
             setShowForm(false);
             // Reset form and file states
             setFormData({
@@ -79,11 +82,11 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
                 title: '',
                 description: '',
                 price: '',
+                walletAddress: '',
             });
             setFile(null); // Reset file state
             clearFormError();
         } catch (error) {
-            // Handle submission error
         }
     };
 
@@ -123,6 +126,7 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
                         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
                         <input type="file" onChange={handleChange} required />
                         <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in USDC" />
+                        <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="Wallet address to receive payment" required />
                         <button className="submit-button" type="submit">Submit</button>
                     </form>
                 </Modal>

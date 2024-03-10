@@ -130,7 +130,6 @@ const HomePage = () => {
     const fetchProducts = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/`);
-            console.log(response.data);
             setProducts(response.data);
         } catch (error) {
             console.error('Failed to fetch products:', error);
@@ -142,7 +141,6 @@ const HomePage = () => {
     }, []);
 
     const onFormSubmit = async (formData: FormData) => {
-        console.log('Submitting:', formData);
         
         try {
           const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, formData, {
@@ -155,7 +153,6 @@ const HomePage = () => {
             console.log('Fetching products after submission...');
             fetchProducts(); // Call fetchProducts to update the list with the new submission
           }
-          console.log('Product created successfully:', response.data);
 
         } catch (error: any) {
             console.error('Failed to create product:', error.response || error);
@@ -164,7 +161,6 @@ const HomePage = () => {
     };
 
     const onSignInSuccess = async (data: any) => {
-        console.log("Sign-in success with data:", data);
         
         try {
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/farcaster_login`, {
@@ -177,7 +173,6 @@ const HomePage = () => {
 
                 if (response.data.isAdmin !== undefined) {
                     localStorage.setItem('isAdmin', JSON.stringify(response.data.isAdmin));
-                    console.log("isAdmin:", response.data.isAdmin);
                 }
                 const redirectUrl = response.data.redirect;
                 window.location.reload();
