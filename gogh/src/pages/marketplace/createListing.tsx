@@ -122,7 +122,7 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
                         <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
                         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
                         <input type="file" onChange={handleChange} required />
-                        <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price" />
+                        <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in USDC" />
                         <button className="submit-button" type="submit">Submit</button>
                     </form>
                 </Modal>
