@@ -10,20 +10,11 @@ import validateMessage from '../../../utils/validateFrameMessage.js'
 const web3 = new Web3(`https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 
 const cryptoConversions = async (usdcAmount) => {
-  console.log('usdc Amaount:', usdcAmount);
 
-  const ethPriceInUSDC = await fetchEthPriceInUSDC(); // Fetch the current ETH price in USDC
-  console.log('ethPriceUSDC:', ethPriceInUSDC)
-  console.log('usdc Amaount:', usdcAmount);
-
+  const ethPriceInUSDC = await fetchEthPriceInUSDC();
   const ethEquivalent = Number(usdcAmount) / Number(ethPriceInUSDC);
-  console.log('eth Equivalent:', ethEquivalent);
-
   const ethEquivalentRounded = Number(ethEquivalent.toFixed(10));
-  console.log('eth Equivalent rounded:', ethEquivalentRounded);
-
   const weiEquivalent = web3.utils.toWei(ethEquivalentRounded, 'ether');
-  console.log('wei Equivalent:', weiEquivalent);
 
   return weiEquivalent;
 };
