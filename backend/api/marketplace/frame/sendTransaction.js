@@ -6,10 +6,6 @@ import Product from '../../../models/marketplace/product.js';
 import Web3 from 'web3';
 import fetchEthPriceInUSDC from '../../../utils/crypto/fetchCryptoPrices.js'
 import validateMessage from '../../../utils/validateFrameMessage.js'
-import { Button, Frog } from 'frog'
-
-export const app = new Frog()
-
 
 const web3 = new Web3(`https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 
@@ -29,16 +25,14 @@ const cryptoConversions = async (usdcAmount) => {
   return weiEquivalent;
 };
 
-app.frame('/:productId', async (c) => {
-  const { productId } = c.req.param();
-  const requestBody = await c.req.json();
-
+router.post('/:productId', async (req, res) => {
+  const { productId } = req.params;
   const isProduction = process.env.NODE_ENV === 'production';
   let buttonIndex, fid;
 
   if (isProduction) {
     try {
-        const messageBytes = requestBody.trustedData.messageBytes;
+        const messageBytes = req.body.trustedData.messageBytes;
         const validatedFrameData = await validateMessage(messageBytes);
         // Extract data from the validatedFrameData for production
         buttonIndex = validatedFrameData.action?.tapped_button?.index;
@@ -49,8 +43,8 @@ app.frame('/:productId', async (c) => {
     }
 } else {
     // Directly use untrustedData in development, with a different data structure
-    buttonIndex = requestBody.untrustedData.buttonIndex;
-    fid = requestBody.untrustedData.fid;
+    buttonIndex = req.body.untrustedData.buttonIndex;
+    fid = req.body.untrustedData.fid;
 }
 
   try {
@@ -62,12 +56,13 @@ app.frame('/:productId', async (c) => {
     const sanitizedPrice = product.price.replace(/[^0-9.]/g, '');
     const weiEquivalent = await cryptoConversions(sanitizedPrice);
 
-    return c.send({
+    const response = {
       chainId: "eip155:8453", // Base
       to: "0x4A6737Da9668D09aCE702c3ff5e0dA33a84d28F7",
-      value: weiEquivalent.toString(), // Use the converted value
-    });
+      value: weiEquivalent.toString(),
+    };
 
+    res.status(200).json(response); // Send JSON response
   } catch (err) {
     console.error('Error in POST /send_transaction/:productId', err);
     res.status(500).send('Internal Server Error');

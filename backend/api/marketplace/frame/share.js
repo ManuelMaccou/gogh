@@ -1,4 +1,4 @@
-// https://www.gogh.shopping/marketplace/frame/share/product/65eca10b7b4b2e08f18c89e9
+// https://www.gogh.shopping/marketplace/frame/share/product/65ecc1562704071fe0d9752a
 
 import { Router } from 'express';
 import MarketplaceProduct from'../../../models/marketplace/product.js';
