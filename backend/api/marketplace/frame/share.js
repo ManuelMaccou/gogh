@@ -38,7 +38,7 @@ router.get('/product/:productId', async (req, res) => {
             <meta property="fc:frame:button:2" content="Buy now" />
             <meta property="fc:frame:button:2:action" content="tx" />
             <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${product._id}" />
-            <meta property="fc:frame:button:3" content="Creating listing" />
+            <meta property="fc:frame:button:3" content="Create listing" />
             <meta property="fc:frame:button:3:action" content="link" />
             <meta property="fc:frame:button:3:target" content="https://www.gogh.shopping" />
             <meta property="fc:frame:button:4" content="FAQ" />
@@ -132,7 +132,7 @@ function generateFrameHtml(product, frameType, faqIndex) {
             <meta property="fc:frame:button:2" content="Buy now" />
             <meta property="fc:frame:button:2:action" content="tx" />
             <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${product._id}" />
-            <meta property="fc:frame:button:3" content="Creating listing" />
+            <meta property="fc:frame:button:3" content="Create listing" />
             <meta property="fc:frame:button:3:action" content="link" />
             <meta property="fc:frame:button:3:target" content="https://www.gogh.shopping" />
             <meta property="fc:frame:button:4" content="FAQ" />
