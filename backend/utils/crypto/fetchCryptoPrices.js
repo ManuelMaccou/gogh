@@ -8,10 +8,8 @@ async function fetchEthPriceInUSDC() {
       throw new Error(`API call failed with status: ${response.status}`);
     }
     const data = await response.json();
-    console.log('coin gecko response:', data)
-
     const ethPriceInUSDC = data.ethereum.usd;
-    console.log(`The current price of 1 ETH in USDC is: ${ethPriceInUSDC}`);
+    
     return ethPriceInUSDC;
   } catch (error) {
     console.error('Error fetching the ETH price:', error);
