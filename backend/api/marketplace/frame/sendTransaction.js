@@ -32,7 +32,6 @@ router.post('/:productId', async (req, res) => {
         const validatedFrameData = await validateMessage(messageBytes);
         console.log("validated frame data:", validatedFrameData);
 
-        // Extract data from the validatedFrameData for production
         buttonIndex = validatedFrameData.action?.tapped_button?.index;
         fid = validatedFrameData.action?.interactor?.fid;
     } catch (error) {
@@ -40,7 +39,6 @@ router.post('/:productId', async (req, res) => {
         return res.status(500).send('An error occurred during message validation.');
     }
 } else {
-    // Directly use untrustedData in development, with a different data structure
     console.log("untrusted data:", req.body.untrustedData);
     buttonIndex = req.body.untrustedData.buttonIndex;
     fid = req.body.untrustedData.fid;

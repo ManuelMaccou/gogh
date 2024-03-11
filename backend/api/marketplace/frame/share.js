@@ -2,6 +2,7 @@
 
 import { Router } from 'express';
 import MarketplaceProduct from'../../../models/marketplace/product.js';
+import validateMessage from '../../../utils/validateFrameMessage.js';
 
 const router = Router();
 
@@ -69,7 +70,8 @@ router.post('/product/:productId', async (req, res) => {
         try {
             const messageBytes = req.body.trustedData.messageBytes;
             const validatedFrameData = await validateMessage(messageBytes);
-            // Extract data from the validatedFrameData for production
+            console.log("validated frame data:", validatedFrameData);
+            
             buttonIndex = validatedFrameData.action?.tapped_button?.index;
             fid = validatedFrameData.action?.interactor?.fid;
         } catch (error) {
