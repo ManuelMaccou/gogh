@@ -56,6 +56,8 @@ router.post('/:productId', async (req, res) => {
     const sanitizedPrice = product.price.replace(/[^0-9.]/g, '');
     const weiEquivalent = await cryptoConversions(sanitizedPrice);
 
+    console.log('wei amount sent to transaction request:', weiEquivalent)
+
     const response = {
       chainId: "eip155:8453", // Base
       method: "eth_sendTransaction",
