@@ -69,9 +69,14 @@ router.post('/product/:productId', async (req, res) => {
     if (isProduction) {
         try {
             const messageBytes = req.body.trustedData.messageBytes;
+            console.log("message bytes:", messageBytes);
+
             const validatedFrameData = await validateMessage(messageBytes);
             console.log("validated frame data:", validatedFrameData);
-            
+
+            const transaction_hash = validatedFrameData.action?.transaction?.hash
+            console.log("transaction hash:", transaction_hash);
+
             buttonIndex = validatedFrameData.action?.tapped_button?.index;
             fid = validatedFrameData.action?.interactor?.fid;
         } catch (error) {
