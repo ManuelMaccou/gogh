@@ -60,7 +60,7 @@ router.post('/:productId', async (req, res) => {
       chainId: "eip155:8453", // Base
       method: "eth_sendTransaction",
       params: {
-        to: "0x4A6737Da9668D09aCE702c3ff5e0dA33a84d28F7",
+        to: "0x62f57efB1a37B93DbF56975fc6c9F2CD64BDd91c",
         value: weiEquivalent.toString(), // Use the converted value
         data: "" // Optional for ETH transfers
       },
