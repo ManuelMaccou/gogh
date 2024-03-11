@@ -19,7 +19,10 @@ const cryptoConversions = async (usdcAmount) => {
   const ethEquivalent = Number(usdcAmount) / Number(ethPriceInUSDC);
   console.log('eth Equivalent:', ethEquivalent);
 
-  const weiEquivalent = web3.utils.toWei(ethEquivalent.toString(), 'ether');
+  const ethEquivalentRounded = Number(ethEquivalent.toFixed(10));
+  console.log('eth Equivalent rounded:', ethEquivalentRounded);
+
+  const weiEquivalent = web3.utils.toWei(ethEquivalentRounded, 'ether');
   console.log('wei Equivalent:', weiEquivalent);
 
   return weiEquivalent;
@@ -54,6 +57,7 @@ router.post('/:productId', async (req, res) => {
     }
 
     const sanitizedPrice = product.price.replace(/[^0-9.]/g, '');
+    console.log('sanitized price:', sanitizedPrice)
     const weiEquivalent = await cryptoConversions(sanitizedPrice);
 
     console.log('wei amount sent to transaction request:', weiEquivalent)
