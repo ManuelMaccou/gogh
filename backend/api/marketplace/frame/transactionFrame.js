@@ -78,9 +78,6 @@ router.post('/product/:productId', async (req, res) => {
 
     // Validate frame interaction first
     if (isProduction) {
-        buttonIndex = validatedFrameData.action?.tapped_button?.index;
-        fid = validatedFrameData.action?.interactor?.fid;
-        buyerEmail = validatedFrameData.action?.input?.text;
         
         try {
             const messageBytes = req.body.trustedData.messageBytes;
@@ -91,6 +88,10 @@ router.post('/product/:productId', async (req, res) => {
 
             transactionHash = validatedFrameData.action?.transaction?.hash
             console.log("transaction hash:", transactionHash);
+
+            buttonIndex = validatedFrameData.action?.tapped_button?.index;
+            fid = validatedFrameData.action?.interactor?.fid;
+            buyerEmail = validatedFrameData.action?.input?.text;
 
         } catch (error) {
             console.error('Error validating message:', error);
