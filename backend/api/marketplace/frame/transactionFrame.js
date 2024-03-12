@@ -64,6 +64,7 @@ router.get('/product/:productId', async (req, res) => {
 
 
 router.post('/product/:productId', async (req, res) => {
+    console.log('request body:', req.body);
     const { productId } = req.params;
     let buyerEmail; 
 
@@ -81,10 +82,7 @@ router.post('/product/:productId', async (req, res) => {
         
         try {
             const messageBytes = req.body.trustedData.messageBytes;
-            console.log("message bytes:", messageBytes);
-
             const validatedFrameData = await validateMessage(messageBytes);
-            console.log("validated frame data:", validatedFrameData);
 
             transactionHash = validatedFrameData.action?.transaction?.hash
             console.log("transaction hash:", transactionHash);
