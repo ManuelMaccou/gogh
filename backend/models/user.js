@@ -6,6 +6,7 @@ const userSchema = new Schema({
     fc_pfp: { type: String },
     fc_username: { type: String },
     fc_profile: { type: String },
+    email: { type: String },
 });
 
 const User = model('User', userSchema);

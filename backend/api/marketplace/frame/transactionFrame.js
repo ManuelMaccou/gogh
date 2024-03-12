@@ -1,82 +1,95 @@
-// https://gogh.shopping/api/marketplace/frame/transactionFrame/65e8789f156969abddbbcf88
+// https://www.gogh.shopping/marketplace/frame/share/product/65eca10b7b4b2e08f18c89e9
 
 import { Router } from 'express';
-import fetch from 'node-fetch';
-import { existsSync, mkdirSync, appendFile } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import Image from '../../../models/image.js';
-import Product from '../../../models/marketplace/product.js';
-import { validateMessage } from '../../../utils/validateFrameMessage.js'
+import sgMail from '@sendgrid/mail';
+import { body, validationResult } from 'express-validator';
+import MarketplaceProduct from '../../../models/marketplace/product.js';
+import validateMessage from '../../../utils/validateFrameMessage.js';
+import User from '../../../models/user.js'
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const router = Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const DATA_DIR = join(__dirname, '..', 'data');
 
-const getImageUrl = (imageId) => `${process.env.BASE_URL}/image/${imageId}`;
+const faqFrames = [
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204427752x477688850444208700/faq1.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204437954x612208291044247900/faq2.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204529991x893094894813133700/faq3.jpg',
+];
 
-const ensureDirectoryExists = (dirPath) => {
-    if (!existsSync(dirPath)) {
-        mkdirSync(dirPath, { recursive: true });
-    }
-};
-
-const appendToCSV = async (filename, data) => {
-    ensureDirectoryExists(DATA_DIR);
-    const csvPath = join(DATA_DIR, `${filename}.csv`);
-    
-    try {
-        await new Promise((resolve, reject) => {
-            appendFile(csvPath, `${data}\n`, (err) => {
-                if (err) {
-                    console.error('Error appending to CSV:', err);
-                    reject(err); // Reject the promise on error
-                } else {
-                    console.log('Data appended to CSV:', csvPath);
-                    console.log('Data:', data);
-                    resolve(); // Resolve the promise on success
-                }
-            });
-        });
-    } catch (error) {
-        console.error("Error appending to CSV:", error);
-    }
-};
-
-const logActionToCSV = async (fid, productId, productTitle, action) => {
-    const now = new Date().toISOString();
-    const productTitleCsv = productTitle.replace(/,/g, '');
-    const data = `${now},${productTitleCsv},${action},${fid}`;
-
-    appendToCSV(productId, data);
-};
-
-
-async function storeImage(imageBuffer, contentType) {
-    const image = new Image({
-        data: imageBuffer,
-        contentType: contentType,
-    });
-    await image.save();
-    return image._id;
-}
-
-router.post('/:productId', async (req, res) => {
+router.get('/product/:productId', async (req, res) => {
     const { productId } = req.params;
 
-    const isProduction = process.env.NODE_ENV === 'production';
+    try {
+        const product = await MarketplaceProduct.findOne({ _id: productId });
+        if (!product) {
+            return res.status(404).send('Product not found during transactionFrame route');
+        }
 
+        const htmlResponse = `
+    <!DOCTYPE html>
+    <html>
+        <head>
+        <title>Gogh Marketplace</title>
+            <meta name="description" content="Sell your items locally with Gogh">
+            <meta property="og:url" content="https://">
+            <meta property="og:image" content="${product.productFrame}" />
+            <meta property="fc:frame" content="vNext" />
+            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/product/${product._id}?frameType=initial" />
+            <meta property="fc:frame:image" content="${product.productFrame}">
+            <meta property="fc:frame:image:aspect_ratio" content="" />
+            <meta property="fc:frame:button:1" content="View online" />
+            <meta property="fc:frame:button:1:action" content="link" />
+            <meta property="fc:frame:button:1:target" content="https://www.gogh.shopping" />
+            <meta property="fc:frame:button:2" content="Buy now" />
+            <meta property="fc:frame:button:2:action" content="tx" />
+            <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${product._id}" />
+            <meta property="fc:frame:button:3" content="Create listing" />
+            <meta property="fc:frame:button:3:action" content="link" />
+            <meta property="fc:frame:button:3:target" content="https://www.gogh.shopping" />
+            <meta property="fc:frame:button:4" content="FAQ" />
+        </head>
+    </html>
+    `;
+
+        res.status(200).send(htmlResponse);
+
+    } catch (error) {
+        console.error('Failed to share product:', error.response || error);
+        res.status(500).json({ message: 'Failed to share product' });
+    }
+});
+
+
+router.post('/product/:productId', async (req, res) => {
+    const { productId } = req.params;
+    let buyerEmail; 
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    const totalFaqs = faqFrames.length;
+
+    let frameType = req.query.frameType;
+    let status = req.query.status;
+    let faqIndex = parseInt(req.query.index) || 0;
     let buttonIndex, fid;
+    let transactionHash;
 
     // Validate frame interaction first
     if (isProduction) {
         try {
             const messageBytes = req.body.trustedData.messageBytes;
+            console.log("message bytes:", messageBytes);
+
             const validatedFrameData = await validateMessage(messageBytes);
-            // Extract data from the validatedFrameData for production
+            console.log("validated frame data:", validatedFrameData);
+
+            transactionHash = validatedFrameData.action?.transaction?.hash
+            console.log("transaction hash:", transactionHash);
+
             buttonIndex = validatedFrameData.action?.tapped_button?.index;
             fid = validatedFrameData.action?.interactor?.fid;
+            buyerEmail = validatedFrameData.action?.input?.text;
+
         } catch (error) {
             console.error('Error validating message:', error);
             return res.status(500).send('An error occurred during message validation.');
@@ -85,51 +98,164 @@ router.post('/:productId', async (req, res) => {
         // Directly use untrustedData in development, with a different data structure
         buttonIndex = req.body.untrustedData.buttonIndex;
         fid = req.body.untrustedData.fid;
+        buyerEmail = req.body.untrustedData.inputText;
+    }
+    const shouldValidateEmail = req.body.transactionHash && req.query.frameType === 'buy' && req.query.status === 'success';
+    if (shouldValidateEmail && buyerEmail) {
+
+        await body('buyerEmail').isEmail().normalizeEmail().run(req);
+        
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
     }
 
     try {
-        let product;
-        product = await Product.findById(productId);
+        const product = await MarketplaceProduct.findOne({ _id: productId });
+        const user = await User.findOne({ _id: product.user});
         if (!product) {
-            return res.status(404).send('Product not found.');
+            return res.status(404).send('Product not found during transactionFrame route');
         }
 
-        try {
-            await logActionToCSV(fid, product._id, product.title, "Started purchase");
-        } catch (error) {
-            console.error("Failed to log 'started purchase' to CSV:", error);
+        if (frameType === 'initial') {
+            if (buttonIndex === 4) { // faq
+                frameType = "faq";
+            }
+
+        } else if (frameType === "faq") {
+            if (buttonIndex === 1) { // prev
+                faqIndex = (faqIndex - 1 + totalFaqs) % totalFaqs;
+
+            } else if (buttonIndex === 2) { // next
+                faqIndex = (faqIndex + 1) % totalFaqs;
+            } else if (buttonIndex === 3) { // back to listing
+                frameType = "initial";
+                faqIndex = 0;
+            }
+
+        } else if (transactionHash && frameType === 'buy') {
+            status = "success"
+
+            const buyerFid = fid;
+            const sellerFid = user.fid;
+            const newTransaction = new MarketplaceTransaction({
+                buyerFid: buyerFid,
+                sellerFid: sellerFid,
+                transactionHash: transactionHash,
+            });
+
+            await newTransaction.save();    
+            
+        } else if (!transactionHash && frameType === 'buy') {
+            status = "fail"
+
+        } else if (transactionHash && frameType === 'buy' && status === 'success') {
+            try {
+                let emailSendingResults = [];
+
+                if (buyerEmail) {
+                    const msgBuyer = {
+                        to: buyerEmail,
+                        from: 'admin@gogh.shopping',
+                        templateId: 'd-9151a338b3ad47ea885140aaf52fc9a3',
+                        dynamicTemplateData: {
+                            transaction_hash: transactionHash,
+                        },
+                    };
+                    emailSendingResults.push(sgMail.send(msgBuyer));
+                }
+
+                if (product.email) {
+                    const msgSeller = {
+                        to: product.email,
+                        from: 'admin@gogh.shopping',
+                        templateId: 'd-48d7775469174e7092913745a9b7e307',
+                        dynamicTemplateData: {
+                            product_name: product.title,
+                            product_price: product.price,
+                            transaction_hash: transactionHash,
+                        },
+                    };
+                    emailSendingResults.push(sgMail.send(msgSeller));
+                }
+                await Promise.all(emailSendingResults);
+                console.log('Transaction completed and emails sent.');
+
+            } catch (error) {
+                console.error('Error sending emails:', error);
+                // Consider whether you want to return a different status code or message in case of email errors
+                res.status(500).json({ message: 'An error occurred while sending emails.' });
+            }
         }
-        
 
+        res.status(200).send(generateFrameHtml(product, frameType, faqIndex, status));
 
-
-        res.status(200).send(generateFrameHtml(product));
-    } catch (err) {
-        console.error('Error in POST /frame/:uniqueId', err);
-        res.status(500).send('Internal Server Error');
+    } catch (error) {
+        console.error('Failed to share product:', error.response || error);
+        res.status(500).json({ message: 'Failed to share product' });
     }
 });
 
-function generateFrameHtml(product) {
-    
-    const htmlResponse = `
+function generateFrameHtml(product, frameType, faqIndex, status) {
+    const faqFrame = faqFrames[faqIndex % faqFrames.length];
+    let buttonsHtml;
+
+    if (frameType === 'faq') {
+        buttonsHtml = `
+            <meta property="og:image" content="${faqFrame}" />
+            <meta property="fc:frame:image" content="${faqFrame}" />
+            <meta property="fc:frame:button:1" content="⬅️ prev" />
+            <meta property="fc:frame:button:2" content="next ➡️" />
+            <meta property="fc:frame:button:3" content="return to listing" />
+        `;
+    } else if (frameType === 'buy') {
+        if (status === 'success') {
+        buttonsHtml = `
+            <meta property="og:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204604757x897514662026309000/success_frame.jpg" />
+            <meta property="fc:frame:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204604757x897514662026309000/success_frame.jpg" />
+            <meta property="fc:frame:input:text"="Enter email" />
+            <meta property="fc:frame:button:1" content="Submit" />
+        `;
+        } else if (status === 'fail') {
+            buttonsHtml = `
+            <meta property="og:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710199426913x658328134602485600/transaction_failed.jpg" />
+            <meta property="fc:frame:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710199426913x658328134602485600/transaction_failed.jpg" />
+            <meta property="fc:frame:button:1" content="Try again" />
+        `;
+        }
+
+    } else {
+        buttonsHtml = `
+            <meta property="og:image" content="${product.productFrame}" />
+            <meta property="fc:frame:image" content="${product.productFrame}" />
+            <meta property="fc:frame:button:1" content="View online" />
+            <meta property="fc:frame:button:1:action" content="link" />
+            <meta property="fc:frame:button:1:target" content="https://www.gogh.shopping" />
+            <meta property="fc:frame:button:2" content="Buy now" />
+            <meta property="fc:frame:button:2:action" content="tx" />
+            <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${product._id}?frameType=buy" />
+            <meta property="fc:frame:button:3" content="Create listing" />
+            <meta property="fc:frame:button:3:action" content="link" />
+            <meta property="fc:frame:button:3:target" content="https://www.gogh.shopping" />
+            <meta property="fc:frame:button:4" content="FAQ" />
+        `;
+    }
+
+    return `
     <!DOCTYPE html>
     <html>
         <head>
-        <title>Gogh Marketplace</title>
-            <meta name="description" content="Sell your items locally with Gogh">
-            <meta property="og:url" content="https://">
-            <meta property="og:image" content="${product.image}">
+            <title>Gogh Marketplace</title>
+            <meta name="description" content="Sell your items locally with Gogh" />
+            <meta property="og:url" content="https://www.gogh.shopping/marketplace/product/${product._id}" />
             <meta property="fc:frame" content="vNext" />
-            <meta name="fc:frame:post_url" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${product._id}">
-            <meta property="fc:frame:image" content="${product.image}">
-            <meta property="fc:frame:image:aspect_ratio" content="" />
-            <meta property="fc:frame:button:1" content="Start Shopping" />
+            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/product/${product._id}?frameType=${frameType}&index=${faqIndex}&status=${status}" />
+            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            ${buttonsHtml}
         </head>
     </html>
     `;
-
-    return htmlResponse;
 }
 
 export default router;

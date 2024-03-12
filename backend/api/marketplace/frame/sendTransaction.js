@@ -58,12 +58,11 @@ router.post('/:productId', async (req, res) => {
       method: "eth_sendTransaction",
       params: {
         to: "0x62f57efB1a37B93DbF56975fc6c9F2CD64BDd91c",
-        value: weiEquivalent.toString(), // Use the converted value
-        data: "" // Optional for ETH transfers
+        value: weiEquivalent.toString(),
       },
     };
 
-    res.status(200).json(response); // Send JSON response
+    res.status(200).json(response);
   } catch (err) {
     console.error('Error in POST /send_transaction/:productId', err);
     res.status(500).send('Internal Server Error');

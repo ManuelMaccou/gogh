@@ -13,9 +13,10 @@ interface FormDataState {
     location: string;
     title: string;
     description: string;
-    walletAddress: string;
     // image: string;
     price: string;
+    walletAddress: string;
+    email: string;
 }
 
 Modal.setAppElement('#root'); 
@@ -33,8 +34,9 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
         title: '',
         description: '',
         // image: '',
-        walletAddress: '',
         price: '',
+        walletAddress: '',
+        email: '',
     });
 
     const [file, setFile] = useState<File | null>(null);
@@ -70,8 +72,9 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
         data.append('title', formData.title);
         data.append('description', formData.description);
         if (file) data.append('image', file);
-        data.append('walletAddress', formData.walletAddress);
         data.append('price', formData.price);
+        data.append('walletAddress', formData.walletAddress);
+        data.append('email', formData.email);
 
         try {
             await onFormSubmit(data, file);
@@ -83,6 +86,7 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
                 description: '',
                 price: '',
                 walletAddress: '',
+                email: '',
             });
             setFile(null); // Reset file state
             clearFormError();
@@ -127,6 +131,7 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
                         <input type="file" onChange={handleChange} required />
                         <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in USDC" />
                         <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="Wallet address to receive payment" required />
+                        <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email" required />
                         <button className="submit-button" type="submit">Submit</button>
                     </form>
                 </Modal>
