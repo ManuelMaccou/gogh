@@ -20,7 +20,7 @@ router.post('/farcaster_login', async (req, res) => {
         const neynarUrl = `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`;
         const neynarOptions = {
             method: 'GET',
-            headers: { accept: 'application/json', api_key: process.env.REACT_APP_NEYNAR_API_KEY }
+            headers: { accept: 'application/json', api_key: process.env.NEYNAR_API_KEY }
         };
 
         const neynarResponse = await axios(neynarUrl, neynarOptions);
