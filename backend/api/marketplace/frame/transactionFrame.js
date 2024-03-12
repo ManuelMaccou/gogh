@@ -3,7 +3,9 @@
 import { Router } from 'express';
 import sgMail from '@sendgrid/mail';
 import { body, validationResult } from 'express-validator';
+import fetch from 'node-fetch';
 import MarketplaceProduct from '../../../models/marketplace/product.js';
+import MarketplaceTransaction from '../../../models/marketplace/transaction.js';
 import validateMessage from '../../../utils/validateFrameMessage.js';
 import User from '../../../models/user.js'
 
@@ -99,6 +101,9 @@ router.post('/product/:productId', async (req, res) => {
         buttonIndex = req.body.untrustedData.buttonIndex;
         fid = req.body.untrustedData.fid;
         buyerEmail = req.body.untrustedData.inputText;
+        transactionHash = req.body.untrustedData.hash; // remove. for testing only
+
+        console.log('buyer email:', buyerEmail);
     }
     const shouldValidateEmail = req.body.transactionHash && req.query.frameType === 'buy' && req.query.status === 'success';
     if (shouldValidateEmail && buyerEmail) {
@@ -134,7 +139,7 @@ router.post('/product/:productId', async (req, res) => {
                 faqIndex = 0;
             }
 
-        } else if (transactionHash && frameType === 'buy') {
+        } else if (transactionHash && frameType === 'buy' && !status) {
             status = "success"
 
             const buyerFid = fid;
@@ -148,11 +153,30 @@ router.post('/product/:productId', async (req, res) => {
             await newTransaction.save();    
             
         } else if (!transactionHash && frameType === 'buy') {
-            status = "fail"
+            status = "fail";
 
         } else if (transactionHash && frameType === 'buy' && status === 'success') {
+            console.log('starting email send condition');
+            status = "success";
             try {
+                const options = {
+                    method: 'GET',
+                    headers: { accept: 'application/json', api_key: process.env.NEYNAR_API_KEY }
+                };
+
+                console.log('Gethering Neynar data');
+                const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, options);
+                const data = await response.json();
+                console.log('Neynar data gathered');
+
+                const username = data.users[0].username;
+                const displayName = data.users[0].display_name;
+                console.log(`Username: ${username}, Display Name: ${displayName}`);
+
+                const buyerProfileUrl = `https://warpcast.com/${username}`
+
                 let emailSendingResults = [];
+                console.log('buyer email:', buyerEmail);
 
                 if (buyerEmail) {
                     const msgBuyer = {
@@ -175,6 +199,9 @@ router.post('/product/:productId', async (req, res) => {
                             product_name: product.title,
                             product_price: product.price,
                             transaction_hash: transactionHash,
+                            buyer_username: displayName,
+                            buyer_profile_url: buyerProfileUrl,
+
                         },
                     };
                     emailSendingResults.push(sgMail.send(msgSeller));

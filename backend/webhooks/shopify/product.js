@@ -85,7 +85,7 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
         // Find the relevant store
         const store = await ShopifyStore.findOne({ storeName: vendor });
         if (!store) {
-            console.log('Store not found');
+            console.log('Store not found for vendor:', vendor);
             return;
         }
 
