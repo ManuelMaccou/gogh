@@ -330,6 +330,7 @@ function generateFrameHtml(product, frameType, faqIndex, status) {
         buttonsHtml = `
             <meta property="og:image" content="${product.productFrame}" />
             <meta property="fc:frame:image" content="${product.productFrame}" />
+            <meta property="fc:frame:input:text"="Enter email for receipt" />
             <meta property="fc:frame:button:1" content="View online" />
             <meta property="fc:frame:button:1:action" content="link" />
             <meta property="fc:frame:button:1:target" content="https://www.gogh.shopping" />
