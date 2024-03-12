@@ -78,6 +78,10 @@ router.post('/product/:productId', async (req, res) => {
 
     // Validate frame interaction first
     if (isProduction) {
+        buttonIndex = validatedFrameData.action?.tapped_button?.index;
+        fid = validatedFrameData.action?.interactor?.fid;
+        buyerEmail = validatedFrameData.action?.input?.text;
+        
         try {
             const messageBytes = req.body.trustedData.messageBytes;
             console.log("message bytes:", messageBytes);
@@ -88,9 +92,69 @@ router.post('/product/:productId', async (req, res) => {
             transactionHash = validatedFrameData.action?.transaction?.hash
             console.log("transaction hash:", transactionHash);
 
-            buttonIndex = validatedFrameData.action?.tapped_button?.index;
-            fid = validatedFrameData.action?.interactor?.fid;
-            buyerEmail = validatedFrameData.action?.input?.text;
+            if (transactionHash) {
+                try {
+                    const options = {
+                        method: 'GET',
+                        headers: { accept: 'application/json', api_key: process.env.NEYNAR_API_KEY }
+                    };
+    
+                    console.log('Gethering Neynar data');
+                    const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, options);
+                    const data = await response.json();
+                    console.log('Neynar data gathered');
+    
+                    const username = data.users[0].username;
+                    const displayName = data.users[0].display_name;
+                    console.log(`Username: ${username}, Display Name: ${displayName}`);
+    
+                    const buyerProfileUrl = `https://warpcast.com/${username}`
+    
+                    let emailSendingResults = [];
+                    console.log('buyer email:', buyerEmail);
+    
+                    if (buyerEmail) {
+                        const msgBuyer = {
+                            to: buyerEmail,
+                            from: 'admin@gogh.shopping',
+                            templateId: 'd-9151a338b3ad47ea885140aaf52fc9a3',
+                            dynamicTemplateData: {
+                                transaction_hash: transactionHash,
+                            },
+                        };
+                        emailSendingResults.push(sgMail.send(msgBuyer));
+                    }
+    
+                    if (product.email) {
+                        const msgSeller = {
+                            to: product.email,
+                            from: 'admin@gogh.shopping',
+                            templateId: 'd-48d7775469174e7092913745a9b7e307',
+                            dynamicTemplateData: {
+                                product_name: product.title,
+                                product_price: product.price,
+                                transaction_hash: transactionHash,
+                                buyer_username: displayName,
+                                buyer_profile_url: buyerProfileUrl,
+    
+                            },
+                        };
+                        emailSendingResults.push(sgMail.send(msgSeller));
+                    }
+                    await Promise.all(emailSendingResults);
+                    console.log('Transaction completed and emails sent.');
+    
+                } catch (error) {
+                    console.error('Error sending emails:', error);
+                    // Consider whether you want to return a different status code or message in case of email errors
+                    res.status(500).json({ message: 'An error occurred while sending emails.' });
+                }
+            }
+
+
+
+
+            
 
         } catch (error) {
             console.error('Error validating message:', error);
