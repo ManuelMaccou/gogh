@@ -92,70 +92,6 @@ router.post('/product/:productId', async (req, res) => {
             transactionHash = validatedFrameData.action?.transaction?.hash
             console.log("transaction hash:", transactionHash);
 
-            if (transactionHash) {
-                try {
-                    const options = {
-                        method: 'GET',
-                        headers: { accept: 'application/json', api_key: process.env.NEYNAR_API_KEY }
-                    };
-    
-                    console.log('Gethering Neynar data');
-                    const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, options);
-                    const data = await response.json();
-                    console.log('Neynar data gathered');
-    
-                    const username = data.users[0].username;
-                    const displayName = data.users[0].display_name;
-                    console.log(`Username: ${username}, Display Name: ${displayName}`);
-    
-                    const buyerProfileUrl = `https://warpcast.com/${username}`
-    
-                    let emailSendingResults = [];
-                    console.log('buyer email:', buyerEmail);
-    
-                    if (buyerEmail) {
-                        const msgBuyer = {
-                            to: buyerEmail,
-                            from: 'admin@gogh.shopping',
-                            templateId: 'd-9151a338b3ad47ea885140aaf52fc9a3',
-                            dynamicTemplateData: {
-                                transaction_hash: transactionHash,
-                            },
-                        };
-                        emailSendingResults.push(sgMail.send(msgBuyer));
-                    }
-    
-                    if (product.email) {
-                        const msgSeller = {
-                            to: product.email,
-                            from: 'admin@gogh.shopping',
-                            templateId: 'd-48d7775469174e7092913745a9b7e307',
-                            dynamicTemplateData: {
-                                product_name: product.title,
-                                product_price: product.price,
-                                transaction_hash: transactionHash,
-                                buyer_username: displayName,
-                                buyer_profile_url: buyerProfileUrl,
-    
-                            },
-                        };
-                        emailSendingResults.push(sgMail.send(msgSeller));
-                    }
-                    await Promise.all(emailSendingResults);
-                    console.log('Transaction completed and emails sent.');
-    
-                } catch (error) {
-                    console.error('Error sending emails:', error);
-                    // Consider whether you want to return a different status code or message in case of email errors
-                    res.status(500).json({ message: 'An error occurred while sending emails.' });
-                }
-            }
-
-
-
-
-            
-
         } catch (error) {
             console.error('Error validating message:', error);
             return res.status(500).send('An error occurred during message validation.');
@@ -186,6 +122,81 @@ router.post('/product/:productId', async (req, res) => {
         if (!product) {
             return res.status(404).send('Product not found during transactionFrame route');
         }
+
+        // Send emails and save transaction
+        if (transactionHash) {
+            try {
+                const options = {
+                    method: 'GET',
+                    headers: { accept: 'application/json', api_key: process.env.NEYNAR_API_KEY }
+                };
+
+                console.log('Gethering Neynar data');
+                const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, options);
+                const data = await response.json();
+                console.log('Neynar data gathered');
+
+                const username = data.users[0].username;
+                const displayName = data.users[0].display_name;
+                console.log(`Username: ${username}, Display Name: ${displayName}`);
+
+                const buyerProfileUrl = `https://warpcast.com/${username}`
+
+                let emailSendingResults = [];
+                console.log('buyer email:', buyerEmail);
+
+                if (buyerEmail) {
+                    const msgBuyer = {
+                        to: buyerEmail,
+                        from: 'admin@gogh.shopping',
+                        templateId: 'd-9151a338b3ad47ea885140aaf52fc9a3',
+                        dynamicTemplateData: {
+                            transaction_hash: transactionHash,
+                        },
+                    };
+                    emailSendingResults.push(sgMail.send(msgBuyer));
+                }
+
+                if (product.email) {
+                    const msgSeller = {
+                        to: product.email,
+                        from: 'admin@gogh.shopping',
+                        templateId: 'd-48d7775469174e7092913745a9b7e307',
+                        dynamicTemplateData: {
+                            product_name: product.title,
+                            product_price: product.price,
+                            transaction_hash: transactionHash,
+                            buyer_username: displayName,
+                            buyer_profile_url: buyerProfileUrl,
+
+                        },
+                    };
+                    emailSendingResults.push(sgMail.send(msgSeller));
+                }
+                await Promise.all(emailSendingResults);
+                console.log('Transaction completed and emails sent.');
+            
+            } catch (error) {
+                console.error('Error sending emails:', error);
+                res.status(500).json({ message: 'An error occurred while sending emails.' });
+            }
+
+            try {
+            const buyerFid = fid;
+            const sellerFid = user.fid;
+            const newTransaction = new MarketplaceTransaction({
+                buyerFid: buyerFid,
+                sellerFid: sellerFid,
+                transactionHash: transactionHash,
+            });
+
+            await newTransaction.save(); 
+
+        } catch (error) {
+            console.error('Error saving transaction:', error);
+            res.status(500).json({ message: 'An error occurred while the transaction.' });
+        }
+    }
 
         if (frameType === 'initial') {
             if (buttonIndex === 4) { // faq
