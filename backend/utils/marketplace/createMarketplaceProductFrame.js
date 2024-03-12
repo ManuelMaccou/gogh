@@ -88,7 +88,7 @@ async function createProductFrame(location, title, description, price, imageUrl)
         }
 
         // Generate and return the image URL
-        const imageBuffer = canvas.toDataURL('image/jpeg');
+        const imageBuffer = canvas.toBuffer('image/jpeg');
         return imageBuffer;
     } catch (error) {
         console.error('Error creating product frame:', error);
