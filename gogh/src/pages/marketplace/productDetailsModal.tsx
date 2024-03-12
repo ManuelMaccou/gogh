@@ -31,9 +31,9 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 }) => {
   if (!product) return null;
 
-  // const shareUrl = `https://warpcast.com/~/compose?embeds[]=https://www.gogh.shopping/marketplace/frame/share/product/${product._id}`;
+const shareUrl = `https://warpcast.com/~/compose?embeds[]=https://www.gogh.shopping/marketplace/frame/share/product/${product._id}`;
 
-
+/*
   return (
     <Modal
         isOpen={isOpen}
@@ -57,9 +57,10 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         </div>
     </Modal>
   );
+  */
 
 
-/*
+
   return (
     <Modal
         isOpen={isOpen}
@@ -89,9 +90,6 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         </div>
     </Modal>
   );
-  */
-
-
 
 };
 
