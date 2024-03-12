@@ -52,14 +52,14 @@ async function createProductFrame(location, title, description, price, imageUrl)
         currentY += wrapText(ctx, title, textSectionStart, currentY, textMaxWidth, textConfig.title.lineHeight);
 
         // Print location underneath the title in italics
-        const locationGap = -40; // Gap between title and location
+        const locationGap = 0; // Gap between title and location
         currentY += locationGap; // Move currentY down to create a gap
         const fullLocation = `Located in ${location}`;
         ctx.font = 'italic 30px Arial';
         ctx.fillText(fullLocation, textSectionStart, currentY);
-        currentY += 80; // Move currentY down after location, creating space before the description
+        currentY += 60; // Adjust space before the description
 
-        // Reset font to non-italics
+        // Reset font to non-italics for description
         ctx.font = textConfig.description.font;
 
         // Draw product description if available
@@ -67,19 +67,14 @@ async function createProductFrame(location, title, description, price, imageUrl)
             const maxDescriptionLength = 60; // Maximum number of words for the description
             let words = description.split(' ');
             let shouldShowViewMore = words.length > maxDescriptionLength;
-            let trimmedDescription = shouldShowViewMore ? words.slice(0, maxDescriptionLength).join(' ') + "..." : description;
+            let trimmedDescription = shouldShowViewMore ? words.slice(0, maxDescriptionLength).join(' ') + "...\n\nView product online for full description." : description;
         
-            // Draw the trimmed description and update currentY based on the text height
-            currentY = wrapText(ctx, trimmedDescription, textSectionStart, currentY, textMaxWidth, textConfig.description.lineHeight);
-            
-            // If the description was trimmed, add the "view more" text with appropriate spacing
-            if (shouldShowViewMore) {
-                currentY += textConfig.description.lineHeight; // Ensure spacing between description and "view more" text
-                ctx.fillStyle = 'blue'; // Set color for "...view product for full description"
-                ctx.fillText("view product for full description.", textSectionStart, currentY);
-                currentY += textConfig.description.lineHeight; // Update currentY in case more text follows
-            }
+            // Use the corrected variable for drawing
+            currentY += wrapText(ctx, trimmedDescription, textSectionStart, currentY, textMaxWidth, textConfig.description.lineHeight);
+
+            // No need for additional "view more" text handling here; it's incorporated into trimmedDescription
         }
+
         // Draw price
         if (price && price.trim() !== '') {
             ctx.font = textConfig.price.font;
@@ -93,7 +88,7 @@ async function createProductFrame(location, title, description, price, imageUrl)
         }
 
         // Generate and return the image URL
-        const imageBuffer = canvas.toBuffer('image/jpeg');
+        const imageBuffer = canvas.toDataURL('image/jpeg');
         return imageBuffer;
     } catch (error) {
         console.error('Error creating product frame:', error);
@@ -102,24 +97,34 @@ async function createProductFrame(location, title, description, price, imageUrl)
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-    const words = text.split(' ');
-    let line = '';
+    // Split the text into lines based on explicit new line characters
+    const lines = text.split('\n');
     let lastY = y;
 
-    for (let n = 0; n < words.length; n++) {
-        let testLine = line + words[n] + ' ';
-        let metrics = ctx.measureText(testLine);
-        let testWidth = metrics.width;
-        if (testWidth > maxWidth && n > 0) {
-            ctx.fillText(line, x, lastY);
-            line = words[n] + ' ';
-            lastY += lineHeight;
-        } else {
-            line = testLine;
+    lines.forEach((originalLine) => {
+        // Trim leading spaces to prevent unintended indenting
+        const line = originalLine.trimStart();
+        const words = line.split(' ');
+        let currentLine = '';
+
+        for (let n = 0; n < words.length; n++) {
+            let testLine = currentLine + words[n] + ' ';
+            let metrics = ctx.measureText(testLine);
+            let testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                ctx.fillText(currentLine, x, lastY);
+                currentLine = words[n] + ' ';
+                lastY += lineHeight;
+            } else {
+                currentLine = testLine;
+            }
         }
-    }
-    ctx.fillText(line, x, lastY); // Ensure the last line is drawn
-    return lastY; // Adjusted to return the Y position for the next line
+        // Draw the current line because the loop is finished
+        ctx.fillText(currentLine.trim(), x, lastY);
+        lastY += lineHeight; // Move to the next line
+    });
+
+    return lastY - y; // Return the height used by the text
 }
 
 const textConfig = {
