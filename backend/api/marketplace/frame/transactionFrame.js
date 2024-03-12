@@ -40,7 +40,7 @@ router.get('/product/:productId', async (req, res) => {
             <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/product/${product._id}?frameType=initial" />
             <meta property="fc:frame:image" content="${product.productFrame}">
             <meta property="fc:frame:image:aspect_ratio" content="" />
-            <meta property="fc:frame:input:text"="Enter email for receipt" />
+            <meta property="fc:frame:input:text" content="Enter email for receipt" />
             <meta property="fc:frame:button:1" content="View online" />
             <meta property="fc:frame:button:1:action" content="link" />
             <meta property="fc:frame:button:1:target" content="https://www.gogh.shopping" />
@@ -316,7 +316,7 @@ function generateFrameHtml(product, frameType, faqIndex, status) {
         buttonsHtml = `
             <meta property="og:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204604757x897514662026309000/success_frame.jpg" />
             <meta property="fc:frame:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204604757x897514662026309000/success_frame.jpg" />
-            <meta property="fc:frame:input:text"="Enter email" />
+            <meta property="fc:frame:input:text" content="Enter email" />
             <meta property="fc:frame:button:1" content="Submit" />
         `;
         } else if (status === 'fail') {
@@ -331,7 +331,7 @@ function generateFrameHtml(product, frameType, faqIndex, status) {
         buttonsHtml = `
             <meta property="og:image" content="${product.productFrame}" />
             <meta property="fc:frame:image" content="${product.productFrame}" />
-            <meta property="fc:frame:input:text"="Enter email for receipt" />
+            <meta property="fc:frame:input:text" content="Enter email for receipt" />
             <meta property="fc:frame:button:1" content="View online" />
             <meta property="fc:frame:button:1:action" content="link" />
             <meta property="fc:frame:button:1:target" content="https://www.gogh.shopping" />
