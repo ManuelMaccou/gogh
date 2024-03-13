@@ -201,7 +201,7 @@
     max-width: 1500px;
 }
 
-.product-modal-header, .product-modal-footer {
+.product-modal-header {
     display: flex;
     align-items: center;
 }
@@ -262,6 +262,7 @@
 
     .product-modal {
         min-width: 95%;
+        min-height: 90%;
     }
 
     .product-image {
@@ -379,7 +380,7 @@ input[type="checkbox"] {
     left: 50%;
     transform: translate(-50%, -50%);
     overflow: auto;
-    max-height: 90%;
+    max-height: 60%;
 }
 
 .marketplace-product-details {
