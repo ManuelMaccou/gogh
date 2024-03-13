@@ -261,7 +261,7 @@
     }
 
     .product-modal {
-        width: 95%;
+        min-width: 95%;
     }
 
     .product-image {
@@ -378,6 +378,8 @@ input[type="checkbox"] {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    overflow: auto;
+    max-height: 90%;
 }
 
 .marketplace-product-details {
