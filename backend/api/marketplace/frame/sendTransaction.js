@@ -53,14 +53,16 @@ router.post('/:productId', async (req, res) => {
     const sanitizedPrice = product.price.replace(/[^0-9.]/g, '');
     const weiEquivalent = await cryptoConversions(sanitizedPrice);
 
+    if (product.walletAddress) {
     const response = {
       chainId: "eip155:8453", // Base
       method: "eth_sendTransaction",
       params: {
-        to: "0x62f57efB1a37B93DbF56975fc6c9F2CD64BDd91c",
+        to: product.walletAddress, 
         value: weiEquivalent.toString(),
       },
     };
+  }
 
     res.status(200).json(response);
   } catch (err) {
