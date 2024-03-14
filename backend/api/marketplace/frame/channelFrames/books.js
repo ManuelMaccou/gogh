@@ -1,9 +1,9 @@
-// https://www.gogh.shopping/marketplace/add/book/
+// https://www.gogh.shopping/marketplace/add/book
 
 
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
-import validateMessage from '../../../utils/validateFrameMessage.js';
+import validateMessage from '../../../../utils/validateFrameMessage.js';
 
 const router = Router();
 
