@@ -65,7 +65,6 @@ router.get('/product/:productId', async (req, res) => {
 
 
 router.post('/product/:productId', async (req, res) => {
-    console.log('request body:', req.body);
     const { productId } = req.params;
     let buyerEmail; 
 
@@ -78,7 +77,6 @@ router.post('/product/:productId', async (req, res) => {
     let buttonIndex, fid;
     let transactionHash;
 
-    // Validate frame interaction first
     if (isProduction) {
         
         try {
@@ -97,11 +95,9 @@ router.post('/product/:productId', async (req, res) => {
             return res.status(500).send('An error occurred during message validation.');
         }
     } else {
-        // Directly use untrustedData in development, with a different data structure
         buttonIndex = req.body.untrustedData.buttonIndex;
         fid = req.body.untrustedData.fid;
         buyerEmail = req.body.untrustedData.inputText;
-        transactionHash = req.body.untrustedData.hash; // remove. for testing only
 
         console.log('buyer email:', buyerEmail);
     }
@@ -351,7 +347,7 @@ function generateFrameHtml(product, frameType, faqIndex, status) {
         <head>
             <title>Gogh Marketplace</title>
             <meta name="description" content="Sell your items locally with Gogh" />
-            <meta property="og:url" content="https://www.gogh.shopping/marketplace/product/${product._id}" />
+            <meta property="og:url" content="https://www.gogh.shopping" />
             <meta property="fc:frame" content="vNext" />
             <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/product/${product._id}?frameType=${frameType}&index=${faqIndex}&status=${status}" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />

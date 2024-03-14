@@ -1,12 +1,32 @@
 import React, { useState, ChangeEvent, FormEvent, forwardRef } from 'react';
 import Modal from 'react-modal';
 
+interface User {
+    _id: string;
+    fc_username: string;
+    fc_pfp: string;
+    fc_profile: string;
+  }
+
+  interface Product {
+    _id: string;
+    location: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+    price: string;
+    walletAddress: string;
+    email: string;
+    user: User;
+  }
+
 interface CreateListingProps {
     isLoggedIn: boolean;
-    onFormSubmit: (formData: FormData, file: File | null) => Promise<void>;
+    onFormSubmit: (formData: FormData, file: File | null) => Promise<Product>;
     formError: string;
     clearFormError: () => void;
     supportedCities: string[];
+    initialFormData?: Partial<FormDataState>;
   }
   
 interface FormDataState {
@@ -27,16 +47,16 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
     formError,
     clearFormError,
     supportedCities,
+    initialFormData,
 }, ref) => {
     const [showForm, setShowForm] = useState<boolean>(false);
     const [formData, setFormData] = useState<FormDataState>({
-        location: '',
-        title: '',
-        description: '',
-        // image: '',
-        price: '',
-        walletAddress: '',
-        email: '',
+        location: initialFormData?.location || '',
+        title: initialFormData?.title || '',
+        description: initialFormData?.description || '',
+        price: initialFormData?.price || '',
+        walletAddress: initialFormData?.walletAddress || '',
+        email: initialFormData?.email || '',
     });
 
     const [file, setFile] = useState<File | null>(null);
@@ -77,7 +97,7 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
         data.append('email', formData.email);
 
         try {
-            await onFormSubmit(data, file);
+            const product = await onFormSubmit(data, file);
             setShowForm(false);
             // Reset form and file states
             setFormData({
@@ -88,6 +108,7 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
                 walletAddress: '',
                 email: '',
             });
+            return product;
             setFile(null); // Reset file state
             clearFormError();
         } catch (error) {

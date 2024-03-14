@@ -8,13 +8,15 @@ interface User {
     fc_profile: string;
   }
 
-interface Product {
+  interface Product {
     _id: string;
     location: string;
     title: string;
     description: string;
     imageUrl: string;
     price: string;
+    walletAddress: string;
+    email: string;
     user: User;
   }
 

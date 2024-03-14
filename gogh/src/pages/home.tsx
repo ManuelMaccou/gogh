@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
+import { useLocation } from 'react-router-dom';
 import CreateListing from './marketplace/createListing';
 import ProductDetailsModal from './marketplace/productDetailsModal';
 import '../../src/styles.css';
@@ -24,6 +25,8 @@ interface Product {
     description: string;
     imageUrl: string;
     price: string;
+    walletAddress: string;
+    email: string;
     user: User;
   }
 
@@ -42,6 +45,22 @@ const supportedCities = [
 
 const HomePage = () => {
     const navigate = useNavigate();
+    const [initialFormData, setInitialFormData] = useState({});
+    const location = useLocation();
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const city = searchParams.get('city');
+        const title = searchParams.get('title');
+        const description = searchParams.get('description');
+        const price = searchParams.get('price');
+    
+        if (city) {
+          // If city is present in URL, prepare initial form data and open modal
+          setInitialFormData({ city, title, description, price });
+          setIsProductModalOpen(true);
+        }
+      }, [location]);
 
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [formError, setFormError] = useState<string>('');
@@ -140,7 +159,7 @@ const HomePage = () => {
         fetchProducts();
     }, []);
 
-    const onFormSubmit = async (formData: FormData) => {
+    const onFormSubmit = async (formData: FormData, file: File | null): Promise<Product> => {
         
         try {
           const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, formData, {
@@ -151,12 +170,17 @@ const HomePage = () => {
 
           if (response.status === 201) {
             console.log('Fetching products after submission...');
-            fetchProducts(); // Call fetchProducts to update the list with the new submission
-          }
+            fetchProducts();
+            openModalWithProduct(response.data);
+            return response.data;
+        } else {
+            throw new Error('Product creation failed');
+        }
 
         } catch (error: any) {
             console.error('Failed to create product:', error.response || error);
             setFormError('Failed to create product. Please try again.');
+            throw error;
         }
     };
 
@@ -266,6 +290,7 @@ const HomePage = () => {
                     clearFormError={() => setFormError('')} 
                     supportedCities={supportedCities}
                     ref={createListingRef}
+                    initialFormData={initialFormData}
                 />
             </section>
             
