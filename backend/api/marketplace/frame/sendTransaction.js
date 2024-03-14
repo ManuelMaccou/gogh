@@ -62,9 +62,9 @@ router.post('/:productId', async (req, res) => {
         value: weiEquivalent.toString(),
       },
     };
+    res.status(200).json(response);
   }
 
-    res.status(200).json(response);
   } catch (err) {
     console.error('Error in POST /send_transaction/:productId', err);
     res.status(500).send('Internal Server Error');
