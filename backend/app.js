@@ -37,6 +37,8 @@ import imageRoutes from './api/image.js';
 // This will soon replace the image route above
 import imagesRoutes from './api/images.js';
 
+import bookChannelFrameRoute from './api/marketplace/frame/channelFrames/books.js'
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const app = express();
@@ -84,6 +86,8 @@ app.use('/images', imagesRoutes);
 app.use('/api/marketplace/product', marketplaceProductRoutes);
 app.use('/api/marketplace/frame/send_transaction', marketplaceSendTransactionRoutes);
 app.use('/marketplace/frame/share', marketplaceShareRoutes);
+
+app.use('/marketplace/add/book', bookChannelFrameRoute);
 
 
 app.get('*', (req, res) => {
