@@ -113,7 +113,7 @@ const bookFrames = [
                         title = inputText;
                         step = '3';
                     }
-                } else if (!index && buttonIndex === 2) {
+                } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
 
@@ -125,7 +125,7 @@ const bookFrames = [
                         description = inputText;
                         step = '4';
                     }
-                } else if (!index && buttonIndex === 2) {
+                } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
 
@@ -137,7 +137,7 @@ const bookFrames = [
                         price = inputText;
                         step = '5'
                     }
-                } else if (!index && buttonIndex === 2) {
+                } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
                 
