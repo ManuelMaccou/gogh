@@ -2,11 +2,12 @@ import { Router } from 'express';
 import auth from '../middleware/auth.js';
 import pkg from 'jsonwebtoken';
 import User from '../models/user.js';
+import auth_old from '../middleware/auth_old.js';
 
 const router = Router();
 const { sign } = pkg;
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth_old, async (req, res) => {
     const { targetFid } = req.body;
     const adminId = process.env.ADMIN_ID
     const adminUser = await User.findById(req.user);

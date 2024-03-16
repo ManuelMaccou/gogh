@@ -5,6 +5,7 @@ import sharp from 'sharp';
 import multer from 'multer';
 // import createProductPreview from '../../utils/marketplace/createProductPreview.js';
 import MarketplaceProduct from'../../models/marketplace/product.js';
+import User from'../../models/user.js';
 import createMarketplaceProductFrame from '../../utils/marketplace/createMarketplaceProductFrame.js';
 import auth from '../../middleware/auth.js';
 
@@ -55,6 +56,8 @@ router.post('/add', auth, upload.single('image'), async (req, res) => {
 
 
         console.log('image after processing:', imageUrl)
+
+        const user = await User.findOne({ privyId: req.user });
         
         const product = new MarketplaceProduct({
             location,
@@ -65,7 +68,7 @@ router.post('/add', auth, upload.single('image'), async (req, res) => {
             price,
             walletAddress,
             email,
-            user: req.user
+            user,
         });
 
         await product.save();

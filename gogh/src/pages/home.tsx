@@ -4,6 +4,8 @@ import axios, { AxiosError } from 'axios';
 import { useLocation } from 'react-router-dom';
 import CreateListing from './marketplace/createListing';
 import ProductDetailsModal from './marketplace/productDetailsModal';
+// import LoginModal from '../loginModal';
+import { usePrivy, useLogin } from '@privy-io/react-auth';
 import '../../src/styles.css';
 
 interface FeaturedStoreImage {
@@ -12,7 +14,9 @@ interface FeaturedStoreImage {
 }
 
 interface User {
+    privyId: string;
     _id: string;
+    fid: string;
     fc_username: string;
     fc_pfp: string;
     fc_profile: string;
@@ -45,30 +49,120 @@ const supportedCities = [
 
 const HomePage = () => {
     const navigate = useNavigate();
-    const [initialFormData, setInitialFormData] = useState({});
     const location = useLocation();
 
-    useEffect(() => {
-        const searchParams = new URLSearchParams(location.search);
-        const city = searchParams.get('city');
-        const title = searchParams.get('title');
-        const description = searchParams.get('description');
-        const price = searchParams.get('price');
-    
-        if (city) {
-          // If city is present in URL, prepare initial form data and open modal
-          setInitialFormData({ city, title, description, price });
-          setIsProductModalOpen(true);
-        }
-      }, [location]);
-
+    const [initialFormData, setInitialFormData] = useState({});
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [formError, setFormError] = useState<string>('');
     const [products, setProducts] = useState<Product[]>([]);
     const [user, setUser] = useState<User | null>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsProductModalOpen] = useState<boolean>(false);
+    // const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+    const [showCreateListingModal, setShowCreateListingModal] = useState(false);
+
+    const createListingRef = useRef<{ openCreateListingModal: () => void }>(null);
+
+    
+    const { ready, authenticated, getAccessToken, logout } = usePrivy();
+
+    const { login } = useLogin({
+        onComplete: async (user, isNewUser) => {
+            const accessToken = await getAccessToken();
+
+            const userPayload = {
+                privyId: user.id,
+                ...(user.farcaster && {
+                    fid: user.farcaster.fid,
+                    fc_username: user.farcaster.displayName,
+                    fc_pfp: user.farcaster.pfp,
+                    fc_profile: `https://warpcast.com/${user.farcaster.username}`,
+                }),
+            };
+            
+
+            try {
+ 
+                if (isNewUser) {
+                    console.log('userPayload:', userPayload);
+                    try {
+
+                        const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/create`, userPayload, {
+                            headers: { Authorization: `Bearer ${accessToken}` },
+                        });
+
+                        if (response.status === 201) {
+                            setUser(response.data);
+                            console.log('User details:', response.data);
+                        } else {
+                            throw new Error('Failed to fetch user details');
+                        }
+
+                    } catch (error) {
+                        if (axios.isAxiosError(error)) {
+                            console.error('Error fetching user details:', error.response?.data?.message || error.message);
+                        } else {
+                            console.error('Unexpected error:', error);
+                        }
+                        setUser(null);
+                    }
+                    
+                } else {
+                    const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/lookup`, userPayload, {
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                    });
+                    
+                    if (response.status === 200) {
+                        setUser(response.data);
+                        console.log('User details:', response.data);
+                    } else {
+                        throw new Error('Failed to fetch user details');
+                    }
+                }
+            } catch (error) {
+                if (error instanceof AxiosError) {
+                    console.error('Error fetching user details:', error.response?.data?.message || error.message);
+                } else {
+                    console.error('Unexpected error:', error);
+                }
+                setUser(null);
+            }
+        },
+        onError: (error) => {
+            console.error("Privy login error:", error);
+        },
+    });
+
+    useEffect(() => {
+        const fetchUserDetails = async () => {
+            const accessToken = await getAccessToken();
+            console.log('auth status 1:', authenticated)
+
+            if (!accessToken) {
+                console.log("No access token available. User might not be logged in.");
+                setUser(null);
+                return;
+            }
+
+            if (!authenticated) {
+                setUser(null);
+                return;
+            }
+
+            try {
+
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/user/lookup`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                })
+                setUser(response.data);
+            } catch(error) {
+                console.error('Error fetching user details:', error);
+                setUser(null);
+            }
+        };
+
+        fetchUserDetails();
+    }, [authenticated]);
 
     const openModalWithProduct = (product: Product) => {
         setSelectedProduct(product);
@@ -80,71 +174,33 @@ const HomePage = () => {
         setSelectedProduct(null);
     };
 
-    const createListingRef = useRef<HTMLDivElement | null>(null);
-
-    const scrollToListProduct = () => {
-        if (createListingRef.current) {
-          createListingRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      };
-
-
-    React.useEffect(() => {
-        const scriptId = 'neynar-script';
-
-        const loadNeynarScript = () => {
-            if (!document.getElementById(scriptId)) {
-                const script = document.createElement('script');
-                script.id = scriptId;
-                script.src = "https://neynarxyz.github.io/siwn/raw/1.2.0/index.js";
-                script.async = true;
-                document.body.appendChild(script);
-            }
-        };
-
-        const removeNeynarScript = () => {
-            const script = document.getElementById(scriptId);
-            if (script) {
-                document.body.removeChild(script);
-            }
-        };
-
-        if (!isLoggedIn) {
-            loadNeynarScript();
-        } else {
-            removeNeynarScript();
-        }
-
-        return () => {
-            removeNeynarScript();
-        };
-    }, [isLoggedIn]);
-
-    React.useEffect(() => {
-        const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token);
-    
-        if (token) {
-            axios.get(`${process.env.REACT_APP_BASE_URL}/api/user/`, {
-                headers: { Authorization: `Bearer ${token}` }
-            }).then(response => {
-                setUser(response.data);
-            }).catch(error => {
-                console.error('Error fetching user details:', error);
-                if (axios.isAxiosError(error) && error.response && error.response.status === 401) {
-                    localStorage.removeItem('token');
-                    setIsLoggedIn(false);
-                    setUser(null);
-                }
-            });
-        }
-    }, []);
-
-    const logout = () => {
-        localStorage.removeItem('token');
-        setIsLoggedIn(false);
+    const handleLogout = () => {
+        logout();
         setUser(null);
     };
+
+    useEffect(() => {
+        console.log('auth status 2:', authenticated)
+        const searchParams = new URLSearchParams(location.search);
+        const city = searchParams.get('city');
+        const title = searchParams.get('title');
+        const description = searchParams.get('description');
+        const price = searchParams.get('price');
+
+        if (city && authenticated && createListingRef.current) {
+            console.log('auth status 3:', authenticated)
+
+            createListingRef.current.openCreateListingModal();
+            setInitialFormData({ location:city, title, description, price });
+            setShowCreateListingModal(true);
+        } else if (city && !authenticated && createListingRef.current) {
+            console.log('auth status 4:', authenticated)
+            createListingRef.current.openCreateListingModal();
+            setInitialFormData({ location:city, title, description, price });
+            login();
+        }
+
+    }, [location, authenticated]);
 
     const fetchProducts = async () => {
         try {
@@ -160,11 +216,12 @@ const HomePage = () => {
     }, []);
 
     const onFormSubmit = async (formData: FormData, file: File | null): Promise<Product> => {
+        const accessToken = await getAccessToken();
         
         try {
           const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, formData, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
+                Authorization: `Bearer ${accessToken}`,
             },
           });
 
@@ -184,67 +241,42 @@ const HomePage = () => {
         }
     };
 
-    const onSignInSuccess = async (data: any) => {
-        
-        try {
-            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/farcaster_login`, {
-                signer_uuid: data.signer_uuid,
-                fid: data.fid
-            });
-
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
-
-                if (response.data.isAdmin !== undefined) {
-                    localStorage.setItem('isAdmin', JSON.stringify(response.data.isAdmin));
-                }
-                const redirectUrl = response.data.redirect;
-                window.location.reload();
-                navigate(redirectUrl);
-            } else {
-                setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
-            }
-        } catch (error: unknown) {
-            console.error("Error during Farcaster login:", error);
-            if (axios.isAxiosError(error)) { 
-                const axiosError = error as AxiosError;
-                if (axiosError.response && axiosError.response.status === 404) {
-                    setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
-                } else {
-                    setErrorMessage("An error occurred during the sign-in process.");
-                }
-            } else {
-                setErrorMessage("An unexpected error occurred.");
-            }
-        }
-    };
-
-    React.useEffect(() => {
-        (window as any).onSignInSuccess = onSignInSuccess;
-        return () => {
-            delete (window as any).onSignInSuccess;
-        };
-    }, [navigate]);
-
     return (
         <div className='main-container'>
             <header className="site-header">
                 <h1>Gogh</h1>
-                {!user ? (
-                    <div className="neynar_signin" data-client_id={process.env.REACT_APP_NEYNAR_CLIENT_ID} data-success-callback="onSignInSuccess" data-variant="warpcast"></div>
-                ) : (
-                    <>
-                        <div className="fc-user-tag">
-                            <img src={user.fc_pfp} alt="User profile" className="fc-pfp" />
-                            <p>{user.fc_username}</p>
-                        </div>
-                        <button onClick={logout} className="logout-button">Logout</button>
-                    </>
-                )}
+
+                {!authenticated && (
+                <button
+                    disabled={!ready}
+                    className="login-button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        login();
+                    }}
+                >
+                        <img src='https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710523060105x590377080657276200/Farcaster%20Icon.png' alt="Farcaster" className="fc-icon" />
+                        <p>Log in</p>
+                </button>
+            )}
+
+            {authenticated && user && (
+                <><button
+                        className="logout-button"
+                        disabled={!ready}
+                        onClick={handleLogout}>
+                        Log out
+                    </button><div className="profile-card">
+                            <img src={user?.fc_pfp} alt="User profile" className="fc-pfp" />
+                            <p>{user?.fc_username}</p>
+                        </div></>
+
+            )}
+
             </header>
             <section className="hero-section">
                 <h1 className="title">Buy and sell products on Farcaster</h1>
-                <button className='list-item' onClick={scrollToListProduct}>List an item for sale</button>
+                <button className='list-item'>List an item for sale</button>
             </section>
             <section className="submitted-products">
                 <div className="marketplace-products-grid">
@@ -254,7 +286,7 @@ const HomePage = () => {
                     <h3>{product.title}</h3>
                     <p>Location: {product.location}</p>
                     <p>Price: {product.price}</p>
-                    <div className='fc-user-tag'>
+                    <div className='profile-card'>
                         {product.user && (
                             <>
                                 <a href={product.user.fc_profile} className="fc-profile-url" target="_blank" rel="noopener noreferrer">
@@ -284,13 +316,15 @@ const HomePage = () => {
                     ))}
                 </div>
                 <CreateListing 
-                    isLoggedIn={isLoggedIn}
+                    ref={createListingRef}
                     onFormSubmit={onFormSubmit} 
                     formError={formError} 
                     clearFormError={() => setFormError('')} 
                     supportedCities={supportedCities}
-                    ref={createListingRef}
                     initialFormData={initialFormData}
+                    showForm={showCreateListingModal}
+                    onCloseModal={() => setShowCreateListingModal(false)}
+                    login={login}
                 />
             </section>
             

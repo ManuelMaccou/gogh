@@ -13,7 +13,7 @@
 }
 
 @media (max-width: 320px) {
-    .site-header .fc-user-tag {
+    .site-header .profile-card {
         display: none;
     }
 }
@@ -25,6 +25,40 @@
 
 .login-message {
     text-align: center;
+}
+
+.login-button {
+    padding: 0px 35px;
+    margin-top: 10px;
+    margin: auto;
+    height: fit-content;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    background: #ffffff;
+    color: #000000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.create-listing-button {
+    padding: 10px 35px;
+    margin-top: 10px;
+    margin: auto;
+    height: fit-content;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    background: #8A63D1;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .logout-button {
@@ -277,7 +311,7 @@
     }
 }
 
-.fc-user-tag {
+.profile-card {
     display: flex;
     align-items: center;
     border-radius: 20px;
@@ -285,8 +319,8 @@
     margin-top: 10px;
 }
 
-
-.fc-pfp {
+.fc-pfp,
+.fc-icon {
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -302,7 +336,7 @@
 }
 
 
-.fc-user-tag p {
+.profile-card p {
     margin: 0;
     font-size: 0.9rem;
 }
@@ -381,6 +415,23 @@ input[type="checkbox"] {
     transform: translate(-50%, -50%);
     overflow: auto;
     max-height: 60%;
+}
+
+.login-modal {
+    width: 40%;
+    max-width: 600px;
+    padding: 20px;
+    margin: auto;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: auto;
+    max-height: 60%;
+
 }
 
 .marketplace-product-details {

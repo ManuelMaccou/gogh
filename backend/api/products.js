@@ -5,7 +5,7 @@ import Image from '../models/image.js';
 import Merchant from '../models/merchant.js';
 import Store from '../models/store.js';
 import pkg from 'jsonwebtoken';
-import auth from '../middleware/auth.js';
+import auth_old from '../middleware/auth.js';
 import generateProductImage from '../utils/productImageGenerator.js';
 import generateDescriptionImage from '../utils/descriptionImageGenerator.js';
 
@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST route to add a new product
-router.post('/add', auth, async (req, res) => {
+router.post('/add', auth_old, async (req, res) => {
   try {
     const productData = req.body;
     console.log("Received product data:", productData.image);
@@ -115,7 +115,7 @@ router.post('/add', auth, async (req, res) => {
   }
 });
 
-router.put('/update/:productId', auth, async (req, res) => {
+router.put('/update/:productId', auth_old, async (req, res) => {
   const { productId } = req.params;
   const productData = req.body;
   
@@ -159,7 +159,7 @@ router.put('/update/:productId', auth, async (req, res) => {
   }
 });
 
-router.delete('/delete/:productId', auth, async (req, res) => {
+router.delete('/delete/:productId', auth_old, async (req, res) => {
   try {
     const productId = req.params.productId;
     const userId = req.user;
@@ -201,7 +201,7 @@ router.get('/redirect/:productId', async (req, res) => {
 });
 
 // Fetch user's products
-router.get('/user-products', auth, async (req, res) => {
+router.get('/user-products', auth_old, async (req, res) => {
     try {
         const userId = req.user;
         if (!userId) {

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import auth from '../middleware/auth.js';
 import Store from '../models/store.js';
 import Merchant from '../models/merchant.js';
+import auth_old from '../middleware/auth_old.js';
 
 const router = Router();
 
@@ -9,7 +10,7 @@ const findMerchantByUserId = async (userId) => {
     return Merchant.findOne({ user: userId }).populate('user');
 };
 
-router.get('/get-page-id', auth, async (req, res) => {
+router.get('/get-page-id', auth_old, async (req, res) => {
     try {
         const userId = req.user;
         const merchant = await findMerchantByUserId(userId);
@@ -30,7 +31,7 @@ router.get('/get-page-id', auth, async (req, res) => {
     }
 });
 
-router.get('/check-page-status', auth, async (req, res) => {
+router.get('/check-page-status', auth_old, async (req, res) => {
     try {
         const userId = req.user;
         const merchant = await findMerchantByUserId(userId);
@@ -55,7 +56,7 @@ router.get('/check-page-status', auth, async (req, res) => {
     }
 });
 
-router.get('/check-merchant-status', auth, async (req, res) => {
+router.get('/check-merchant-status', auth_old, async (req, res) => {
     const userId = req.user;
 
     try {

@@ -17,6 +17,7 @@
   "dependencies": {
     "@elastic/elasticsearch": "^8.12.1",
     "@neynar/nodejs-sdk": "^1.10.0",
+    "@privy-io/server-auth": "^1.7.2",
     "@sendgrid/mail": "^8.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

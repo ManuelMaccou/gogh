@@ -13,6 +13,7 @@ export async function validateMessage(messageBytes) {
         body: JSON.stringify({
             cast_reaction_context: false,
             follow_context: false,
+            signer_context: true,
             message_bytes_in_hex: messageBytes
         })
     };

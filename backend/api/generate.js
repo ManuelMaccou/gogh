@@ -4,6 +4,7 @@ import auth from '../middleware/auth.js';
 import Product from '../models/product.js';
 import Merchant from '../models/merchant.js';
 import Store from '../models/store.js';
+import auth_old from '../middleware/auth_old.js';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const findMerchantByUserId = async (userId) => {
     return Merchant.findOne({ user: userId }).populate('user');
 };
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth_old, async (req, res) => {
     try {
         const userId = req.user;
         const uniqueId = uuidv4();

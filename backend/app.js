@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 import connectDB from './database.js';
 import cors from 'cors';
 
-
 import productRoutes from './api/products.js';
 import userRoutes from './api/user.js';
 import merchantRoutes from './api/merchant.js'
@@ -42,6 +41,7 @@ import bookChannelFrameRoute from './api/marketplace/frame/channelFrames/books.j
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const app = express();
+
 app.use(cors());
 
 // Trust the reverse proxy when determining the connection protocol

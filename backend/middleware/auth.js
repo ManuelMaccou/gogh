@@ -1,23 +1,23 @@
-import pkg from 'jsonwebtoken';
-const { verify } = pkg;
+import privy from '../services/privyClient.js';
 
-const auth = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-        return res.status(401).json({ message: 'No token, authorization denied' });
+const auth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "No authentication token provided." });
     }
 
-    try {
-        const decoded = verify(token, process.env.JWT_SECRET);
-        req.user = decoded.userId;
-        if (decoded.impersonatedBy) {
-            req.impersonatedBy = decoded.impersonatedBy;
-        }
-        next();
-    } catch (err) {
-        console.error('JWT Error:', err.message);
-        res.status(401).json({ message: 'Token is not valid' });
-    }
+    const token = authHeader.split(' ')[1]; 
+    const verifiedClaims = await privy.verifyAuthToken(token);
+
+    req.user = verifiedClaims.userId
+
+    next();
+  } catch (error) {
+    // If token verification fails
+    console.error("Authentication error:", error);
+    res.status(401).json({ message: "Invalid or expired token." });
+  }
 };
 
 export default auth;

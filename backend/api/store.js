@@ -2,7 +2,7 @@ import { Router } from 'express';
 import fetch from 'node-fetch';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
-import auth from '../middleware/auth.js';
+import auth_old from '../middleware/auth.js';
 import Store from '../models/store.js';
 import Merchant from '../models/merchant.js';
 import Image from '../models/image.js';
@@ -38,7 +38,7 @@ async function storeImage(imageBuffer, contentType) {
 }
   
 
-router.post('/create', auth, async (req, res) => {
+router.post('/create', auth_old, async (req, res) => {
     const userId = req.user;
     const { image: imageUrl, storeName, storeDescription } = req.body;
 
@@ -70,7 +70,7 @@ router.post('/create', auth, async (req, res) => {
 });
 
 
-router.post('/update', auth, async (req, res) => {
+router.post('/update', auth_old, async (req, res) => {
     try {
         const userId = req.user;
         const uniqueId = uuidv4();

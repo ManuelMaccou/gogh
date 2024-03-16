@@ -1,6 +1,7 @@
 import { Schema, model } from 'mongoose';
 
 const userSchema = new Schema({
+    privyId: { type: String, unique: true },
     fid: { type: String, unique: true },
     signer_uuid: { type: String },
     fc_pfp: { type: String },

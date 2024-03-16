@@ -1,14 +1,17 @@
-import React, { useState, ChangeEvent, FormEvent, forwardRef } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent, forwardRef, useImperativeHandle } from 'react';
 import Modal from 'react-modal';
+import { usePrivy } from '@privy-io/react-auth';
 
 interface User {
+    privyId: string;
     _id: string;
+    fid: string;
     fc_username: string;
     fc_pfp: string;
     fc_profile: string;
-  }
+}
 
-  interface Product {
+interface Product {
     _id: string;
     location: string;
     title: string;
@@ -18,52 +21,81 @@ interface User {
     walletAddress: string;
     email: string;
     user: User;
-  }
+}
 
 interface CreateListingProps {
-    isLoggedIn: boolean;
     onFormSubmit: (formData: FormData, file: File | null) => Promise<Product>;
     formError: string;
     clearFormError: () => void;
     supportedCities: string[];
     initialFormData?: Partial<FormDataState>;
-  }
+    showForm: boolean;
+    onCloseModal: () => void;
+    login: () => void;
+}
   
 interface FormDataState {
     location: string;
     title: string;
     description: string;
-    // image: string;
     price: string;
     walletAddress: string;
     email: string;
 }
 
+interface CreateListingHandles {
+    openCreateListingModal: () => void;
+}
+
 Modal.setAppElement('#root'); 
 
-const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
-    isLoggedIn,
+const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     onFormSubmit,
     formError,
     clearFormError,
     supportedCities,
     initialFormData,
+    showForm: propShowForm,
+    onCloseModal,
+    login,
 }, ref) => {
-    const [showForm, setShowForm] = useState<boolean>(false);
+    const { ready, authenticated } = usePrivy();
     const [formData, setFormData] = useState<FormDataState>({
-        location: initialFormData?.location || '',
-        title: initialFormData?.title || '',
-        description: initialFormData?.description || '',
-        price: initialFormData?.price || '',
-        walletAddress: initialFormData?.walletAddress || '',
-        email: initialFormData?.email || '',
+        location: '',
+        title: '',
+        description: '',
+        price: '',
+        walletAddress: '',
+        email: '',
     });
-
     const [file, setFile] = useState<File | null>(null);
+    const [showForm, setShowForm] = useState<boolean>(propShowForm);
+
+    // Add this useEffect hook
+    useEffect(() => {
+        if (initialFormData) {
+            setFormData({
+                location: initialFormData.location || '',
+                title: initialFormData.title || '',
+                description: initialFormData.description || '',
+                price: initialFormData.price || '',
+                walletAddress: initialFormData.walletAddress || '',
+                email: initialFormData.email || '',
+            });
+        }
+    }, [initialFormData]);
+
+
+    useImperativeHandle(ref, () => ({
+        openCreateListingModal: () => {
+            handleButtonClick();
+            // setShowForm(true);
+        },
+    }));
 
     const handleButtonClick = () => {
-        if (!isLoggedIn) {
-          alert('You must be logged in to create a listing.');
+        if (!authenticated) {
+          login();
           return;
         }
         clearFormError();
@@ -72,6 +104,7 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
 
     const handleCloseModal = () => {
         setShowForm(false);
+        onCloseModal();
         clearFormError();
     };
 
@@ -88,17 +121,17 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData();
-        data.append('location', formData.location);
-        data.append('title', formData.title);
-        data.append('description', formData.description);
+        Object.keys(formData).forEach((key) => {
+            const value = formData[key as keyof FormDataState];
+            if (value !== undefined) {
+            data.append(key, value);
+            }
+        });
         if (file) data.append('image', file);
-        data.append('price', formData.price);
-        data.append('walletAddress', formData.walletAddress);
-        data.append('email', formData.email);
 
         try {
             const product = await onFormSubmit(data, file);
-            setShowForm(false);
+            handleCloseModal();
             // Reset form and file states
             setFormData({
                 location: '',
@@ -108,28 +141,39 @@ const CreateListing = forwardRef<HTMLDivElement, CreateListingProps>(({
                 walletAddress: '',
                 email: '',
             });
-            return product;
-            setFile(null); // Reset file state
+            setFile(null); 
             clearFormError();
+            return product;
         } catch (error) {
         }
+
     };
 
 
     return (
-        <div ref={ref}>
+        <div>
             <div className="create-listing-container">
-                {!isLoggedIn ? (
+                {!authenticated ? (
                 <>
                     <p>Log in to list your product.</p>
-                    <div className="neynar_signin" data-client_id={process.env.REACT_APP_NEYNAR_CLIENT_ID} data-success-callback="onSignInSuccess" data-variant="warpcast"></div>
+                    <button
+                    disabled={!ready}
+                    className="login-button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        login();
+                    }}
+                >
+                   <img src='https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710523060105x590377080657276200/Farcaster%20Icon.png' alt="Farcaster" className="fc-icon" />
+                        <p>Log in</p>
+                </button>
                 </>
             ) : (
                 <>
                     <div className="create-listing">
                         <p>List your product for sale</p>
                     </div>
-                    <button onClick={handleButtonClick}>Create Listing</button>
+                    <button className="create-listing-button" onClick={handleButtonClick}>Create Listing</button>
 
                 <Modal 
                 isOpen={showForm} 
