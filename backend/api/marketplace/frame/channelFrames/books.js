@@ -8,18 +8,6 @@ import validateMessage from '../../../../utils/validateFrameMessage.js';
 
 const router = Router();
 
-let inputText, buttonIndex, step, city, title, description, price, inputError, explain;
-
-const bookFrames = [
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534902459x287655313360131620/books1.jpg',
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534914905x210028621315930600/books2.jpg',
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534927003x427386421304160260/books3.jpg',
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534944815x575172734527624960/books4.jpg',
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710551642848x613212823615965040/books5.jpg',
-];
-
-
-
 router.get('/', async (req, res) => {
 
     const htmlResponse = `
@@ -47,9 +35,9 @@ router.get('/', async (req, res) => {
 
 router.post('/',
 [
-    query('city').if(query('city').exists()).trim().escape(),
-    query('title').if(query('title').exists()).trim().escape(),
-    query('description').if(query('description').exists()).trim().escape(),
+    query('city').if(query('city').exists()).trim(),
+    query('title').if(query('title').exists()).trim(),
+    query('description').if(query('description').exists()).trim(),
     query('price').if(query('price').exists()).customSanitizer(value => {
         // Remove everything except numbers and dollar sign
         return value.replace(/[^0-9$]/g, '');
@@ -63,8 +51,17 @@ async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
+    let inputText, buttonIndex, step, city, title, description, price, inputError, explain;
+
+const bookFrames = [
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710555919752x326559283048353900/books1.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534914905x210028621315930600/books2.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534927003x427386421304160260/books3.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534944815x575172734527624960/books4.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710551642848x613212823615965040/books5.jpg',
+];
+
     const isProduction = process.env.NODE_ENV === 'production';
-    console.log('isProduction:', isProduction);
 
     step = req.query.step;
     city = req.query.city;
@@ -81,8 +78,7 @@ async (req, res) => {
             const validatedFrameData = await validateMessage(messageBytes);
 
             buttonIndex = validatedFrameData.action?.tapped_button?.index;
-            console.log('buttonIndex:', buttonIndex);
-            
+
             inputText = validatedFrameData.action?.input?.text;
 
         } catch (error) {
@@ -155,7 +151,7 @@ async (req, res) => {
         }
 
 
-    res.status(200).send(generateFrameHtml(step, inputError, explain));
+    res.status(200).send(generateFrameHtml(bookFrames, step, city, title, description, price, inputError, explain));
 
     } catch (error) {
         console.error('Failed to generate frame HTML:', error.response || error);
@@ -163,7 +159,7 @@ async (req, res) => {
     }
 });
 
-function generateFrameHtml(step, inputError, explain) {
+function generateFrameHtml(bookFrames, step, city, title, description, price, inputError, explain) {
     const index = parseInt(step, 10) - 1;
     const bookFrame = bookFrames[Math.max(0, Math.min(index, bookFrames.length - 1))];
     let buttonsHtml;
