@@ -109,11 +109,11 @@ const bookFrames = [
                 if (inputText) {
                     if (buttonIndex === 1) { // back
                         step = '1';
-                    } else {
+                    } else if (buttonIndex === 2) {
                         title = inputText;
                         step = '3';
                     }
-                } else {
+                } else if (!index && buttonIndex === 2) {
                     inputError = "true";
                 }
 
@@ -121,11 +121,11 @@ const bookFrames = [
                 if (inputText) {
                     if (buttonIndex === 1) { // back
                         step = '2';
-                    } else {
+                    } else if (buttonIndex === 2) {
                         description = inputText;
                         step = '4';
                     }
-                } else {
+                } else if (!index && buttonIndex === 2) {
                     inputError = "true";
                 }
 
@@ -133,11 +133,14 @@ const bookFrames = [
                 if (inputText) {
                     if (buttonIndex === 1) { // back
                         step = '3'
-                    } else {
+                    } else if (buttonIndex === 2) {
                         price = inputText;
                         step = '5'
                     }
+                } else if (!index && buttonIndex === 2) {
+                    inputError = "true";
                 }
+                
             } else if (step === '5') {
                 if (buttonIndex === 1) { // back
                     step = '4'
