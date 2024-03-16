@@ -92,22 +92,17 @@ async (req, res) => {
     }
     try {
         if (inputError !== "true" && explain !== "true") {
-            console.log('checkpoint 1');
-            console.log('buttonIndex', buttonIndex);
 
             if (step === '1') {
-                console.log('checkpoint 2');
 
                 if (buttonIndex === '1') {
                     city = 'NYC';
                     step = '2';
                 } else if (buttonIndex === '2') {
-                    console.log('checkpoint 3');
 
                     city = 'LA';
                     step = '2';
                 } else {
-                    console.log('checkpoint 4');
                     explain = 'true';
                 }
 
@@ -163,9 +158,6 @@ async (req, res) => {
         console.error('Failed to generate frame HTML:', error.response || error);
         res.status(500).json({ message: 'Failed to share product' });
     }
-
-
-
 });
 
 function generateFrameHtml(step, inputError, explain) {
@@ -211,6 +203,7 @@ function generateFrameHtml(step, inputError, explain) {
 
         switch (step) {
             case '1': // When the user hits explain and comes back on the first step
+            console.log('brookFrame:', bookFrame);
             buttonsHtml = `
                 <meta property="fc:frame:image" content="${bookFrame}" />
                 <meta property="fc:frame:button:1" content="NYC" />
