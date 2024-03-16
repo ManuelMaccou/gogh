@@ -94,10 +94,10 @@ const bookFrames = [
 
             if (step === '1') {
 
-                if (buttonIndex === '1') {
+                if (buttonIndex === 1) {
                     city = 'NYC';
                     step = '2';
-                } else if (buttonIndex === '2') {
+                } else if (buttonIndex === 2) {
 
                     city = 'LA';
                     step = '2';
@@ -107,7 +107,7 @@ const bookFrames = [
 
             } else if (step === '2') {
                 if (inputText) {
-                    if (buttonIndex === '1') { // back
+                    if (buttonIndex === 1) { // back
                         step = '1';
                     } else {
                         title = inputText;
@@ -119,7 +119,7 @@ const bookFrames = [
 
             } else if (step === '3') {
                 if (inputText) {
-                    if (buttonIndex === '1') { // back
+                    if (buttonIndex === 1) { // back
                         step = '2';
                     } else {
                         description = inputText;
@@ -131,7 +131,7 @@ const bookFrames = [
 
             } else if (step === '4') {
                 if (inputText) {
-                    if (buttonIndex === '1') { // back
+                    if (buttonIndex === 1) { // back
                         step = '3'
                     } else {
                         price = inputText;
@@ -139,12 +139,12 @@ const bookFrames = [
                     }
                 }
             } else if (step === '5') {
-                if (buttonIndex === '1') { // back
+                if (buttonIndex === 1) { // back
                     step = '4'
                 }
             }
         } else { // Either inputError or explain is true
-            if (buttonIndex === '1') {
+            if (buttonIndex === 1) {
                 inputError = "";
                 explain = "";
             }
