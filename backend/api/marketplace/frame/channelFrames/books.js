@@ -93,50 +93,48 @@ const bookFrames = [
         if (inputError !== "true" && explain !== "true") {
 
             if (step === '1') {
-
                 if (buttonIndex === 1) {
                     city = 'NYC';
                     step = '2';
                 } else if (buttonIndex === 2) {
-
                     city = 'LA';
                     step = '2';
-                } else {
+                } else  if (buttonIndex === 3) {
                     explain = 'true';
                 }
 
             } else if (step === '2') {
-                if (inputText) {
-                    if (buttonIndex === 1) { // back
-                        step = '1';
-                    } else if (buttonIndex === 2) {
-                        title = inputText;
-                        step = '3';
-                    }
+                if (buttonIndex === 1) { // back
+                    step = '1';
+
+                } else if (buttonIndex === 2 && inputText) {
+                    title = inputText;
+                    step = '3';
+
                 } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
 
             } else if (step === '3') {
-                if (inputText) {
-                    if (buttonIndex === 1) { // back
-                        step = '2';
-                    } else if (buttonIndex === 2) {
-                        description = inputText;
-                        step = '4';
-                    }
+                if (buttonIndex === 1) { // back
+                    step = '2';
+
+                } else if (buttonIndex === 2 && inputText) {
+                    description = inputText;
+                    step = '4';
+
                 } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
 
             } else if (step === '4') {
-                if (inputText) {
-                    if (buttonIndex === 1) { // back
-                        step = '3'
-                    } else if (buttonIndex === 2) {
-                        price = inputText;
-                        step = '5'
-                    }
+                if (buttonIndex === 1) { // back
+                    step = '3'
+
+                } else if (buttonIndex === 2 && inputText) {
+                    price = inputText;
+                    step = '5'
+                    
                 } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
