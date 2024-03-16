@@ -64,6 +64,7 @@ async (req, res) => {
     }
 
     const isProduction = process.env.NODE_ENV === 'production';
+    console.log('isProduction:', isProduction);
 
     step = req.query.step;
     city = req.query.city;
@@ -80,6 +81,8 @@ async (req, res) => {
             const validatedFrameData = await validateMessage(messageBytes);
 
             buttonIndex = validatedFrameData.action?.tapped_button?.index;
+            console.log('buttonIndex:', buttonIndex);
+            
             inputText = validatedFrameData.action?.input?.text;
 
         } catch (error) {
@@ -144,7 +147,7 @@ async (req, res) => {
                     step = '4'
                 }
             }
-        } else {
+        } else { // Either inputError or explain is true
             if (buttonIndex === '1') {
                 inputError = "";
                 explain = "";
@@ -199,11 +202,8 @@ function generateFrameHtml(step, inputError, explain) {
         `;
     } else {
 
-        console.log("not explain or inputError")
-
         switch (step) {
             case '1': // When the user hits explain and comes back on the first step
-            console.log('brookFrame:', bookFrame);
             buttonsHtml = `
                 <meta property="fc:frame:image" content="${bookFrame}" />
                 <meta property="fc:frame:button:1" content="NYC" />
