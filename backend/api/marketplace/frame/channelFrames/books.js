@@ -4,7 +4,10 @@
 import { Router } from 'express';
 import { query, validationResult } from 'express-validator';
 import validateMessage from '../../../../utils/validateFrameMessage.js';
+import { v4 as uuidv4 } from 'uuid';
+import { client, connectRedis } from '../../../../redis.js';
 
+connectRedis()
 
 const router = Router();
 
@@ -33,18 +36,7 @@ router.get('/', async (req, res) => {
 });
 
 
-router.post('/',
-[
-    query('city').if(query('city').exists()).trim(),
-    query('title').if(query('title').exists()).trim(),
-    query('description').if(query('description').exists()).trim(),
-    query('price').if(query('price').exists()).customSanitizer(value => {
-        // Remove everything except numbers and dollar sign
-        return value.replace(/[^0-9$]/g, '');
-    }),
-],
-
-async (req, res) => {
+router.post('/', async (req, res) => {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -59,19 +51,11 @@ const bookFrames = [
     'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710551642848x613212823615965040/books5.jpg',
 ];
 
+    let { step, inputError, explain } = req.query;
+
     const isProduction = process.env.NODE_ENV === 'production';
 
-    let inputText, buttonIndex, step, city, inputError, explain;
-    let encodedTitle, encodedDescription, encodedPrice;
-
-    step = req.query.step;
-    city = req.query.city;
-    encodedTitle = encodeURIComponent(req.query.title);
-    encodedDescription = encodeURIComponent(req.query.description);
-    encodedPrice = encodeURIComponent(req.query.price);
-    inputError = req.query.inputError
-    explain = req.query.explain
-
+    let buttonIndex, inputText, verifiedAddresses;
     if (isProduction) {
         
         try {
@@ -79,7 +63,7 @@ const bookFrames = [
             const validatedFrameData = await validateMessage(messageBytes);
 
             buttonIndex = validatedFrameData.action?.tapped_button?.index;
-
+            verifiedAddresses = validateMessage.action?.interactor?.verified_addresses?.eth_addresses;
             inputText = validatedFrameData.action?.input?.text;
 
         } catch (error) {
@@ -89,16 +73,28 @@ const bookFrames = [
     } else {
         buttonIndex = req.body.untrustedData.buttonIndex;
         inputText = req.body.untrustedData.inputText;
+        verifiedAddresses = req.body.untrustedData.verified_addresses.eth_addresses;
     }
+
+    let sessionId = req.query.sessionId || uuidv4();
+
     try {
+
+        let existingData = await client.get(sessionId).catch(err => {
+            console.error('Error retrieving data from Redis:', err);
+            throw new Error('Failed to retrieve session data');
+        });
+
+        let redisData = existingData ? JSON.parse(existingData) : {};
+       
         if (inputError !== "true" && explain !== "true") {
 
             if (step === '1') {
                 if (buttonIndex === 1) {
-                    city = 'NYC';
+                    redisData.city = 'NYC';
                     step = '2';
                 } else if (buttonIndex === 2) {
-                    city = 'LA';
+                    redisData.city = 'LA';
                     step = '2';
                 } else  if (buttonIndex === 3) {
                     explain = 'true';
@@ -109,7 +105,7 @@ const bookFrames = [
                     step = '1';
 
                 } else if (buttonIndex === 2 && inputText) {
-                    encodedTitle = encodeURIComponent(inputText);
+                    redisData.title = inputText;
                     step = '3';
 
                 } else if (!inputText && buttonIndex === 2) {
@@ -121,28 +117,47 @@ const bookFrames = [
                     step = '2';
 
                 } else if (buttonIndex === 2 && inputText) {
-                    encodedDescription = encodeURIComponent(inputText);
+                    redisData.description = inputText;
                     step = '4';
 
                 } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
-
             } else if (step === '4') {
                 if (buttonIndex === 1) { // back
                     step = '3'
 
                 } else if (buttonIndex === 2 && inputText) {
-                    encodedPrice = encodeURIComponent(inputText);
+                    redisData.price = inputText; // pass stored data to generate URL
                     step = '5'
                     
                 } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
-                
+
             } else if (step === '5') {
                 if (buttonIndex === 1) { // back
-                    step = '4'
+                    step = '4';
+
+                } else if (buttonIndex === 2 && inputText) {
+                    redisData.walletAddress = inputText;
+                    step = '6';
+
+                } else if (buttonIndex === 2 && !inputText) {
+                    inputError = 'true';
+
+                } else if (buttonIndex === 3 && verifiedAddresses[0]) {
+                    redisData.walletAddress = verifiedAddresses[0];
+                    step = '6';
+
+                } else if (buttonIndex === 4 && verifiedAddresses[1]) {
+                    redisData.walletAddress = verifiedAddresses[1];
+                    step = '6';
+                }
+                
+            } else if (step === '6') {
+                if (buttonIndex === 1) { // back
+                    step = '5'
                 }
             }
         } else { // Either inputError or explain is true
@@ -152,8 +167,16 @@ const bookFrames = [
             }
         }
 
+        await client.set(sessionId, JSON.stringify(redisData), {
+            EX: 3600 // Expires in 3600 seconds (1 hour)
+        }).catch(err => {
+            console.error('Error saving data to Redis:', err);
+            throw new Error('Failed to save session data');
+        }); 
 
-    res.status(200).send(generateFrameHtml(bookFrames, step, city, encodedTitle, encodedDescription, encodedPrice, inputError, explain));
+        console.log('redisData:', redisData);
+
+    res.status(200).send(generateFrameHtml(bookFrames, verifiedAddresses, redisData, sessionId, step, inputError, explain));
 
     } catch (error) {
         console.error('Failed to generate frame HTML:', error.response || error);
@@ -161,7 +184,7 @@ const bookFrames = [
     }
 });
 
-function generateFrameHtml(bookFrames, step, city, encodedTitle, encodedDescription, encodedPrice, inputError, explain) {
+function generateFrameHtml(bookFrames, verifiedAddresses, redisData, sessionId, step, inputError, explain) {
     const index = parseInt(step, 10) - 1;
     const bookFrame = bookFrames[Math.max(0, Math.min(index, bookFrames.length - 1))];
     let buttonsHtml;
@@ -174,7 +197,7 @@ function generateFrameHtml(bookFrames, step, city, encodedTitle, encodedDescript
                 <title>Gogh Marketplace</title>
                 <meta name="description" content="Sell your items locally with Gogh" />
                 <meta property="og:url" content="https://www.gogh.shopping" />
-                <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&inputError=${inputError}&explain=${explain}" />
+                <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&sessionId=${sessionId}&inputError=${inputError}&explain=${explain}" />
                 <meta property="fc:frame" content="vNext" />
                 <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
                 <meta property="fc:frame:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710536263408x279083520176537150/book_error.jpg" />
@@ -190,7 +213,7 @@ function generateFrameHtml(bookFrames, step, city, encodedTitle, encodedDescript
                 <title>Gogh Marketplace</title>
                 <meta name="description" content="Sell your items locally with Gogh" />
                 <meta property="og:url" content="https://www.gogh.shopping" />
-                <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&inputError=${inputError}&explain=${explain}" />
+                <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&sessionId=${sessionId}&inputError=${inputError}&explain=${explain}" />
                 <meta property="fc:frame" content="vNext" />
                 <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
                 <meta property="fc:frame:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710536203514x489206431345016200/book_explain.jpg" />
@@ -237,13 +260,50 @@ function generateFrameHtml(bookFrames, step, city, encodedTitle, encodedDescript
             `;
             break;
 
-            case '5': // Confirms the price, now navigate to Gogh for picture
+            case '5':
+            if (!verifiedAddresses) {
+                buttonsHtml = `
+                    <meta property="fc:frame:image" content="${bookFrame}" />
+                    <meta property="fc:frame:input:text" content="ENS not supported" />
+                    <meta property="fc:frame:button:1" content="Back" />
+                    <meta property="fc:frame:button:2" content="Use custom" />
+
+                `;
+            } else if (verifiedAddresses[0] && !verifiedAddresses[1]) {
+                buttonsHtml = `
+                    <meta property="fc:frame:image" content="${bookFrame}" />
+                    <meta property="fc:frame:input:text" content="ENS not supported" />
+                    <meta property="fc:frame:button:1" content="Back" />
+                    <meta property="fc:frame:button:2" content="Use custom" />
+                    <meta property="fc:frame:button:3" content="${verifiedAddresses[0]}" />
+                `;
+            } else if (verifiedAddresses[1]) {
+                buttonsHtml = `
+                    <meta property="fc:frame:image" content="${bookFrame}" />
+                    <meta property="fc:frame:input:text" content="ENS not supported" />
+                    <meta property="fc:frame:button:1" content="Back" />
+                    <meta property="fc:frame:button:2" content="Use custom" />
+                    <meta property="fc:frame:button:3" content="${verifiedAddresses[0]}" />
+                    <meta property="fc:frame:button:3" content="${verifiedAddresses[1]}" />
+                `;
+            }
+
+            break;
+
+            case '6': // Confirms the price, now navigate to Gogh for picture
+
+            const encodedCity = encodeURIComponent(redisData.city || '');
+            const encodedTitle = encodeURIComponent(redisData.title || '');
+            const encodedDescription = encodeURIComponent(redisData.description || '');
+            const encodedPrice = encodeURIComponent(redisData.price || '');
+            const encodedWalletAddress = encodeURIComponent(redisData.walletAddress || '');
+
             buttonsHtml = `
                 <meta property="fc:frame:image" content="${bookFrame}" />
                 <meta property="fc:frame:button:1" content="Back" />
                 <meta property="fc:frame:button:2" content="Upload photo" />
                 <meta property="fc:frame:button:2:action" content="link" />
-                <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/?city=${city}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}" />
+                <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/?city=${encodedCity}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&encodedWalletAddress=${encodedWalletAddress}" />
             `;
             break;
         }
@@ -257,7 +317,7 @@ function generateFrameHtml(bookFrames, step, city, encodedTitle, encodedDescript
             <meta name="description" content="Sell your items locally with Gogh" />
             <meta property="og:url" content="https://www.gogh.shopping" />
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&inputError=${inputError}&explain=${explain}" />
+            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&sessionId=${sessionId}&inputError=${inputError}&explain=${explain}" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
             ${buttonsHtml}
         </head>
