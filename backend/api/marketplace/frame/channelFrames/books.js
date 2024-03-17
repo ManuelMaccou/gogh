@@ -66,6 +66,13 @@ const bookFrames = [
             verifiedAddresses = validateMessage.action?.interactor?.verified_addresses?.eth_addresses;
             inputText = validatedFrameData.action?.input?.text;
 
+            console.log('messageBytes:', messageBytes);
+            console.log('validatedFrameData:', validatedFrameData);
+            console.log('action:', validatedFrameData.action);
+            console.log('interactor:', validatedFrameData.action.interactor);
+            console.log('verified_addresses:', validatedFrameData.action.interactor.verified_addresses);
+            console.log('eth_addresses:', validatedFrameData.action.interactor.verified_addresses.eth_addresses);
+
         } catch (error) {
             console.error('Error validating message:', error);
             return res.status(500).send('An error occurred during message validation.');

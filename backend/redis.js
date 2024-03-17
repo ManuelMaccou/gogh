@@ -15,7 +15,4 @@ const connectRedis = async () => {
     }
 };
 
-console.log('REDIS_PRIVATE_URL:', process.env.REDIS_PRIVATE_URL);
-
-
 export { client, connectRedis };
