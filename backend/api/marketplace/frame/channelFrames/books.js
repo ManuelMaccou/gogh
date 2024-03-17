@@ -63,14 +63,9 @@ const bookFrames = [
             const validatedFrameData = await validateMessage(messageBytes);
 
             buttonIndex = validatedFrameData.action?.tapped_button?.index;
-            verifiedAddresses = validateMessage.action?.interactor?.verified_addresses?.eth_addresses;
+            verifiedAddresses = validatedFrameData.action?.interactor?.verified_addresses?.eth_addresses;
             inputText = validatedFrameData.action?.input?.text;
 
-            console.log('messageBytes:', messageBytes);
-            console.log('validatedFrameData:', validatedFrameData);
-            console.log('action:', validatedFrameData.action);
-            console.log('interactor:', validatedFrameData.action.interactor);
-            console.log('verified_addresses:', validatedFrameData.action.interactor.verified_addresses);
             console.log('eth_addresses:', validatedFrameData.action.interactor.verified_addresses.eth_addresses);
 
         } catch (error) {
@@ -135,7 +130,7 @@ const bookFrames = [
                     step = '3'
 
                 } else if (buttonIndex === 2 && inputText) {
-                    redisData.price = inputText; // pass stored data to generate URL
+                    redisData.price = inputText;
                     step = '5'
                     
                 } else if (!inputText && buttonIndex === 2) {
