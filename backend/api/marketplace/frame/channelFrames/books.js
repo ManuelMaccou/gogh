@@ -51,8 +51,6 @@ async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    let inputText, buttonIndex, step, city, title, description, price, inputError, explain;
-
 const bookFrames = [
     'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710555919752x326559283048353900/books1.jpg',
     'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534914905x210028621315930600/books2.jpg',
@@ -63,11 +61,14 @@ const bookFrames = [
 
     const isProduction = process.env.NODE_ENV === 'production';
 
+    let inputText, buttonIndex, step, city, inputError, explain;
+    let encodedTitle, encodedDescription, encodedPrice;
+
     step = req.query.step;
     city = req.query.city;
-    title = req.query.title;
-    description = req.query.description;
-    price = req.query.price;
+    encodedTitle = encodeURIComponent(req.query.title);
+    encodedDescription = encodeURIComponent(req.query.description);
+    encodedPrice = encodeURIComponent(req.query.price);
     inputError = req.query.inputError
     explain = req.query.explain
 
@@ -108,7 +109,7 @@ const bookFrames = [
                     step = '1';
 
                 } else if (buttonIndex === 2 && inputText) {
-                    title = inputText;
+                    encodedTitle = encodeURIComponent(inputText);
                     step = '3';
 
                 } else if (!inputText && buttonIndex === 2) {
@@ -120,7 +121,7 @@ const bookFrames = [
                     step = '2';
 
                 } else if (buttonIndex === 2 && inputText) {
-                    description = inputText;
+                    encodedDescription = encodeURIComponent(inputText);
                     step = '4';
 
                 } else if (!inputText && buttonIndex === 2) {
@@ -132,7 +133,7 @@ const bookFrames = [
                     step = '3'
 
                 } else if (buttonIndex === 2 && inputText) {
-                    price = inputText;
+                    encodedPrice = encodeURIComponent(inputText);
                     step = '5'
                     
                 } else if (!inputText && buttonIndex === 2) {
@@ -152,7 +153,7 @@ const bookFrames = [
         }
 
 
-    res.status(200).send(generateFrameHtml(bookFrames, step, city, title, description, price, inputError, explain));
+    res.status(200).send(generateFrameHtml(bookFrames, step, city, encodedTitle, encodedDescription, encodedPrice, inputError, explain));
 
     } catch (error) {
         console.error('Failed to generate frame HTML:', error.response || error);
@@ -160,7 +161,7 @@ const bookFrames = [
     }
 });
 
-function generateFrameHtml(bookFrames, step, city, title, description, price, inputError, explain) {
+function generateFrameHtml(bookFrames, step, city, encodedTitle, encodedDescription, encodedPrice, inputError, explain) {
     const index = parseInt(step, 10) - 1;
     const bookFrame = bookFrames[Math.max(0, Math.min(index, bookFrames.length - 1))];
     let buttonsHtml;
@@ -173,7 +174,7 @@ function generateFrameHtml(bookFrames, step, city, title, description, price, in
                 <title>Gogh Marketplace</title>
                 <meta name="description" content="Sell your items locally with Gogh" />
                 <meta property="og:url" content="https://www.gogh.shopping" />
-                <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${title}&description=${description}&price=${price}&inputError=${inputError}&explain=${explain}" />
+                <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&inputError=${inputError}&explain=${explain}" />
                 <meta property="fc:frame" content="vNext" />
                 <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
                 <meta property="fc:frame:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710536263408x279083520176537150/book_error.jpg" />
@@ -189,7 +190,7 @@ function generateFrameHtml(bookFrames, step, city, title, description, price, in
                 <title>Gogh Marketplace</title>
                 <meta name="description" content="Sell your items locally with Gogh" />
                 <meta property="og:url" content="https://www.gogh.shopping" />
-                <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${title}&description=${description}&price=${price}&inputError=${inputError}&explain=${explain}" />
+                <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&inputError=${inputError}&explain=${explain}" />
                 <meta property="fc:frame" content="vNext" />
                 <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
                 <meta property="fc:frame:image" content="https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710536203514x489206431345016200/book_explain.jpg" />
@@ -242,7 +243,7 @@ function generateFrameHtml(bookFrames, step, city, title, description, price, in
                 <meta property="fc:frame:button:1" content="Back" />
                 <meta property="fc:frame:button:2" content="Upload photo" />
                 <meta property="fc:frame:button:2:action" content="link" />
-                <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/?city=${encodeURIComponent(city)}&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&price=${encodeURIComponent(price)}" />
+                <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/?city=${city}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}" />
             `;
             break;
         }
@@ -256,7 +257,7 @@ function generateFrameHtml(bookFrames, step, city, title, description, price, in
             <meta name="description" content="Sell your items locally with Gogh" />
             <meta property="og:url" content="https://www.gogh.shopping" />
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${title}&description=${description}&price=${price}&inputError=${inputError}&explain=${explain}" />
+            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/add/book/?step=${step}&city=${city}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&inputError=${inputError}&explain=${explain}" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
             ${buttonsHtml}
         </head>
