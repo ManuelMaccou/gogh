@@ -281,7 +281,7 @@ function generateFrameHtml(bookFrames, verifiedAddresses, redisData, sessionId, 
             if (!verifiedAddresses) {
                 buttonsHtml = `
                     <meta property="fc:frame:image" content="${bookFrame}" />
-                    <meta property="fc:frame:input:text" content="ENS not supported" />
+                    <meta property="fc:frame:input:text" content="0x123..." />
                     <meta property="fc:frame:button:1" content="Back" />
                     <meta property="fc:frame:button:2" content="Use custom" />
 
