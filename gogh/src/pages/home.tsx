@@ -79,10 +79,8 @@ const HomePage = () => {
                     fc_profile: `https://warpcast.com/${user.farcaster.username}`,
                 }),
             };
-            
 
             try {
- 
                 if (isNewUser) {
                     console.log('userPayload:', userPayload);
                     try {
@@ -136,7 +134,6 @@ const HomePage = () => {
     useEffect(() => {
         const fetchUserDetails = async () => {
             const accessToken = await getAccessToken();
-            console.log('auth status 1:', authenticated)
 
             if (!accessToken) {
                 console.log("No access token available. User might not be logged in.");
@@ -188,12 +185,12 @@ const HomePage = () => {
         const walletAddress = searchParams.get('walletAddress');
         const email = searchParams.get('email');
 
-        if (city && authenticated && createListingRef.current) {
+        if (city && ready && authenticated && createListingRef.current) {
             createListingRef.current.openCreateListingModal();
             setInitialFormData({ location:city, title, description, price, walletAddress, email });
             setShowCreateListingModal(true);
 
-        } else if (city && !authenticated && createListingRef.current) {
+        } else if (city && ready && !authenticated && createListingRef.current) {
             createListingRef.current.openCreateListingModal();
             setInitialFormData({ location:city, title, description, price,walletAddress, email });
             login();
@@ -262,7 +259,7 @@ const HomePage = () => {
                         </button>
                     )}
 
-                    {authenticated && user && (
+                    {authenticated && ready && user && (
                     <>
                     <div className="profile-card">
                         <img src={user?.fc_pfp} alt="User profile" className="fc-pfp" />
