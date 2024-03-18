@@ -243,34 +243,40 @@ const HomePage = () => {
     return (
         <div className='main-container'>
             <header className="site-header">
-                <h1>Gogh</h1>
+                <div>
+                    <img className='header-logo' src="/logo192.png" alt="Logo" />
+                </div>
 
-                {!authenticated && (
-                <button
+                <div className='header-nav'>
+                    {!authenticated && (
+                        <button
+                            disabled={!ready}
+                            className="login-button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                login();
+                            }}
+                        >
+                                <img src='https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710523060105x590377080657276200/Farcaster%20Icon.png' alt="Farcaster" className="fc-icon" />
+                                <p>Log in</p>
+                        </button>
+                    )}
+
+                    {authenticated && user && (
+                    <>
+                    <div className="profile-card">
+                        <img src={user?.fc_pfp} alt="User profile" className="fc-pfp" />
+                        <p>{user?.fc_username}</p>
+                    </div>
+                    <button
+                    className="logout-button"
                     disabled={!ready}
-                    className="login-button"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        login();
-                    }}
-                >
-                        <img src='https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710523060105x590377080657276200/Farcaster%20Icon.png' alt="Farcaster" className="fc-icon" />
-                        <p>Log in</p>
-                </button>
-            )}
-
-            {authenticated && user && (
-                <><button
-                        className="logout-button"
-                        disabled={!ready}
-                        onClick={handleLogout}>
-                        Log out
-                    </button><div className="profile-card">
-                            <img src={user?.fc_pfp} alt="User profile" className="fc-pfp" />
-                            <p>{user?.fc_username}</p>
-                        </div></>
-
-            )}
+                    onClick={handleLogout}>
+                    Log out
+                    </button>
+                    </>
+                    )}
+                </div>
 
             </header>
             <section className="hero-section">

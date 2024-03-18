@@ -161,7 +161,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
             <div className="create-listing-container">
                 {!authenticated ? (
                 <>
-                    <p>Log in to list your product.</p>
                     <button
                     disabled={!ready}
                     className="login-button"
@@ -171,7 +170,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                     }}
                 >
                    <img src='https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710523060105x590377080657276200/Farcaster%20Icon.png' alt="Farcaster" className="fc-icon" />
-                        <p>Log in</p>
+                        <p>Log in to add listing</p>
                 </button>
                 </>
             ) : (
