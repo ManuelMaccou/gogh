@@ -10,7 +10,6 @@ const { sign: jwtSign } = pkg;
 
 router.post('/create', auth, async (req, res) => {
     const userData = req.body;
-    console.log('create userPayload:', userData);
     
     if (!userData) {
         return res.status(400).json({ message: "Missing user data" });
@@ -30,6 +29,7 @@ router.post('/create', auth, async (req, res) => {
                 fc_username: userData.fc_username,
                 fc_pfp: userData.fc_pfp,
                 fc_profile: userData.fc_profile,
+                walletAddress: userData.walletAddress,
             });
         } 
         await user.save();

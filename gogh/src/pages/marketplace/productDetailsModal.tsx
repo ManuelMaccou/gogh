@@ -3,9 +3,11 @@ import Modal from 'react-modal';
 
 interface User {
     _id: string;
-    fc_username: string;
-    fc_pfp: string;
-    fc_profile: string;
+    fc_username?: string;
+    fc_pfp?: string;
+    fc_profile?: string;
+    email?: string;
+    walletAddress?: string;
   }
 
   interface Product {
@@ -34,6 +36,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   if (!product) return null;
 
 const shareUrl = `https://warpcast.com/~/compose?embeds[]=https://www.gogh.shopping/marketplace/frame/share/product/${product._id}`;
+const userName = product.user?.fc_username ?? product.user?.walletAddress?.slice(0, 6);
 
   return (
     <Modal
@@ -49,8 +52,11 @@ const shareUrl = `https://warpcast.com/~/compose?embeds[]=https://www.gogh.shopp
         </button>
       </div>
       <div className='product-modal-header'>
+      {product.user?.fc_pfp && (
         <img src={product.user.fc_pfp} alt="User profile" className='fc-pfp'  />
-        <p>{product.user.fc_username}</p>
+      )}
+
+        <p>{userName}</p>
         <a href={shareUrl} target="_blank" rel="noopener noreferrer" className='share-button'>
         <p>Share</p>
         <i className="fa-regular fa-share-from-square"></i>

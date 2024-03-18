@@ -49,6 +49,23 @@
     align-items: center;
 }
 
+.header-login-button {
+    padding: 0px 35px;
+    margin-top: 10px;
+    margin: auto;
+    height: fit-content;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    background: #8A63D1;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
 .create-listing-button {
     padding: 10px 35px;
     margin-top: 10px;
@@ -483,6 +500,7 @@ input[type="checkbox"] {
     color: #ffffff;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 16px;
+    cursor: pointer;
 }
 
 .submit-button {

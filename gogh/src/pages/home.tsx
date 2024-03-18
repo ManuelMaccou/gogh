@@ -16,10 +16,12 @@ interface FeaturedStoreImage {
 interface User {
     privyId: string;
     _id: string;
-    fid: string;
-    fc_username: string;
-    fc_pfp: string;
-    fc_profile: string;
+    fid?: string;
+    fc_username?: string;
+    fc_pfp?: string;
+    fc_profile?: string;
+    email?: string;
+    walletAddress?: string;
   }
 
 interface Product {
@@ -68,21 +70,22 @@ const HomePage = () => {
 
     const { login } = useLogin({
         onComplete: async (user, isNewUser) => {
+
             const accessToken = await getAccessToken();
 
             const userPayload = {
                 privyId: user.id,
+                walletAddress: user.wallet?.address,
                 ...(user.farcaster && {
-                    fid: user.farcaster.fid,
-                    fc_username: user.farcaster.displayName,
-                    fc_pfp: user.farcaster.pfp,
-                    fc_profile: `https://warpcast.com/${user.farcaster.username}`,
+                    fid: user.farcaster?.fid,
+                    fc_username: user.farcaster?.displayName,
+                    fc_pfp: user.farcaster?.pfp,
+                    fc_profile: `https://warpcast.com/${user.farcaster?.username}`,
                 }),
             };
 
             try {
                 if (isNewUser) {
-                    console.log('userPayload:', userPayload);
                     try {
 
                         const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/create`, userPayload, {
@@ -91,7 +94,6 @@ const HomePage = () => {
 
                         if (response.status === 201) {
                             setUser(response.data);
-                            console.log('User details:', response.data);
                         } else {
                             throw new Error('Failed to fetch user details');
                         }
@@ -112,7 +114,6 @@ const HomePage = () => {
                     
                     if (response.status === 200) {
                         setUser(response.data);
-                        console.log('User details:', response.data);
                     } else {
                         throw new Error('Failed to fetch user details');
                     }
@@ -184,6 +185,9 @@ const HomePage = () => {
         const price = searchParams.get('price');
         const walletAddress = searchParams.get('walletAddress');
         const email = searchParams.get('email');
+        console.log('test');
+        console.log('ready:', ready);
+        console.log('authenticated:', authenticated);
 
         if (city && ready && authenticated && createListingRef.current) {
             createListingRef.current.openCreateListingModal();
@@ -236,6 +240,7 @@ const HomePage = () => {
             throw error;
         }
     };
+    const userName = user?.fc_username ?? user?.walletAddress?.slice(0, 6);
 
     return (
         <div className='main-container'>
@@ -248,22 +253,23 @@ const HomePage = () => {
                     {!authenticated && (
                         <button
                             disabled={!ready}
-                            className="login-button"
+                            className="header-login-button"
                             onClick={(e) => {
                                 e.preventDefault();
                                 login();
                             }}
                         >
-                                <img src='https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710523060105x590377080657276200/Farcaster%20Icon.png' alt="Farcaster" className="fc-icon" />
-                                <p>Log in</p>
+                            <p>Log in</p>
                         </button>
                     )}
 
                     {authenticated && ready && user && (
                     <>
                     <div className="profile-card">
+                    {user?.fc_pfp && (
                         <img src={user?.fc_pfp} alt="User profile" className="fc-pfp" />
-                        <p>{user?.fc_username}</p>
+                    )}
+                        <p>{userName}</p>
                     </div>
                     <button
                     className="logout-button"

@@ -4,6 +4,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './database.js';
 import cors from 'cors';
+import helmet from "helmet";
 
 import productRoutes from './api/products.js';
 import userRoutes from './api/user.js';
@@ -42,13 +43,38 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const app = express();
 
-app.use(cors());
+
 
 // Trust the reverse proxy when determining the connection protocol
 app.set('trust proxy', true);
 
 // Connect to Database
 connectDB();
+
+
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "http://localhost:5001"],
+            scriptSrc: ["'self'", "https://challenges.cloudflare.com", "https://kit.fontawesome.com", "https://neynarxyz.github.io"],
+            childSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org"],
+            frameSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org", "https://challenges.cloudflare.com"],
+            connectSrc: ["https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io"],
+            reportUri: ["/csp-report"],
+        },
+        reportOnly: true,
+    }}),
+);
+
+app.post('/csp-report', express.json({type: 'application/csp-report'}), (req, res) => {
+    console.log('CSP Violation:', req.body);
+    res.status(204).end();
+});
+
+app.use(cors());
 
 app.use(json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 

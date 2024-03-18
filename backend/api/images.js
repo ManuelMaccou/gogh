@@ -4,9 +4,8 @@
 
 import { Router } from 'express';
 const router = Router();
-import Image from '../models/image.js'; // Adjust the path to your Image model
+import Image from '../models/image.js';
 
-// Serve images from MongoDB with a URL ending in .jpg
 router.get('/:imageId.jpg', async (req, res) => {
     try {
         const { imageId } = req.params;
@@ -17,6 +16,7 @@ router.get('/:imageId.jpg', async (req, res) => {
         }
 
         res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.send(image.data); // Send the image data as the response
     } catch (error) {
         console.error(error);

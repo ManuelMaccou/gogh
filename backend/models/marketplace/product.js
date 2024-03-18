@@ -9,7 +9,7 @@ const marketplaceProductSchema = new Schema({
     price: { type: String, required: false },
     walletAddress: { type: String, required: true },
     email: { type: String, required: true },
-    user: { type: Schema.Types.ObjectId, ref: 'User' }
+    user: { type: Schema.Types.ObjectId, required: true, ref: 'User' }
 });
 
 const MarketplaceProduct = model('MarketplaceProduct', marketplaceProductSchema);

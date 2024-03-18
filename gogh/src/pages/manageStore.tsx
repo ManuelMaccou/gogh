@@ -37,6 +37,8 @@ interface User {
     fc_username: string;
     fc_pfp: string;
     fc_profile: string;
+    email: string;
+    walletAddress: string;
 }
 
 function parseJwt(token: string) {

@@ -5,10 +5,12 @@ import { usePrivy } from '@privy-io/react-auth';
 interface User {
     privyId: string;
     _id: string;
-    fid: string;
-    fc_username: string;
-    fc_pfp: string;
-    fc_profile: string;
+    fid?: string;
+    fc_username?: string;
+    fc_pfp?: string;
+    fc_profile?: string;
+    email?: string;
+    walletAddress?: string;
 }
 
 interface Product {
@@ -71,6 +73,8 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     const [file, setFile] = useState<File | null>(null);
     const [showForm, setShowForm] = useState<boolean>(propShowForm);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [fileName, setFileName] = useState<string>('');
+    const [filePreview, setFilePreview] = useState<string | null>(null);
 
     // Add this useEffect hook
     useEffect(() => {
@@ -102,6 +106,18 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         setShowForm(true);
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files ? e.target.files[0] : null;
+        if (file) {
+            setFileName(file.name);
+            setFilePreview(URL.createObjectURL(file));
+        } else {
+            // Handle the case when no file is selected
+            setFileName('');
+            setFilePreview(null);
+        }
+      };
+
     const handleFileButtonClick = () => {
         if (fileInputRef.current) {
           fileInputRef.current.click();
@@ -118,7 +134,15 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         const { name, value } = event.target;
     
         if (event.target instanceof HTMLInputElement && event.target.type === 'file') {
-            setFile(event.target.files && event.target.files.length > 0 ? event.target.files[0] : null);
+            const file = event.target.files && event.target.files.length > 0 ? event.target.files[0] : null;
+            setFile(file);
+            if (file) {
+                setFileName(file.name); // Update the file name for UI display
+                setFilePreview(URL.createObjectURL(file)); // Generate and set file preview
+            } else {
+                setFileName('');
+                setFilePreview(null); // Clear previous file preview
+            }
         } else {
             setFormData(prevState => ({ ...prevState, [name]: value }));
         }
@@ -169,8 +193,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         login();
                     }}
                 >
-                   <img src='https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710523060105x590377080657276200/Farcaster%20Icon.png' alt="Farcaster" className="fc-icon" />
-                        <p>Log in to add listing</p>
+                    <p>Log in to add listing</p>
                 </button>
                 </>
             ) : (
@@ -206,6 +229,9 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         />
                         {/* Custom button that users see and interact with */}
                         <button className='upload-image-button' onClick={handleFileButtonClick} type="button">Upload image</button>
+                        {fileName && <div>Selected file: {fileName}</div>}
+                        {filePreview && <img src={filePreview} alt="File preview" style={{ width: '100px', height: 'auto' }} />}
+
                         <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in USDC" />
                         <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment. Not ENS." required />
                         <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email for purchase notifications" required />
