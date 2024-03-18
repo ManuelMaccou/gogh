@@ -185,8 +185,18 @@
 
 .product-modal-close {
     margin-bottom: 20px;
-    font-size: 24px;
     text-align: end;
+}
+
+.fa-solid {
+    font-size: 24px;
+}
+
+.product-modal-close button {
+    appearance: none;
+    border: none;
+    background: none;
+    cursor: pointer;
 }
 
 .product-modal-header {
