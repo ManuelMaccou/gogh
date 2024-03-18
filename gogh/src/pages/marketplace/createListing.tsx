@@ -28,6 +28,7 @@ interface Product {
 interface CreateListingProps {
     onFormSubmit: (formData: FormData, file: File | null) => Promise<Product>;
     formError: string;
+    setFormError: (error: string) => void;
     clearFormError: () => void;
     supportedCities: string[];
     initialFormData?: Partial<FormDataState>;
@@ -54,6 +55,7 @@ Modal.setAppElement('#root');
 const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     onFormSubmit,
     formError,
+    setFormError,
     clearFormError,
     supportedCities,
     initialFormData,
@@ -106,18 +108,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         setShowForm(true);
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files ? e.target.files[0] : null;
-        if (file) {
-            setFileName(file.name);
-            setFilePreview(URL.createObjectURL(file));
-        } else {
-            // Handle the case when no file is selected
-            setFileName('');
-            setFilePreview(null);
-        }
-      };
-
     const handleFileButtonClick = () => {
         if (fileInputRef.current) {
           fileInputRef.current.click();
@@ -150,6 +140,12 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        clearFormError();
+        if (!file) {
+            setFormError('Please upload an image for the product.');
+            return; 
+        }
+
         const data = new FormData();
         Object.keys(formData).forEach((key) => {
             const value = formData[key as keyof FormDataState];
@@ -210,7 +206,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                     <button className="close-button" onClick={handleCloseModal}>&times;</button>
                     <h2>Add Product</h2>
                     <form onSubmit={handleSubmit}>
-                        {formError && <p className="form-error">{formError}</p>}
                         <select name="location" value={formData.location} onChange={handleChange} required>
                             <option value="">Select your city</option>
                             {supportedCities.map((city, index) => (
@@ -225,7 +220,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                             ref={fileInputRef}
                             onChange={handleChange}
                             style={{ display: 'none' }}
-                            required
                         />
                         {/* Custom button that users see and interact with */}
                         <button className='upload-image-button' onClick={handleFileButtonClick} type="button">Upload image</button>
@@ -236,6 +230,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment. Not ENS." required />
                         <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email for purchase notifications" required />
                         <button className="submit-button" type="submit">Submit</button>
+                        {formError && <p className="form-error">{formError}</p>}
                     </form>
                 </Modal>
                 </>
