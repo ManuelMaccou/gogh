@@ -35,34 +35,6 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
 const shareUrl = `https://warpcast.com/~/compose?embeds[]=https://www.gogh.shopping/marketplace/frame/share/product/${product._id}`;
 
-/*
-  return (
-    <Modal
-        isOpen={isOpen}
-        onRequestClose={onRequestClose}
-        contentLabel="Product Details"
-        className="product-modal"
-        overlayClassName="modal-overlay"
-    >
-        
-        <div className='product-modal-header'>
-            <img src={product.user.fc_pfp} alt="User profile" className='fc-pfp'  />
-            <p>{product.user.fc_username}</p>
-        </div>
-        <div className='product-modal-body'>
-            <img src={product.imageUrl} alt={product.title} className='product-image'/>
-            <div className='product-info'>
-                <h2>{product.title}</h2>
-                <p className='product-description'>{product.description}</p>
-                <p className='product-price'>Price: {product.price}</p>
-            </div>
-        </div>
-    </Modal>
-  );
-  */
-
-
-
   return (
     <Modal
         isOpen={isOpen}

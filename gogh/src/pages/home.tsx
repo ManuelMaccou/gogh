@@ -180,23 +180,22 @@ const HomePage = () => {
     };
 
     useEffect(() => {
-        console.log('auth status 2:', authenticated)
         const searchParams = new URLSearchParams(location.search);
         const city = searchParams.get('city');
         const title = searchParams.get('title');
         const description = searchParams.get('description');
         const price = searchParams.get('price');
+        const walletAddress = searchParams.get('walletAddress');
+        const email = searchParams.get('email');
 
         if (city && authenticated && createListingRef.current) {
-            console.log('auth status 3:', authenticated)
-
             createListingRef.current.openCreateListingModal();
-            setInitialFormData({ location:city, title, description, price });
+            setInitialFormData({ location:city, title, description, price, walletAddress, email });
             setShowCreateListingModal(true);
+
         } else if (city && !authenticated && createListingRef.current) {
-            console.log('auth status 4:', authenticated)
             createListingRef.current.openCreateListingModal();
-            setInitialFormData({ location:city, title, description, price });
+            setInitialFormData({ location:city, title, description, price,walletAddress,email });
             login();
         }
 

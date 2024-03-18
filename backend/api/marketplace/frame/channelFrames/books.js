@@ -46,9 +46,11 @@ router.post('/', async (req, res) => {
 const bookFrames = [
     'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710555919752x326559283048353900/books1.jpg',
     'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534914905x210028621315930600/books2.jpg',
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534927003x427386421304160260/books3.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710720645673x271228752763877470/books3.jpg',
     'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710534944815x575172734527624960/books4.jpg',
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710551642848x613212823615965040/books5.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710720430622x627950942486502400/books5.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710721208937x933494432404038800/books6.jpg',
+    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710720534023x518762324099516000/books7.jpg',
 ];
 
     let { step, inputError, explain } = req.query;
@@ -125,6 +127,7 @@ const bookFrames = [
                 } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
                 }
+
             } else if (step === '4') {
                 if (buttonIndex === 1) { // back
                     step = '3'
@@ -156,10 +159,22 @@ const bookFrames = [
                     redisData.walletAddress = verifiedAddresses[1];
                     step = '6';
                 }
-                
+
             } else if (step === '6') {
                 if (buttonIndex === 1) { // back
                     step = '5'
+
+                } else if (buttonIndex === 2 && inputText) {
+                    redisData.email = inputText;
+                    step = '7'
+                    
+                } else if (!inputText && buttonIndex === 2) {
+                    inputError = "true";
+                }
+                
+            } else if (step === '7') {
+                if (buttonIndex === 1) { // back
+                    step = '6'
                 }
             }
         } else { // Either inputError or explain is true
@@ -292,7 +307,16 @@ function generateFrameHtml(bookFrames, verifiedAddresses, redisData, sessionId, 
 
             break;
 
-            case '6': // Confirms the price, now navigate to Gogh for picture
+            case '6': // User entered description, now show price frame
+            buttonsHtml = `
+                <meta property="fc:frame:image" content="${bookFrame}" />
+                <meta property="fc:frame:input:text" content="Enter an email" />
+                <meta property="fc:frame:button:1" content="Back" />
+                <meta property="fc:frame:button:2" content="Continue" />
+            `;
+            break;
+
+            case '7': // Confirms the price, now navigate to Gogh for picture
 
             const encodedCity = encodeURIComponent(redisData.city || '');
             const encodedTitle = encodeURIComponent(redisData.title || '');
@@ -305,7 +329,7 @@ function generateFrameHtml(bookFrames, verifiedAddresses, redisData, sessionId, 
                 <meta property="fc:frame:button:1" content="Back" />
                 <meta property="fc:frame:button:2" content="Upload photo" />
                 <meta property="fc:frame:button:2:action" content="link" />
-                <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/?city=${encodedCity}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&encodedWalletAddress=${encodedWalletAddress}" />
+                <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/?city=${encodedCity}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&walletAddress=${encodedWalletAddress}" />
             `;
             break;
         }
