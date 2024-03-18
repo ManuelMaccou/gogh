@@ -54,6 +54,7 @@
     font-size: 14px;
     font-weight: 700;
     font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
     background: #8A63D1;
     color: #ffffff;
     cursor: pointer;
@@ -166,64 +167,6 @@
     height: auto;
     display: block;
     border-radius: 8px;
-}
-  
-.local-section {
-    text-align: center;
-    padding: 2rem;
-    background-color: #fff;
-    font-size: 1rem;
-}
-
-.local-section h2 {
-    font-size: 56px;
-    text-align: center;
-}
-
-@media (max-width: 768px) {
-    .local-section h2 {
-        font-size: 40px;
-    }
-}
-
-.local-section h3 {
-    font-size: 26px;
-    text-align: center;
-}
-
-.local-section .cities-item {
-    width: 150px;
-    display: inline-flex;
-    margin: 0.5rem;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    background-color: #000000;
-    color: #ffffff;
-    border-radius: 25px;
-  }
-
-@media (max-width: 768px) {
-    .local-section .cities-item {
-        margin: 0px;
-    }
-}
-  
-.cities-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-}
-
-.create-listing-container {
-    max-width: 500px;
-    padding: 20px;
-    margin-top: 20px;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
-    border: 2px dotted #ccc;
 }
   
 .create-listing {
@@ -512,6 +455,19 @@ input[type="checkbox"] {
     border-radius: 10px;
     border: 1px solid #ddd;
     box-sizing: border-box;
+}
+
+.upload-image-button {
+    width: 100%;
+    height: 40px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    background-color: #8A63D1;
+    border: none;
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
 }
 
 .submit-button {

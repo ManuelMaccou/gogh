@@ -323,13 +323,14 @@ function generateFrameHtml(bookFrames, verifiedAddresses, redisData, sessionId, 
             const encodedDescription = encodeURIComponent(redisData.description || '');
             const encodedPrice = encodeURIComponent(redisData.price || '');
             const encodedWalletAddress = encodeURIComponent(redisData.walletAddress || '');
+            const encodedEmail = encodeURIComponent(redisData.email || '');
 
             buttonsHtml = `
                 <meta property="fc:frame:image" content="${bookFrame}" />
                 <meta property="fc:frame:button:1" content="Back" />
                 <meta property="fc:frame:button:2" content="Upload photo" />
                 <meta property="fc:frame:button:2:action" content="link" />
-                <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/?city=${encodedCity}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&walletAddress=${encodedWalletAddress}" />
+                <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/?city=${encodedCity}&title=${encodedTitle}&description=${encodedDescription}&price=${encodedPrice}&walletAddress=${encodedWalletAddress}&email=${encodedEmail}" />
             `;
             break;
         }

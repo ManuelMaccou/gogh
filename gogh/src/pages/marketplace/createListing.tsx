@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent, forwardRef, useImperativeHandle, useRef } from 'react';
 import Modal from 'react-modal';
 import { usePrivy } from '@privy-io/react-auth';
 
@@ -70,6 +70,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     });
     const [file, setFile] = useState<File | null>(null);
     const [showForm, setShowForm] = useState<boolean>(propShowForm);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Add this useEffect hook
     useEffect(() => {
@@ -89,7 +90,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     useImperativeHandle(ref, () => ({
         openCreateListingModal: () => {
             handleButtonClick();
-            // setShowForm(true);
         },
     }));
 
@@ -101,6 +101,12 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         clearFormError();
         setShowForm(true);
     };
+
+    const handleFileButtonClick = () => {
+        if (fileInputRef.current) {
+          fileInputRef.current.click();
+        }
+      };
 
     const handleCloseModal = () => {
         setShowForm(false);
@@ -171,10 +177,8 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
             ) : (
                 <>
                     <div className="create-listing">
-                        <p>List your product for sale</p>
+                        <button className="create-listing-button" onClick={handleButtonClick}>Create Listing</button>
                     </div>
-                    <button className="create-listing-button" onClick={handleButtonClick}>Create Listing</button>
-
                 <Modal 
                 isOpen={showForm} 
                 onRequestClose={handleCloseModal}
@@ -193,7 +197,16 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         </select>
                         <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
                         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
-                        <input type="file" onChange={handleChange} required />
+                        {/* Hidden file input */}
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleChange}
+                            style={{ display: 'none' }}
+                            required
+                        />
+                        {/* Custom button that users see and interact with */}
+                        <button className='upload-image-button' onClick={handleFileButtonClick} type="button">Upload image</button>
                         <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in USDC" />
                         <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment. Not ENS." required />
                         <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email for purchase notifications" required />

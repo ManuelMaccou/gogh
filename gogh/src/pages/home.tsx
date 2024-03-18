@@ -195,7 +195,7 @@ const HomePage = () => {
 
         } else if (city && !authenticated && createListingRef.current) {
             createListingRef.current.openCreateListingModal();
-            setInitialFormData({ location:city, title, description, price,walletAddress,email });
+            setInitialFormData({ location:city, title, description, price,walletAddress, email });
             login();
         }
 
@@ -275,7 +275,17 @@ const HomePage = () => {
             </header>
             <section className="hero-section">
                 <h1 className="title">Buy and sell products on Farcaster</h1>
-                <button className='list-item'>List an item for sale</button>
+                <CreateListing 
+                    ref={createListingRef}
+                    onFormSubmit={onFormSubmit} 
+                    formError={formError} 
+                    clearFormError={() => setFormError('')} 
+                    supportedCities={supportedCities}
+                    initialFormData={initialFormData}
+                    showForm={showCreateListingModal}
+                    onCloseModal={() => setShowCreateListingModal(false)}
+                    login={login}
+                />
             </section>
             <section className="submitted-products">
                 <div className="marketplace-products-grid">
@@ -304,29 +314,6 @@ const HomePage = () => {
                     />
                 </div>
             </section>
-            <section className="local-section">
-                <h2>Local Marketplace</h2>
-                <h3>Current cities supported:</h3>
-                <div className="cities-container">
-                    {supportedCities.map((city, index) => (
-                        <div key={index} className="cities-item">
-                            <p>{city}</p>
-                        </div>
-                    ))}
-                </div>
-                <CreateListing 
-                    ref={createListingRef}
-                    onFormSubmit={onFormSubmit} 
-                    formError={formError} 
-                    clearFormError={() => setFormError('')} 
-                    supportedCities={supportedCities}
-                    initialFormData={initialFormData}
-                    showForm={showCreateListingModal}
-                    onCloseModal={() => setShowCreateListingModal(false)}
-                    login={login}
-                />
-            </section>
-            
             <section className="featured-stores-section">
                 <div className="featured-stores">
                     <h2>Featured Stores</h2>
