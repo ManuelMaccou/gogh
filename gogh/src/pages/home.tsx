@@ -191,20 +191,18 @@ const HomePage = () => {
         console.log('ready:', ready);
         console.log('authenticated:', authenticated);
 
-        if (ready) {
-            if (city && authenticated && createListingRef.current) {
-                createListingRef.current.openCreateListingModal();
-                setInitialFormData({ location:city, title, description, price, walletAddress, email });
-                setShowCreateListingModal(true);
+        if (city && ready && authenticated && createListingRef.current) {
+            createListingRef.current.openCreateListingModal();
+            setInitialFormData({ location:city, title, description, price, walletAddress, email });
+            setShowCreateListingModal(true);
 
-            } else if (city && !authenticated && createListingRef.current) {
-                createListingRef.current.openCreateListingModal();
-                setInitialFormData({ location:city, title, description, price,walletAddress, email });
-                setShowCreateListingModal(true);
-                login();
-            }
+        } else if (city && ready && !authenticated && createListingRef.current) {
+            createListingRef.current.openCreateListingModal();
+            setInitialFormData({ location:city, title, description, price,walletAddress, email });
+            login();
         }
-    }, [location, authenticated, user, ready]);
+
+    }, [location, authenticated]);
 
     const fetchProducts = async () => {
         try {
@@ -292,7 +290,6 @@ const HomePage = () => {
                     ref={createListingRef}
                     onFormSubmit={onFormSubmit} 
                     formError={formError} 
-                    setFormError={setFormError}
                     clearFormError={() => setFormError('')} 
                     supportedCities={supportedCities}
                     initialFormData={initialFormData}
