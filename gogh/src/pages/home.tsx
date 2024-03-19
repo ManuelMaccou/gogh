@@ -114,6 +114,7 @@ const HomePage = () => {
                     
                     if (response.status === 200) {
                         setUser(response.data);
+                        console.log('setUser at login:', response.data);
                     } else {
                         throw new Error('Failed to fetch user details');
                     }
@@ -153,6 +154,7 @@ const HomePage = () => {
                     headers: { 'Authorization': `Bearer ${accessToken}` }
                 })
                 setUser(response.data);
+                console.log('setUser at refresh:', response.data);
             } catch(error) {
                 console.error('Error fetching user details:', error);
                 setUser(null);

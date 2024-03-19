@@ -47,10 +47,15 @@ router.post('/lookup', async (req, res) => {
     try {
         // Prefer privyId if available, fallback to fid otherwise
         const privyId = userData.privyId;
+        console.log('privyId:', privyId);
+
         const fid = userData.fid;
+        console.log('fid:', fid);
+
         const query = privyId ? { privyId } : { fid };
 
         let user = await User.findOne(query);
+        console.log('user in user API:', user);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
