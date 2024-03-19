@@ -114,7 +114,6 @@ const HomePage = () => {
                     
                     if (response.status === 200) {
                         setUser(response.data);
-                        console.log('setUser at login:', response.data);
                     } else {
                         throw new Error('Failed to fetch user details');
                     }
@@ -154,7 +153,6 @@ const HomePage = () => {
                     headers: { 'Authorization': `Bearer ${accessToken}` }
                 })
                 setUser(response.data);
-                console.log('setUser at refresh:', response.data);
             } catch(error) {
                 console.error('Error fetching user details:', error);
                 setUser(null);
@@ -191,18 +189,21 @@ const HomePage = () => {
         console.log('ready:', ready);
         console.log('authenticated:', authenticated);
 
-        if (city && ready && authenticated && createListingRef.current) {
-            createListingRef.current.openCreateListingModal();
-            setInitialFormData({ location:city, title, description, price, walletAddress, email });
-            setShowCreateListingModal(true);
+        if (ready) {
+            if (city && authenticated && createListingRef.current) {
+                createListingRef.current.openCreateListingModal();
+                setInitialFormData({ location:city, title, description, price, walletAddress, email });
+                setShowCreateListingModal(true);
 
-        } else if (city && ready && !authenticated && createListingRef.current) {
-            createListingRef.current.openCreateListingModal();
-            setInitialFormData({ location:city, title, description, price,walletAddress, email });
-            login();
+            } else if (city && !authenticated && createListingRef.current) {
+                createListingRef.current.openCreateListingModal();
+                setInitialFormData({ location:city, title, description, price,walletAddress, email });
+                setShowCreateListingModal(true);
+                login();
+            }
         }
 
-    }, [location, authenticated]);
+    }, [location, authenticated, user, ready]);
 
     const fetchProducts = async () => {
         try {
@@ -228,7 +229,6 @@ const HomePage = () => {
           });
 
           if (response.status === 201) {
-            console.log('Fetching products after submission...');
             fetchProducts();
             openModalWithProduct(response.data);
             return response.data;
