@@ -1,4 +1,4 @@
-// https://www.gogh.shopping/marketplace/add/book/
+// https://www.gogh.shopping/marketplace/add/book
 
 
 import { Router } from 'express';
