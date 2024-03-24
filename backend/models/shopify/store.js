@@ -12,7 +12,7 @@ const ShopifyVariantSchema = new Schema({
 
 // Define Product Schema
 const ShopifyProductSchema = new Schema({
-    shopifyProductId: { type: String, unique: true },
+    shopifyProductId: { type: String },
     title: { type: String },
     description: { type: String },
     originalDescription: { type: String },
@@ -40,7 +40,7 @@ const ShopifyStoreSchema = new Schema({
 });
 
 // Index for faster retrieval
-ShopifyStoreSchema.index({ 'products.shopifyProductId': 1, 'products.variants.shopifyVariantId': 1 });
+ShopifyStoreSchema.index({ shopifyStoreUrl: 1, 'products.shopifyProductId': 1 }, { unique: true });
 
 const ShopifyStore = model('ShopifyStore', ShopifyStoreSchema);
 
