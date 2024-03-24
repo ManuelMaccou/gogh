@@ -84,7 +84,8 @@ async function createProductFrame(product) {
             const priceBottomMargin = 30;
             const priceX = canvas.width - priceRightMargin;
             const priceY = canvas.height - priceBottomMargin;
-            ctx.fillText(product.variants[0].price, priceX, priceY); // No line height needed for single line text like price 
+            const fullPrice = `$${product.variants[0].price}`
+            ctx.fillText(fullPrice, priceX, priceY); // No line height needed for single line text like price 
         }
 
 

@@ -75,7 +75,8 @@ async function createOptionsFrame(product, variant) {
             const priceBottomMargin = 30;
             const priceX = canvas.width - priceRightMargin;
             const priceY = canvas.height - priceBottomMargin;
-            ctx.fillText(variant.price, priceX, priceY);
+            const fullPrice = `$${variant.price}`
+            ctx.fillText(fullPrice, priceX, priceY);
         }
 
         // Generate and return the image URL
