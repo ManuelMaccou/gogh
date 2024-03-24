@@ -79,13 +79,14 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
     console.log('Received product update webhook');
     res.status(200).send('Webhook received');
 
-    const { vendor, id, title, image, images, variants } = req.body;
+    const shopifyDomain = req.headers['x-shopify-shop-domain'];
+    const { id, title, image, images, variants } = req.body;
 
     try {
         // Find the relevant store
-        const store = await ShopifyStore.findOne({ storeName: vendor });
+        const store = await ShopifyStore.findOne({ shopifyStoreUrl: shopifyDomain });
         if (!store) {
-            console.log('Store not found for vendor:', vendor);
+            console.log('Store not found for Shopify Domain:', shopifyDomain);
             return;
         }
 
@@ -136,7 +137,7 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
                     const generatedProductFrameBuffer = await createProductFrame(existingProduct);
                     const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
 
-                    existingProduct.frameImage = `${process.env.BASE_URL}/image/${productImageId}`;
+                    existingProduct.frameImage = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
                     console.log('Frame images updated for product');
                 } catch (error) {
                 console.error(`Error generating frame images for product ${product.shopifyProductId}:`, error);
@@ -202,7 +203,7 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
                             // Generate frame images for each variant
                             const generatedVariantFrameBuffer = await createOptionsFrame(existingProduct, existingVariant);
                             const variantImageId = await storeImage(generatedVariantFrameBuffer, 'image/jpeg');
-                            existingVariant.frameImage = `${process.env.BASE_URL}/image/${variantImageId}`;
+                            existingVariant.frameImage = `${process.env.BASE_URL}/images/${variantImageId}.jpg`;
                             console.log('Frame images updated for variant');
                         } catch (error) {
                         console.error('Error generating frame images for variant', error);
