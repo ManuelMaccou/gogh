@@ -101,7 +101,7 @@ router.post('/update', async (req, res) => {
         }
 
         const storeImageId = await storeImage(imageBuffer, mimeType);
-        const storeImageUrl = `${process.env.BASE_URL}/image/${storeImageId}`;
+        const storeImageUrl = `${process.env.BASE_URL}/images/${storeImageId}.jpg`;
 
         const pageHtml = `
         <!DOCTYPE html>

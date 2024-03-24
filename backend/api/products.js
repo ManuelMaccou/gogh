@@ -64,7 +64,7 @@ router.post('/add', auth_old, async (req, res) => {
       const generatedProductImageBuffer = await generateProductImage(productData);
       const productImageId = await storeImage(generatedProductImageBuffer, 'image/jpeg');
 
-      generatedProductImage = `${req.protocol}://${req.headers.host}/image/${productImageId}`;
+      generatedProductImage = `${req.protocol}://${req.headers.host}/images/${productImageId}.jpg`;
     } catch (error) {
       console.error("Error generating product image:", error);
     } 
@@ -73,7 +73,7 @@ router.post('/add', auth_old, async (req, res) => {
       const generatedDescriptionImageBuffer = await generateDescriptionImage(productData);
       const descriptionImageId = await storeImage(generatedDescriptionImageBuffer, 'image/jpeg');
 
-      generatedDescriptionImage = `${req.protocol}://${req.headers.host}/image/${descriptionImageId}`;
+      generatedDescriptionImage = `${req.protocol}://${req.headers.host}/images/${descriptionImageId}.jpg`;
     } catch (error) {
       console.error("Error generating description image:", error);
     }
@@ -126,7 +126,7 @@ router.put('/update/:productId', auth_old, async (req, res) => {
       const generatedProductImageBuffer = await generateProductImage(productData);
       const productImageId = await storeImage(generatedProductImageBuffer, 'image/jpeg');
 
-      generatedProductImage = `${req.protocol}://${req.headers.host}/image/${productImageId}`;
+      generatedProductImage = `${req.protocol}://${req.headers.host}/images/${productImageId}.jpg`;
     } catch (error) {
       console.error("Error generating product image:", error);
       return res.status(500).send("Error generating product image");
@@ -136,7 +136,7 @@ router.put('/update/:productId', auth_old, async (req, res) => {
       const generatedDescriptionImageBuffer = await generateDescriptionImage(productData);
       const descriptionImageId = await storeImage(generatedDescriptionImageBuffer, 'image/jpeg');
 
-      generatedDescriptionImage = `${req.protocol}://${req.headers.host}/image/${descriptionImageId}`;
+      generatedDescriptionImage = `${req.protocol}://${req.headers.host}/images/${descriptionImageId}.jpg`;
     } catch (error) {
       console.error("Error generating description image:", error);
       return res.status(500).send("Error generating description image");

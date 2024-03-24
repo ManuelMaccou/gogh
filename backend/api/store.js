@@ -52,7 +52,7 @@ router.post('/create', auth_old, async (req, res) => {
         const processedImageBuffer = await processImageFromUrl(imageUrl);
 
         const storeImageId = await storeImage(processedImageBuffer, 'image/jpeg');
-        const storeImageUrl = `${req.protocol}://${req.headers.host}/image/${storeImageId}`;
+        const storeImageUrl = `${req.protocol}://${req.headers.host}/images/${storeImageId}.jpg`;
 
         console.log("Creating store with merchat.id as storeAdmin:", merchant._id);
         const newStore = await Store.create({

@@ -114,13 +114,13 @@ export async function updateProductFrames(storeId) {
       // Generate frame image for the product
       const generatedProductFrameBuffer = await createProductFrame(product);
       const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
-      product.frameImage = `${process.env.BASE_URL}/image/${productImageId}`;
+      product.frameImage = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
 
       for (const variant of product.variants) {
         // Generate frame images for each variant
         const generatedVariantFrameBuffer = await createOptionsFrame(product, variant);
         const variantImageId = await storeImage(generatedVariantFrameBuffer, 'image/jpeg');
-        variant.frameImage = `${process.env.BASE_URL}/image/${variantImageId}`;
+        variant.frameImage = `${process.env.BASE_URL}/images/${variantImageId}.jpg`;
       }
       
       console.log(`Frame images updated for product ${product.shopifyProductId}`);

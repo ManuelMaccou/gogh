@@ -29,7 +29,7 @@ async function updateFrameImage(updatedProduct) {
         // Update the product with the new frameImage URL
         await ShopifyStore.findOneAndUpdate(
             { 'products._id': productId },
-            { $set: { 'products.$.frameImage': `${process.env.BASE_URL}/image/${productImageId}` }},
+            { $set: { 'products.$.frameImage': `${process.env.BASE_URL}/images/${productImageId}.jpg` }},
             { new: true }
         );
         

@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const DATA_DIR = join(__dirname, '..', 'data');
 
-const getImageUrl = (imageId) => `${process.env.BASE_URL}/image/${imageId}`;
+const getImageUrl = (imageId) => `${process.env.BASE_URL}/images/${imageId}.jpg`;
 
 const ensureDirectoryExists = (dirPath) => {
     if (!existsSync(dirPath)) {

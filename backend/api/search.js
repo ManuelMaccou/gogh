@@ -141,7 +141,7 @@ router.post('/books', [
 
           const generateBookImageBuffer = await GenerateBookImage(productData);
           const bookImageId = await storeImage(generateBookImageBuffer, 'image/jpeg');
-          const generatedBookImage = `${req.protocol}://${req.headers.host}/image/${bookImageId}`;
+          const generatedBookImage = `${req.protocol}://${req.headers.host}/images/${bookImageId}.jpg`;
 
   
         const results = {
