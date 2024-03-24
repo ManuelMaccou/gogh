@@ -25,7 +25,7 @@ async function fetchAndConvertImage(imageUrl) {
     return buffer;
 }
 
-// Adjusted getDominantColor to accept a buffer
+// Adjusted getDominantColor to accept a buffer.
 async function getDominantColor(buffer) {
     const image = await read(buffer);
     const dominantColor = image.getPixelColor(0, 0);
