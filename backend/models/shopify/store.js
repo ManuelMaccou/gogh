@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 
 // Define Variant Schema
 const ShopifyVariantSchema = new Schema({
-    shopifyVariantId: { type: String, unique: true },
+    shopifyVariantId: { type: String },
     title: { type: String },
     image: { type: String },
     frameImage: { type: String },
