@@ -2,7 +2,9 @@ import React, { useState, useEffect, ChangeEvent, FormEvent, useCallback } from 
 import axios, { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
-import SimulateUser from '../../SimulateUser'
+import { useUser } from '../../contexts/userContext';
+import { usePrivy } from '@privy-io/react-auth';
+import Header from '../header';
 
 
 interface ProductData {
@@ -35,7 +37,7 @@ interface User {
     fid:string;
     fc_username: string;
     fc_pfp: string;
-    fc_profile: string;
+    fc_url: string;
     email: string;
     walletAddress: string;
 }
@@ -59,65 +61,11 @@ function ManageShopifyStore() {
     const [lineCount, setLineCount] = useState(0);
     const [lineLimitExceeded, setLineLimitExceeded] = useState(false);
     const [selectedProductForEdit, setSelectedProductForEdit] = useState<Product | null>(null);
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [simulateFid, setSimulateFid] = useState<string>('');
+    const { user } = useUser();
+    const {ready, authenticated, getAccessToken} = usePrivy();
 
-    React.useEffect(() => {
-        const scriptId = 'neynar-script';
 
-        const loadNeynarScript = () => {
-            if (!document.getElementById(scriptId)) {
-                const script = document.createElement('script');
-                script.id = scriptId;
-                script.src = "https://neynarxyz.github.io/siwn/raw/1.2.0/index.js";
-                script.async = true;
-                document.body.appendChild(script);
-            }
-        };
-
-        const removeNeynarScript = () => {
-            const script = document.getElementById(scriptId);
-            if (script) {
-                document.body.removeChild(script);
-            }
-        };
-
-        if (!isLoggedIn) {
-            loadNeynarScript();
-        } else {
-            removeNeynarScript();
-        }
-
-        return () => {
-            removeNeynarScript();
-        };
-    }, [isLoggedIn]);
-
-    React.useEffect(() => {
-        const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token);
-    
-        if (token) {
-            axios.get(`${process.env.REACT_APP_BASE_URL}/api/user/`, {
-                headers: { Authorization: `Bearer ${token}` }
-            }).then(response => {
-                setUser(response.data);
-            }).catch(error => {
-                console.error('Error fetching user details:', error);
-                if (axios.isAxiosError(error) && error.response && error.response.status === 401) {
-                    localStorage.removeItem('token');
-                    setIsLoggedIn(false);
-                    setUser(null);
-                }
-            });
-        }
-    }, []);
-
-    const logout = () => {
-        localStorage.removeItem('token');
-        setIsLoggedIn(false);
-        setUser(null);
-    };
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -190,12 +138,12 @@ function ManageShopifyStore() {
     const [submitting, setSubmitting] = useState(false);
 
     const handleSubmitImageUrl = async () => {
+        const accessToken = await getAccessToken();
         setSubmitting(true);
         try {
-            const token = localStorage.getItem('token');
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/shopify/store/update`, 
-                { storeImage: storeImage }, 
-                { headers: { Authorization: `Bearer ${token}` } }
+                { storeImage: storeImage, user: user }, 
+                { headers: { Authorization: `Bearer ${accessToken}` } }
             );
 
             const { storeImageUrl, frameUrl } = response.data;
@@ -213,18 +161,51 @@ function ManageShopifyStore() {
     };
   
     useEffect(() => {
-        const fetchStoreAndProducts = async () => {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                return;
-            }
+        if (authenticated && !simulateFid) {
+            const fetchStoreAndProducts = async () => {
+                console.log('fetching store and products');
+                const accessToken = await getAccessToken();
 
+                try {
+                    const storeResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/shopify/store/fetch`, {
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                    });
+
+                    
+                    setStore(storeResponse.data);
+                    setProducts(storeResponse.data.products);
+                    setFrameUrl(storeResponse.data.frameUrl);
+                    
+                } catch (err) {
+                    if (axios.isAxiosError(err)) {
+                        const message = err.response?.data?.message || "An error occurred.";
+                        if (err.response?.status === 404) {
+                            console.log('No products found for store');
+                        } else if (err.response?.status === 401) {
+                            setErrorMessage('Session has expired. Please log in again.');
+                        } else {
+                            console.error('Error fetching products:', message);
+                        }
+                    } else {
+                        console.error('Network error or issue with fetching products:', err);
+                    }
+                }
+            };
+            fetchStoreAndProducts();
+        }
+    }, [authenticated, ready]);
+
+    const handleSimulateSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (authenticated && simulateFid && user?.fid === '8587') {
+            
             try {
-                const storeResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/shopify/store`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                const accessToken = await getAccessToken();
+                const storeResponse = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/shopify/store/simulate`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                    params: { fid: simulateFid }, // Pass as query parameter
                 });
 
-                
                 setStore(storeResponse.data);
                 setProducts(storeResponse.data.products);
                 setFrameUrl(storeResponse.data.frameUrl);
@@ -243,10 +224,8 @@ function ManageShopifyStore() {
                     console.error('Network error or issue with fetching products:', err);
                 }
             }
-        };
-      
-        fetchStoreAndProducts();
-    }, []);
+        }
+    };
    
 
     const [isEditMode, setIsEditMode] = useState(false);    
@@ -288,8 +267,8 @@ function ManageShopifyStore() {
         console.log('Selected product to edit:',selectedProductForEdit);
 
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
+            const accessToken = await getAccessToken();
+            if (!authenticated) {
                 setErrorMessage("You are not logged in. Please log in to submit a product.");
                 return;
             }
@@ -302,8 +281,8 @@ function ManageShopifyStore() {
 
             console.log('selectedProductForEdit ID:', selectedProductForEdit._id);
             const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/api/shopify/product/update/${selectedProductForEdit._id}`,
-            updatedProductData,
-                { headers: { Authorization: `Bearer ${token}` } }
+            {updatedProductData, user, simulateFid},
+                { headers: { Authorization: `Bearer ${accessToken}` } }
             );
             const updatedProduct = response.data;
             setProducts(prevProducts => prevProducts.map(p => p._id.toString() === updatedProduct._id.toString() ? updatedProduct : p));
@@ -328,57 +307,10 @@ function ManageShopifyStore() {
         }
     };
 
-    const onSignInSuccess = async (data: any) => {
-        console.log("Sign-in success with data:", data);
-        
-        try {
-            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/farcaster_login`, {
-                signer_uuid: data.signer_uuid,
-                fid: data.fid
-            });
-
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
-
-                if (response.data.isAdmin !== undefined) {
-                    localStorage.setItem('isAdmin', JSON.stringify(response.data.isAdmin));
-                    console.log("isAdmin:", response.data.isAdmin);
-                }
-                const redirectUrl = response.data.redirect;
-                window.location.reload();
-                navigate(redirectUrl);
-            } else {
-                setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
-            }
-        } catch (error: unknown) {
-            console.error("Error during Farcaster login:", error);
-            if (axios.isAxiosError(error)) { 
-                const axiosError = error as AxiosError;
-                if (axiosError.response && axiosError.response.status === 404) {
-                    setErrorMessage("Apply to be a merchant by DMing @manuelmaccou.eth on Warpcast");
-                } else {
-                    setErrorMessage("An error occurred during the sign-in process.");
-                }
-            } else {
-                setErrorMessage("An unexpected error occurred.");
-            }
-        }
-    };
-
-    React.useEffect(() => {
-        (window as any).onSignInSuccess = onSignInSuccess;
-        return () => {
-            delete (window as any).onSignInSuccess;
-        };
-    }, [navigate]);
-
-    if (!isLoggedIn) {
+    if (!authenticated) {
         return (
           <div className='main-container'>
-            <header className="site-header">
-              <h1>Gogh</h1>
-              <div className="neynar_signin" data-client_id={process.env.REACT_APP_NEYNAR_CLIENT_ID} data-success-callback="onSignInSuccess" data-variant="warpcast"></div>
-            </header>
+            <Header />
             <div className="login-message">
               <p>You must be logged in to access this page.</p>
             </div>
@@ -389,24 +321,17 @@ function ManageShopifyStore() {
     return (
         <div>
             <div>
-                <header className="site-header">
-                    <h1>Gogh</h1>
-                    {!user ? (
-                        <div className="neynar_signin" data-client_id={process.env.REACT_APP_NEYNAR_CLIENT_ID} data-success-callback="onSignInSuccess" data-variant="warpcast"></div>
-                    ) : (
-                        <>
-                            <div className="fc-user-tag">
-                                <img src={user.fc_pfp} alt="User profile" className="fc-pfp" />
-                                <p>{user.fc_username}</p>
-                            </div>
-                            <button onClick={logout} className="logout-button">Logout</button>
-                        </>
-                    )}
-                </header>
+                <Header />
             </div>
             <div>
-            {currentUser && currentUser.fid === '8587' && (
-                <SimulateUser onSimulationSuccess={onSimulationSuccess} />
+            {user && user.fid === '8587' && (
+                <div>
+                <form onSubmit={handleSimulateSubmit}>
+                    <label htmlFor="simulateFid">Simulate User FID:</label>
+                    <input type="text" value={simulateFid} onChange={(e) => setSimulateFid(e.target.value || '')} />
+                    <button type="submit">Simulate</button>
+                </form>
+              </div>
             )}
             </div>
             <div className="submit-product-container">

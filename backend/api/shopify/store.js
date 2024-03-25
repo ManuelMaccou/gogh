@@ -2,8 +2,10 @@ import { Router } from 'express';
 import axios from 'axios';
 import pkg from 'jsonwebtoken';
 import Merchant from '../../models/merchant.js';
+import User from '../../models/user.js';
 import ShopifyStore from '../../models/shopify/store.js';
 import Image from '../../models/image.js';
+import auth from '../../middleware/auth.js';
 
 const router = Router();
 const { verify } = pkg;
@@ -11,19 +13,50 @@ const { verify } = pkg;
 
 
 // Get store info
-router.get('/', async (req, res) => {
-    try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader) {
-            return res.status(401).json({ message: "Authorization header is missing." });
-        }
+router.get('/fetch', auth, async (req, res) => {
+    const userId = req.user;
 
-        const token = authHeader.split(' ')[1]; // Bearer Token
-        const decoded = verify(token, process.env.JWT_SECRET);
-        const userId = decoded.userId;
+    try {
+        const user = await User.findOne({ privyId: userId });
+        console.log ('user in shopify store get route', user);
   
         // Find the merchant associated with the user
-        const merchant = await Merchant.findOne({ user: userId });
+        const merchant = await Merchant.findOne({ user: user._id });
+        if (!merchant) {
+            return res.status(404).json({ message: "Merchant not found." });
+        }
+  
+        // Find the store associated with the merchant
+        const store = await ShopifyStore.findOne({ storeAdmin: merchant._id })
+
+        if (!store) {
+            return res.status(404).json({ message: "Store not found." });
+        }
+
+        res.json(store);
+    } catch (error) {
+        if (error.name === "JsonWebTokenError") {
+            return res.status(401).json({ message: "Invalid or expired token." });
+        }
+        console.error("Error fetching products:", error);
+        res.status(500).json({ message: "Internal server error." });
+    }
+});
+
+// Get simulated store info
+router.get('/simulate', auth, async (req, res) => {
+    try {
+
+        const fid = req.query.fid;
+    
+        const user = await User.findOne({ fid: fid });
+        console.log ('user in shopify store get route', user);
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+        
+        // Find the merchant associated with the user
+        const merchant = await Merchant.findOne({ user: user._id });
         if (!merchant) {
             return res.status(404).json({ message: "Merchant not found." });
         }
@@ -46,18 +79,12 @@ router.get('/', async (req, res) => {
 });
 
 // Update store details
-router.post('/update', async (req, res) => {
+router.post('/update', auth, async (req, res) => {
 
-    const authHeader = req.headers.authorization;
-        if (!authHeader) {
-            return res.status(401).json({ message: "Authorization header is missing." });
-        }
+    const { user } = req.body;
+    console.log ('user in shopify store update', user);
 
-    const token = authHeader.split(' ')[1]; // Bearer Token
-    const decoded = verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
-
-    const merchant = await Merchant.findOne({ user: userId });
+    const merchant = await Merchant.findOne({ user: user._id });
     if (!merchant) {
         return res.status(404).json({ message: "Merchant not found." });
     }

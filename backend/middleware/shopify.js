@@ -14,7 +14,6 @@ export const verifyShopifyWebhook = async (req, res, next) => {
 
   try {
     const store = await ShopifyStore.findOne({ shopifyStoreUrl: shopifyDomain });
-    console.log('Store found');
     if (!store) {
       console.log('Store not found');
       return res.status(404).json({ message: "Store not found." });

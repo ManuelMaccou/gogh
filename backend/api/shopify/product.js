@@ -3,7 +3,9 @@ import pkg from 'jsonwebtoken';
 import Image from '../../models/image.js';
 import Merchant from '../../models/merchant.js';
 import ShopifyStore from '../../models/shopify/store.js';
+import User from '../../models/user.js';
 import createProductFrame from '../../utils/shopify/createProductFrame.js';
+import auth from '../../middleware/auth.js';
 
 
 const router = Router();
@@ -78,36 +80,43 @@ router.get('/', async (req, res) => {
 
 
 // Update products via form for things like description and title
-router.put('/update/:productId', async (req, res) => {
+router.put('/update/:productId', auth, async (req, res) => {
     const { productId } = req.params;
-    const { description } = req.body;
-    
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: "No authorization token provided." });
-    }
+    const { simulateFid } = req.body;
+    const { description } = req.body.updatedProductData;
+    const userId = req.user;
 
-    const token = authHeader.split(' ')[1];
-    let userId;
-
-    try {
-        const decoded = verify(token, process.env.JWT_SECRET);
-        userId = decoded.userId;
-    } catch (error) {
-        return res.status(401).json({ message: "Invalid or expired token." });
-    }
-
-    const merchant = await Merchant.findOne({ user: userId });
-    if (!merchant) {
-        return res.status(404).json({ message: "Merchant not found." });
-    }
-    
-    const storeAdminId = merchant._id;
+    console.log('updateing product');
+    console.log('update productId:', productId);
+    console.log('update description:', description);
+    console.log('update simulatefid:', simulateFid);
+    console.log('update user ID:', userId);
 
     try {
+        const authUser = await User.findOne({ privyId: userId });
+        if (!authUser) {
+            return res.status(404).json({ message: "Authenticated user not found." });
+        }
+
+        let targetUser = authUser;
+
+        // Check if the authenticated user is an admin and simulateFid is provided
+        if (authUser.fid === '8587' && simulateFid) {
+            const simulatedUser = await User.findOne({ fid: simulateFid });
+            if (!simulatedUser) {
+                return res.status(404).json({ message: "Simulated user not found." });
+            }
+            targetUser = simulatedUser; // Use simulated user's details for further operations
+        }
+
+        const merchant = await Merchant.findOne({ user: targetUser._id });
+        if (!merchant) {
+            return res.status(404).json({ message: "Merchant not found." });
+        }
+
         const updateStore = await ShopifyStore.findOneAndUpdate(
-            { storeAdmin: storeAdminId, 'products._id': productId },
-            { $set: { 'products.$.description': description }},
+            { storeAdmin: merchant._id, 'products._id': productId },
+            { $set: { 'products.$.description': description } },
             { new: true }
         );
 
@@ -116,6 +125,7 @@ router.put('/update/:productId', async (req, res) => {
         }
 
         const updatedProduct = updateStore.products.find(p => p._id.toString() === productId);
+        console.log('updated product description:', updatedProduct.description);
 
         updateFrameImage(updatedProduct);
 
