@@ -8,7 +8,8 @@ interface User {
     fid?: string;
     fc_username?: string;
     fc_pfp?: string;
-    fc_profile?: string;
+    fc_bio?: string;
+    fc_url?: string;
     email?: string;
     walletAddress?: string;
 }
@@ -18,7 +19,8 @@ interface Product {
     location: string;
     title: string;
     description: string;
-    imageUrl: string;
+    featuredImage: string;
+    additionalImages: string [];
     price: string;
     walletAddress: string;
     email: string;
@@ -70,11 +72,13 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         walletAddress: '',
         email: '',
     });
-    const [file, setFile] = useState<File | null>(null);
     const [showForm, setShowForm] = useState<boolean>(propShowForm);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [fileName, setFileName] = useState<string>('');
-    const [filePreview, setFilePreview] = useState<string | null>(null);
+    const [featuredImage, setFeaturedImage] = useState<File | null>(null);
+    const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
+    const featuredImageInputRef = useRef<HTMLInputElement>(null);
+    const additionalImagesInputRef = useRef<HTMLInputElement>(null);
+    const [featuredImagePreview, setFeaturedImagePreview] = useState<string | null>(null);
+    const [additionalImagesPreview, setAdditionalImagesPreview] = useState<string[]>([]);
 
     // Add this useEffect hook
     useEffect(() => {
@@ -106,24 +110,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         setShowForm(true);
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files ? e.target.files[0] : null;
-        if (file) {
-            setFileName(file.name);
-            setFilePreview(URL.createObjectURL(file));
-        } else {
-            // Handle the case when no file is selected
-            setFileName('');
-            setFilePreview(null);
-        }
-      };
-
-    const handleFileButtonClick = () => {
-        if (fileInputRef.current) {
-          fileInputRef.current.click();
-        }
-      };
-
     const handleCloseModal = () => {
         setShowForm(false);
         onCloseModal();
@@ -134,18 +120,49 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         const { name, value } = event.target;
     
         if (event.target instanceof HTMLInputElement && event.target.type === 'file') {
-            const file = event.target.files && event.target.files.length > 0 ? event.target.files[0] : null;
-            setFile(file);
-            if (file) {
-                setFileName(file.name); // Update the file name for UI display
-                setFilePreview(URL.createObjectURL(file)); // Generate and set file preview
-            } else {
-                setFileName('');
-                setFilePreview(null); // Clear previous file preview
+            // Handling the featured image
+            if (name === 'featuredImage') {
+                const file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+                if (file) {
+                    setFeaturedImage(file);
+                    setFeaturedImagePreview(URL.createObjectURL(file));
+                } else {
+                    // Resetting states if no file is selected
+                    setFeaturedImage(null);
+                    setFeaturedImagePreview(null);
+                }
+            }
+            // Handling additional images
+            else if (name === 'additionalImages' && event.target.files) {
+                const newFiles = Array.from(event.target.files);
+                const spaceAvailable = 3 - additionalFiles.length;
+                const filesToAdd = newFiles.slice(0, spaceAvailable);
+            
+                if (filesToAdd.length > 0) {
+                    const updatedFiles = [...additionalFiles, ...filesToAdd];
+                    setAdditionalFiles(updatedFiles);
+            
+                    const updatedPreviews = updatedFiles.map(file => URL.createObjectURL(file));
+                    setAdditionalImagesPreview(updatedPreviews);
+                }
+            
+                if (newFiles.length > spaceAvailable) {
+                    alert(`Only 3 photos can be added.`);
+                }
             }
         } else {
             setFormData(prevState => ({ ...prevState, [name]: value }));
         }
+    };
+
+    const handleRemoveImage = (index: number) => {
+        // Remove the file at the given index
+        const newFiles = [...additionalFiles.slice(0, index), ...additionalFiles.slice(index + 1)];
+        setAdditionalFiles(newFiles);
+    
+        // Remove the preview at the given index
+        const newPreviews = [...additionalImagesPreview.slice(0, index), ...additionalImagesPreview.slice(index + 1)];
+        setAdditionalImagesPreview(newPreviews);
     };
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -157,10 +174,24 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
             data.append(key, value);
             }
         });
-        if (file) data.append('image', file);
+
+        if (featuredImage) {
+            data.append('featuredImage', featuredImage);
+        }
+
+        if (!featuredImage) {
+            alert("Please upload a featured image.");
+            return;
+        }
+
+        if (additionalFiles) {
+            additionalFiles.forEach((file) => {
+                data.append('images', file);
+            });
+        }
 
         try {
-            const product = await onFormSubmit(data, file);
+            const product = await onFormSubmit(data, featuredImage);
             handleCloseModal();
             // Reset form and file states
             setFormData({
@@ -171,8 +202,12 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                 walletAddress: '',
                 email: '',
             });
-            setFile(null); 
+            setFeaturedImage(null);
+            setAdditionalFiles([]);
+            setFeaturedImagePreview(null);
+            setAdditionalImagesPreview([]);
             clearFormError();
+            console.log('added product:', product);
             return product;
         } catch (error) {
         }
@@ -209,8 +244,8 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                 >
                     <button className="close-button" onClick={handleCloseModal}>&times;</button>
                     <h2>Add Product</h2>
+                    <p>If your product is sold, you will receive an email with the buyer's information. Please coordinate with them for pickup, dropoff, shipping. </p>
                     <form onSubmit={handleSubmit}>
-                        {formError && <p className="form-error">{formError}</p>}
                         <select name="location" value={formData.location} onChange={handleChange} required>
                             <option value="">Select your city</option>
                             {supportedCities.map((city, index) => (
@@ -221,21 +256,61 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
                         {/* Hidden file input */}
                         <input
+                            name="featuredImage"
                             type="file"
-                            ref={fileInputRef}
+                            ref={featuredImageInputRef}
                             onChange={handleChange}
                             style={{ display: 'none' }}
-                            required
                         />
-                        {/* Custom button that users see and interact with */}
-                        <button className='upload-image-button' onClick={handleFileButtonClick} type="button">Upload image</button>
-                        {fileName && <div>Selected file: {fileName}</div>}
-                        {filePreview && <img src={filePreview} alt="File preview" style={{ width: '100px', height: 'auto' }} />}
+                        
+                        {featuredImagePreview && (
+                            <img src={featuredImagePreview} alt="Featured product image" style={{ width: '70px', height: 'auto' }} />
+                        )}
+                        <input
+                            name="additionalImages"
+                            type="file"
+                            multiple
+                            ref={additionalImagesInputRef}
+                            onChange={handleChange}
+                            style={{ display: 'none' }}
+                        />
+                        <button 
+                        className='upload-featured-image-button'
+                        type="button"
+                        onClick={() => {
+                            console.log('Upload button clicked');
+                            featuredImageInputRef.current?.click()}}>
+                            Upload Featured Image
+                        </button>
 
+                        <div>
+                            {additionalImagesPreview.map((previewUrl, index) => (
+                                <div key={index} style={{ position: 'relative', display: 'inline-block', marginRight: '5px' }}>
+                                    <img src={previewUrl} alt={`Additional product ${index + 1}`} style={{ width: '70px', height: 'auto' }} />
+                                    <button 
+                                        onClick={() => handleRemoveImage(index)} 
+                                        style={{ position: 'absolute', top: 0, right: 0, cursor: 'pointer', background: 'red', color: 'white', border: 'none'}}>
+                                        x
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        {featuredImagePreview && (
+                        <button
+                        className='upload-additional-image-button'
+                        type="button"
+                        onClick={() => additionalImagesInputRef.current?.click()}>
+                            Add up to 3 more images
+                        </button>
+                        )}
+
+                        {/* Custom button that users see and interact with */}
                         <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in USDC" />
                         <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment. Not ENS." required />
                         <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email for purchase notifications" required />
                         <button className="submit-button" type="submit">Submit</button>
+                        {formError && <p className="form-error">{formError}</p>}
                     </form>
                 </Modal>
                 </>

@@ -5,7 +5,7 @@ interface User {
     _id: string;
     fc_username?: string;
     fc_pfp?: string;
-    fc_profile?: string;
+    fc_url?: string;
     email?: string;
     walletAddress?: string;
   }
@@ -15,7 +15,8 @@ interface User {
     location: string;
     title: string;
     description: string;
-    imageUrl: string;
+    featuredImage: string;
+    additionalImages: string [];
     price: string;
     walletAddress: string;
     email: string;
@@ -63,7 +64,7 @@ const userName = product.user?.fc_username ?? product.user?.walletAddress?.slice
         </a>
     </div>
     <div className='product-modal-body'>
-      <img src={product.imageUrl} alt={product.title} className='product-image'/>
+      <img src={product.featuredImage} alt={product.title} className='product-image'/>
       <div className='product-info'>
           <h2>{product.title}</h2>
           <p className='product-description'>{product.description}</p>

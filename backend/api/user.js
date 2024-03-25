@@ -17,23 +17,30 @@ router.post('/create', auth, async (req, res) => {
 
     try {
         const privyId = userData.privyId;
-        const fid = userData.fid;
-        const query = privyId ? { privyId } : { fid };
 
-        let user = await User.findOne(query);
+        let user = await User.findOne({ privyId: privyId });
 
         if (!user) {
-            user = new User({
-                privyId: userData.privyId,
-                fid: userData.fid,
-                fc_username: userData.fc_username,
-                fc_pfp: userData.fc_pfp,
-                fc_profile: userData.fc_profile,
-                walletAddress: userData.walletAddress,
-            });
-        } 
-        await user.save();
-        return res.status(201).json({ user, message: "User created successfully" });
+            try {
+                user = new User({
+                    privyId: userData.privyId,
+                    fid: userData.fid,
+                    fc_username: userData.fc_username,
+                    fc_pfp: userData.fc_pfp,
+                    fc_url: userData.fc_url,
+                    fc_bio: userData.fc_bio,
+                    walletAddress: userData.walletAddress,
+                });
+    
+                await user.save();
+                return res.status(201).json({ user, message: "User created successfully" });
+            } catch (saveError) {
+                console.error('Error saving new user:', saveError.message);
+                return res.status(500).json({ message: "Error saving new user" });
+            }
+        } else {
+            return res.status(200).json({ user, message: "User already exists" });
+        }
 
     } catch (error) {
         console.error('Error handling Privy login:', error.message);
@@ -41,27 +48,25 @@ router.post('/create', auth, async (req, res) => {
     }
 });
 
-router.post('/lookup', async (req, res) => {
-    const userData = req.body;
+router.post('/lookup', auth, async (req, res) => {
+    const { privyId, fc_username, fc_bio } = req.body;
+    const userIdFromToken = req.user;
 
     try {
-        // Prefer privyId if available, fallback to fid otherwise
-        const privyId = userData.privyId;
-        console.log('privyId:', privyId);
-
-        const fid = userData.fid;
-        console.log('fid:', fid);
-
-        const query = privyId ? { privyId } : { fid };
-
-        let user = await User.findOne(query);
-        console.log('user in user API:', user);
+        let user = await User.findOne({ privyId: privyId });
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        res.json(user);
+        // Ensure the user from the token is the same as the user being updated
+        if (user.privyId.toString() !== userIdFromToken) {
+            return res.status(403).json({ message: 'Unauthorized to update this user' });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(user._id, { fc_username, fc_bio }, { new: true });
+
+        res.json(updatedUser);
     } catch (error) {
         console.error('Error fetching user details:', error.message);
         res.status(500).send('Server error');
@@ -112,7 +117,7 @@ router.post('/farcaster_login', async (req, res) => {
                 fid,
                 fc_username: fcUserData.display_name,
                 fc_pfp: fcUserData.pfp_url,
-                fc_profile: `https://warpcast.com/${fcUserData.username}`,
+                fc_url: `https://warpcast.com/${fcUserData.username}`,
                 signer_uuid
             });
 

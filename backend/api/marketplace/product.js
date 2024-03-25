@@ -22,40 +22,58 @@ async function storeImage(imageBuffer, contentType) {
       contentType: contentType,
     });
     await image.save();
-    return image._id; // Returns the MongoDB ID of the saved image
+    return image._id;
 }
 
-router.post('/add', auth, upload.single('image'), async (req, res) => {
+router.post('/add', auth, upload.fields([
+    { name: 'featuredImage', maxCount: 1 },
+    { name: 'images', maxCount: 3 }
+]), async (req, res) => {
     if (!req.user) {
         return res.status(401).send('User not authenticated');
     }
 
-    if (!req.file) {
-        return res.status(400).send('No image uploaded');
+    if (!req.files['featuredImage'] || req.files['featuredImage'].length === 0) {
+        return res.status(400).send('Featured image is required');
     }
 
     try {
-        const {location, title, description, price, walletAddress, email } = req.body;
-        
-        const processedImageBuffer = await sharp(req.file.buffer)
+        const { location, title, description, price, walletAddress, email } = req.body;
+
+        const featuredImageFile = req.files['featuredImage'][0];
+        const processedFeaturedImageBuffer = await sharp(featuredImageFile.buffer)
+            .rotate()
             .resize(800, 800, {
                 fit: sharp.fit.inside,
                 withoutEnlargement: true
             })
             .jpeg()
             .toBuffer();
-        
-        // Process user submitted image
-        const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
-        const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;
 
-        // Create sharable frame
-        const generatedProductFrameBuffer = await createMarketplaceProductFrame(location, title, description, price, imageUrl);
+        const processedFeaturedImage = await storeImage(processedFeaturedImageBuffer, 'image/jpeg');
+        const featuredImage = `${process.env.BASE_URL}/images/${processedFeaturedImage}.jpg`;
+
+        // Create sharable frame with the featured image
+        const generatedProductFrameBuffer = await createMarketplaceProductFrame(location, title, description, price, featuredImage);
         const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
-        const productFrame = `${process.env.BASE_URL}/image/${productImageId}`;
+        const productFrame = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
 
-
-        console.log('image after processing:', imageUrl)
+        let additionalImageUrls = [];
+        if (req.files['images']) {
+            for (const file of req.files['images']) {
+                const processedImageBuffer = await sharp(file.buffer)
+                    .resize(800, 800, {
+                        fit: sharp.fit.inside,
+                        withoutEnlargement: true
+                    })
+                    .jpeg()
+                    .toBuffer();
+                
+                const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
+                const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;
+                additionalImageUrls.push(imageUrl);
+            }
+        }
 
         const user = await User.findOne({ privyId: req.user });
         
@@ -64,7 +82,8 @@ router.post('/add', auth, upload.single('image'), async (req, res) => {
             title,
             description,
             productFrame,
-            imageUrl,
+            featuredImage,
+            additionalImages: additionalImageUrls,
             price,
             walletAddress,
             email,
@@ -74,21 +93,39 @@ router.post('/add', auth, upload.single('image'), async (req, res) => {
         await product.save();
         res.status(201).json(product);
     } catch (error) {
-        console.error('Failed to create product:', error.response || error);
-        res.status(500).json({ message: 'Failed to create product' });
+            const errorMessage = error.response ? (error.response.data.message || "Failed to create product.") : error.message;
+            console.error('Failed to create product:', errorMessage);
+            setFormError(errorMessage);
+            throw error;
     }
 });
 
 router.get('/', async (req, res) => {
     try {
         const products = await MarketplaceProduct.find({})
-            .populate('user', 'fc_username fc_pfp fc_profile')
+            .populate('user', 'fc_username fc_pfp fc_url fc_bio walletAddress')
             .exec();
 
         res.json(products);
     } catch (error) {
         console.error('Failed to fetch products:', error);
         res.status(500).json({ message: 'Failed to fetch products' });
+    }
+});
+
+router.get('/single/:productId', async (req, res) => {
+    try {
+        const productId = req.params.productId;
+        const product = await MarketplaceProduct.findOne({ _id: productId }).populate('user');
+        
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        };
+
+        res.json(product);
+    } catch (error) {
+        console.error('Failed to fetch single product:', error);
+        res.status(500).json({ message: 'Failed to fetch single product' });
     }
 });
 

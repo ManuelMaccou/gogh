@@ -4,17 +4,21 @@ import { UserProvider } from './contexts/userContext';
 import HomePage from './pages/home';
 import ManageStore from './pages/manageStore';
 import ManageShopifyStore from './pages/shopify/manageStore'
+import Listing from './pages/marketplace/listing'
 
 const App: React.FC = () => {
 
     return (
             <div>
                 <HelmetProvider>
+                    <UserProvider>
                         <Routes>
                             <Route path="/" element={<HomePage />} />
                             <Route path="/manage-store" element={<ManageStore />} />
-                            <Route path="/manage-shopify-store" element={<UserProvider><ManageShopifyStore /></UserProvider>} />
+                            <Route path="/manage-shopify-store" element={<ManageShopifyStore />} />
+                            <Route path="/listing/:productId" element={<Listing />} />
                         </Routes>
+                    </UserProvider>
                 </HelmetProvider>
             </div>
     );

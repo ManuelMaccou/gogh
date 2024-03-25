@@ -4,14 +4,10 @@ import axios, { AxiosError } from 'axios';
 import { useLocation } from 'react-router-dom';
 import CreateListing from './marketplace/createListing';
 import ProductDetailsModal from './marketplace/productDetailsModal';
-// import LoginModal from '../loginModal';
 import { usePrivy, useLogin } from '@privy-io/react-auth';
+import { useUser } from '../contexts/userContext';
+import Header from './header';
 import '../../src/styles.css';
-
-interface FeaturedStoreImage {
-    src: string;
-    link: string;
-}
 
 interface User {
     privyId: string;
@@ -19,7 +15,8 @@ interface User {
     fid?: string;
     fc_username?: string;
     fc_pfp?: string;
-    fc_profile?: string;
+    fc_bio?: string;
+    fc_url?: string;
     email?: string;
     walletAddress?: string;
   }
@@ -29,7 +26,8 @@ interface Product {
     location: string;
     title: string;
     description: string;
-    imageUrl: string;
+    featuredImage: string;
+    additionalImages: string [];
     price: string;
     walletAddress: string;
     email: string;
@@ -57,14 +55,12 @@ const HomePage = () => {
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [formError, setFormError] = useState<string>('');
     const [products, setProducts] = useState<Product[]>([]);
-    const [user, setUser] = useState<User | null>(null);
+    const { setUser } = useUser();
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsProductModalOpen] = useState<boolean>(false);
-    // const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
     const [showCreateListingModal, setShowCreateListingModal] = useState(false);
 
     const createListingRef = useRef<{ openCreateListingModal: () => void }>(null);
-
     
     const { ready, authenticated, getAccessToken, logout } = usePrivy();
 
@@ -80,7 +76,8 @@ const HomePage = () => {
                     fid: user.farcaster?.fid,
                     fc_username: user.farcaster?.displayName,
                     fc_pfp: user.farcaster?.pfp,
-                    fc_profile: `https://warpcast.com/${user.farcaster?.username}`,
+                    fc_bio: user.farcaster?.bio,
+                    fc_url: `https://warpcast.com/${user.farcaster?.username}`,
                 }),
             };
 
@@ -92,8 +89,10 @@ const HomePage = () => {
                             headers: { Authorization: `Bearer ${accessToken}` },
                         });
 
+                        console.log('Homepage response:', response);
+
                         if (response.status === 201) {
-                            setUser(response.data);
+                            setUser(response.data.user);
                         } else {
                             throw new Error('Failed to fetch user details');
                         }
@@ -162,19 +161,16 @@ const HomePage = () => {
         fetchUserDetails();
     }, [authenticated]);
 
-    const openModalWithProduct = (product: Product) => {
-        setSelectedProduct(product);
-        setIsProductModalOpen(true);
+    const openListingPage = (product: Product) => {
+        const productId = product._id;
+        console.log('productId:', productId);
+
+        navigate(`/listing/${productId}`);
     };
 
     const closeModal = () => {
         setIsProductModalOpen(false);
         setSelectedProduct(null);
-    };
-
-    const handleLogout = () => {
-        logout();
-        setUser(null);
     };
 
     useEffect(() => {
@@ -185,9 +181,6 @@ const HomePage = () => {
         const price = searchParams.get('price');
         const walletAddress = searchParams.get('walletAddress');
         const email = searchParams.get('email');
-        console.log('test');
-        console.log('ready:', ready);
-        console.log('authenticated:', authenticated);
 
         if (ready) {
             if (city && authenticated && createListingRef.current) {
@@ -203,7 +196,7 @@ const HomePage = () => {
             }
         }
 
-    }, [location, authenticated, user, ready]);
+    }, [location, authenticated, ready]);
 
     const fetchProducts = async () => {
         try {
@@ -214,7 +207,7 @@ const HomePage = () => {
         }
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         fetchProducts();
     }, []);
 
@@ -228,9 +221,11 @@ const HomePage = () => {
             },
           });
 
+          console.log("response data:", response.data);
+
           if (response.status === 201) {
-            fetchProducts();
-            openModalWithProduct(response.data);
+            const product = response.data
+            openListingPage(product);
             return response.data;
         } else {
             throw new Error('Product creation failed');
@@ -242,48 +237,10 @@ const HomePage = () => {
             throw error;
         }
     };
-    const userName = user?.fc_username ?? user?.walletAddress?.slice(0, 6);
 
     return (
         <div className='main-container'>
-            <header className="site-header">
-                <div>
-                    <img className='header-logo' src="/logo192.png" alt="Logo" />
-                </div>
-
-                <div className='header-nav'>
-                    {!authenticated && (
-                        <button
-                            disabled={!ready}
-                            className="header-login-button"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                login();
-                            }}
-                        >
-                            <p>Log in</p>
-                        </button>
-                    )}
-
-                    {authenticated && ready && user && (
-                    <>
-                    <div className="profile-card">
-                    {user?.fc_pfp && (
-                        <img src={user?.fc_pfp} alt="User profile" className="fc-pfp" />
-                    )}
-                        <p>{userName}</p>
-                    </div>
-                    <button
-                    className="logout-button"
-                    disabled={!ready}
-                    onClick={handleLogout}>
-                    Log out
-                    </button>
-                    </>
-                    )}
-                </div>
-
-            </header>
+            <Header />
             <section className="hero-section">
                 <h1 className="title">Buy and sell products on Farcaster</h1>
                 <CreateListing 
@@ -301,18 +258,27 @@ const HomePage = () => {
             <section className="submitted-products">
                 <div className="marketplace-products-grid">
                 {products.map((product) => (
-                    <div key={product._id} className="marketplace-product-card" onClick={() => openModalWithProduct(product)}>
-                    <img src={product.imageUrl} alt={product.title} className='marketplace-img'/>
-                    <h3>{product.title}</h3>
-                    <p>Location: {product.location}</p>
-                    <p>Price: {product.price}</p>
-                    <div className='profile-card'>
-                        {product.user && (
+                    <div key={product._id} className="marketplace-product-card" onClick={() => openListingPage(product)}>
+                        <div>
+                            <img src={product.featuredImage} alt={product.title} className='marketplace-img'/>
+                            <h3>{product.title}</h3>
+                            <p>Location: {product.location}</p>
+                            <p>Price: {product.price}</p>
+                        </div>
+                        <div className='profile-card'>
+                            {product.user && (
                             <>
-                                <a href={product.user.fc_profile} className="fc-profile-url" target="_blank" rel="noopener noreferrer">
-                                <img src={product.user.fc_pfp} alt="User profile" className='fc-pfp'/>
-                                <span>{product.user.fc_username}</span>
-                                </a>
+                                <img 
+                                src={product.user.fc_pfp || "/images/default-profile.jpg"}
+                                onError={(e) => { 
+                                    const target = e.target as HTMLImageElement;
+                                    target.onerror = null; // Prevents infinite loop in case fallback image also fails
+                                    target.src = "/images/default-profile.jpg";
+                                }}
+                                alt="User profile picture"
+                                className='fc-pfp'
+                            />
+                                <span>{product.user.fc_username ?? product.user.walletAddress?.slice(0, 6)}</span>
                             </>
                             )}
                         </div>

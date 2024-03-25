@@ -36,7 +36,7 @@ interface User {
     fid:string;
     fc_username: string;
     fc_pfp: string;
-    fc_profile: string;
+    fc_url: string;
     email: string;
     walletAddress: string;
 }

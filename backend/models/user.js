@@ -5,8 +5,9 @@ const userSchema = new Schema({
     fid: { type: String },
     signer_uuid: { type: String },
     fc_pfp: { type: String },
+    fc_bio: { type: String },
     fc_username: { type: String },
-    fc_profile: { type: String },
+    fc_url: { type: String },
     email: { type: String },
     walletAddress: { type: String },
 });
