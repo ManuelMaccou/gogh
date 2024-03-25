@@ -15,6 +15,7 @@ router.get('/:imageId.jpg', async (req, res) => {
             return res.status(404).send('Image not found');
         }
 
+        res.setHeader('Cache-Control', 'public, max-age=3600');
         res.setHeader('Content-Type', 'image/jpeg');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.send(image.data); // Send the image data as the response

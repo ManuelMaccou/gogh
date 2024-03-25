@@ -54,7 +54,7 @@ async function createProductFrame(location, title, description, price, imageUrl)
         // Print location underneath the title in italics
         const locationGap = 0; // Gap between title and location
         currentY += locationGap; // Move currentY down to create a gap
-        const fullLocation = `Located in ${location}`;
+        const fullLocation = `${location} pickup/dropoff`;
         ctx.font = 'italic 30px Arial';
         ctx.fillText(fullLocation, textSectionStart, currentY);
         currentY += 60; // Adjust space before the description
@@ -84,7 +84,8 @@ async function createProductFrame(location, title, description, price, imageUrl)
             const priceBottomMargin = 30;
             const priceX = canvas.width - priceRightMargin;
             const priceY = canvas.height - priceBottomMargin;
-            ctx.fillText(price, priceX, priceY);
+            const fullprice = `${price} USDC`;
+            ctx.fillText(fullprice, priceX, priceY);
         }
 
         // Generate and return the image URL
