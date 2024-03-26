@@ -58,11 +58,11 @@ app.use(
             directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https://*.cdn.bubble.io", "http://localhost:5001", "https://imgur.com"],
+            imgSrc: ["'self'", "data:", "https://*.cdn.bubble.io", "http://localhost:5001", "https://i.imgur.com"],
             scriptSrc: ["'self'", "https://challenges.cloudflare.com", "https://kit.fontawesome.com", "https://neynarxyz.github.io"],
             childSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org"],
             frameSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org", "https://challenges.cloudflare.com"],
-            connectSrc: ["'self'", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://kit.fontawesome.com",],
+            connectSrc: ["'self'", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://ka-f.fontawesome.com",],
             reportUri: ["/csp-report"],
         },
         reportOnly: true,
