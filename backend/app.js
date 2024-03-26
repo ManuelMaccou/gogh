@@ -58,11 +58,11 @@ app.use(
             directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "http://localhost:5001"],
+            imgSrc: ["'self'", "data:", "https://*.cdn.bubble.io", "http://localhost:5001", "https://imgur.com"],
             scriptSrc: ["'self'", "https://challenges.cloudflare.com", "https://kit.fontawesome.com", "https://neynarxyz.github.io"],
             childSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org"],
             frameSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org", "https://challenges.cloudflare.com"],
-            connectSrc: ["https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io"],
+            connectSrc: ["'self'", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://kit.fontawesome.com",],
             reportUri: ["/csp-report"],
         },
         reportOnly: true,
@@ -112,7 +112,6 @@ app.use('/images', imagesRoutes);
 app.use('/api/marketplace/product', marketplaceProductRoutes);
 app.use('/api/marketplace/frame/send_transaction', marketplaceSendTransactionRoutes);
 app.use('/marketplace/frame/share', marketplaceShareRoutes);
-
 app.use('/marketplace/add/book', bookChannelFrameRoute);
 
 
