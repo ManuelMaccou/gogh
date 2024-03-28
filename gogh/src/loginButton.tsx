@@ -33,13 +33,11 @@ interface Product {
 }
 
 const LoginButton: React.FC<LoginButtonProps> = ({ buttonText }) => {
-    console.log("login button used 1")
 
     const { getAccessToken } = usePrivy();
     const { setUser } = useUser();
     const { login } = useLogin({
         onComplete: async (user, isNewUser) => {
-            console.log("login button used 2")
             const accessToken = await getAccessToken();
 
             const userPayload = {
@@ -61,8 +59,6 @@ const LoginButton: React.FC<LoginButtonProps> = ({ buttonText }) => {
                         const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/create`, userPayload, {
                             headers: { Authorization: `Bearer ${accessToken}` },
                         });
-
-                        console.log('login button user create response:', response);
 
                         if (response.status === 201) {
                             setUser(response.data.user);

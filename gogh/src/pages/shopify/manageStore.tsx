@@ -43,11 +43,6 @@ interface User {
 }
 
 
-const onSimulationSuccess = (fid: string) => {
-    console.log(`Simulated FID: ${fid}`);
-};
-
-
 function ManageShopifyStore() {
     const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -163,7 +158,6 @@ function ManageShopifyStore() {
     useEffect(() => {
         if (authenticated && !simulateFid) {
             const fetchStoreAndProducts = async () => {
-                console.log('fetching store and products');
                 const accessToken = await getAccessToken();
 
                 try {
@@ -180,7 +174,6 @@ function ManageShopifyStore() {
                     if (axios.isAxiosError(err)) {
                         const message = err.response?.data?.message || "An error occurred.";
                         if (err.response?.status === 404) {
-                            console.log('No products found for store');
                         } else if (err.response?.status === 401) {
                             setErrorMessage('Session has expired. Please log in again.');
                         } else {
@@ -214,7 +207,6 @@ function ManageShopifyStore() {
                 if (axios.isAxiosError(err)) {
                     const message = err.response?.data?.message || "An error occurred.";
                     if (err.response?.status === 404) {
-                        console.log('No products found for store');
                     } else if (err.response?.status === 401) {
                         setErrorMessage('Session has expired. Please log in again.');
                     } else {
@@ -238,12 +230,7 @@ function ManageShopifyStore() {
     };
 
     const handleProductSelect = (productId: string) => {
-        
-
         const productToEdit = products.find(product => product._id === productId);
-        console.log("Product selected:", productId);
-
-        console.log('product to edit:',productToEdit)
 
         if (productToEdit) {
             setProductData({
@@ -264,7 +251,6 @@ function ManageShopifyStore() {
             setErrorMessage("No product selected for editing.");
             return;
         }
-        console.log('Selected product to edit:',selectedProductForEdit);
 
         try {
             const accessToken = await getAccessToken();
@@ -279,7 +265,6 @@ function ManageShopifyStore() {
                 description: productData.description // This is the updated description from the editor
             };
 
-            console.log('selectedProductForEdit ID:', selectedProductForEdit._id);
             const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/api/shopify/product/update/${selectedProductForEdit._id}`,
             {updatedProductData, user, simulateFid},
                 { headers: { Authorization: `Bearer ${accessToken}` } }

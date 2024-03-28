@@ -89,8 +89,6 @@ const HomePage = () => {
                             headers: { Authorization: `Bearer ${accessToken}` },
                         });
 
-                        console.log('Homepage response:', response);
-
                         if (response.status === 201) {
                             setUser(response.data.user);
                         } else {
@@ -136,7 +134,6 @@ const HomePage = () => {
             const accessToken = await getAccessToken();
 
             if (!accessToken) {
-                console.log("No access token available. User might not be logged in.");
                 setUser(null);
                 return;
             }
@@ -163,8 +160,6 @@ const HomePage = () => {
 
     const openListingPage = (product: Product) => {
         const productId = product._id;
-        console.log('productId:', productId);
-
         navigate(`/listing/${productId}`);
     };
 
@@ -220,8 +215,6 @@ const HomePage = () => {
                 Authorization: `Bearer ${accessToken}`,
             },
           });
-
-          console.log("response data:", response.data);
 
           if (response.status === 201) {
             const product = response.data

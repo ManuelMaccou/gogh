@@ -28,8 +28,11 @@ import shopifyFrameRoutes from './api/shopify/frame.js';
 import shopifyProductWebhooks from './webhooks/shopify/product.js';
 
 import marketplaceProductRoutes from './api/marketplace/product.js';
-import marketplaceShareRoutes from './api/marketplace/frame/transactionFrame.js';
-import marketplaceSendTransactionRoutes from './api/marketplace/frame/sendTransaction.js';
+import marketplaceFrameShareRoutes from './api/marketplace/frame/transactionFrame.js';
+import marketplaceFrameSendTransactionRoutes from './api/marketplace/frame/sendTransaction.js';
+import crypto from './api/crypto.js';
+
+import marketplaceTransactionRoutes from './api/marketplace/transaction.js';
 
 // This will soon be removed
 import imageRoutes from './api/image.js';
@@ -57,15 +60,16 @@ app.use(
         contentSecurityPolicy: {
             directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https://*.cdn.bubble.io", "http://localhost:5001", "https://i.imgur.com"],
-            scriptSrc: ["'self'", "https://challenges.cloudflare.com", "https://kit.fontawesome.com", "https://neynarxyz.github.io"],
+            styleSrc: ["'self'", "sha256-Ajrn2JfOTISCPhOetahUcaOhZ854HKtCcNBgJTdIGxM=", "sha256-UDHBHdd4da/v5O7d+qMgrwf9zOoyf3QWpe6JgGdMnHY=",
+            "sha256-FG186pX32/RqkjtL5kNb6LG7uYR99KhVlJGHiAbALxk=", "sha256-MslUGu1K02u908pcw8Mbxp0ZoMZEzz1debesfSEzmsE="],
+            imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com/", "https://*.cdn.bubble.io", "http://localhost:5001", "https://i.imgur.com"],
+            scriptSrc: ["'self'", "'wasm-eval'", "https://auth.privy.io/apps", "https://challenges.cloudflare.com", "https://kit.fontawesome.com", "https://neynarxyz.github.io"],
             childSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org"],
             frameSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org", "https://challenges.cloudflare.com"],
             connectSrc: ["'self'", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://ka-f.fontawesome.com",],
             reportUri: ["/csp-report"],
         },
-        reportOnly: true,
+        reportOnly: false,
     }}),
 );
 
@@ -110,9 +114,12 @@ app.use('/image', imageRoutes);
 app.use('/images', imagesRoutes);
 
 app.use('/api/marketplace/product', marketplaceProductRoutes);
-app.use('/api/marketplace/frame/send_transaction', marketplaceSendTransactionRoutes);
-app.use('/marketplace/frame/share', marketplaceShareRoutes);
+app.use('/api/marketplace/frame/send_transaction', marketplaceFrameSendTransactionRoutes);
+app.use('/marketplace/frame/share', marketplaceFrameShareRoutes);
 app.use('/marketplace/add/book', bookChannelFrameRoute);
+app.use('/api/crypto', crypto);
+
+app.use('/api/transaction', marketplaceTransactionRoutes);
 
 
 app.get('*', (req, res) => {

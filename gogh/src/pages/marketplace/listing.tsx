@@ -3,8 +3,9 @@ import axios, { AxiosError } from 'axios';
 import { useParams } from 'react-router-dom';
 import { usePrivy, useWallets, useLogin, useConnectWallet } from '@privy-io/react-auth';
 import { useUser } from '../../contexts/userContext';
+import { useNavigate } from 'react-router-dom';
+import Web3 from 'web3';
 import Header from '../header';
-
 
 interface Product {
     _id: string;
@@ -37,19 +38,28 @@ interface TransactionDetails {
     source: string;
   }
 
+ 
+
 const Listing = () => {
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    const web3 = new Web3(process.env.REACT_APP_ALCHEMY_API_URL);
+
     const [product, setProduct] = useState<Product | null>(null);
-    const { setUser } = useUser();
+    const { setUser, user } = useUser();
     const {ready, authenticated, getAccessToken} = usePrivy();
-    const {wallets} = useWallets();
     const { productId } = useParams<{ productId: string }>();
     const [selectedImage, setSelectedImage] = useState('');
     const [isPurchaseInitiated, setIsPurchaseInitiated] = useState(false);
     const [loginAction, setLoginAction] = useState<null | string>(null);
+    
+    const {wallets} = useWallets();
+    const walletAddress = wallets[0]?.address;
 
-    useEffect(() => {
-        console.log(`Authentication status: ${authenticated}, Ready status: ${ready}`);
-    }, [authenticated, ready]);
+    const navigate = useNavigate();
+
+    // useEffect(() => {
+    // }, [authenticated, ready]);
 
     const fetchSingleProduct = async () => {
         try {
@@ -89,14 +99,11 @@ const Listing = () => {
 
             try {
                 if (isNewUser) {
-                    console.log('listing login function used for new user');
                     try {
 
                         const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/create`, userPayload, {
                             headers: { Authorization: `Bearer ${accessToken}` },
                         });
-
-                        console.log('lising page new user:', response);
 
                         if (response.status === 201) {
                             setUser(response.data.user);
@@ -150,7 +157,6 @@ const Listing = () => {
 
     const { connectWallet } = useConnectWallet({
         onSuccess: (wallet) => {
-            console.log(wallet);
         },
         onError: (error) => {
             console.log(error);
@@ -158,83 +164,76 @@ const Listing = () => {
         },
     });
 
-    console.log('wallets:', wallets);
-
     useEffect(() => {
         if (isPurchaseInitiated) {
-            if (!wallets[0]) {
+            if (!walletAddress) {
                 connectWallet();
             } else {
-                console.log('checkpoint 1');
                 buyProduct();
             }
         }
-    }, [isPurchaseInitiated, authenticated, wallets]);
-
-    console.log('states:', isPurchaseInitiated, authenticated, wallets, loginAction)
+    }, [isPurchaseInitiated, authenticated, walletAddress]);
 
     const initiatePurchase = () => {
         if(!authenticated) {
             setLoginAction('purchase');
             login();
         } else if (authenticated && (!wallets || wallets.length === 0)) {
-            console.log('auth no wallet');
             setIsPurchaseInitiated(true);
         } else if (authenticated && wallets && wallets.length > 0) {
-            console.log('checkpoint 1');
-            console.log('wallets at 1:', wallets);
             buyProduct();
         }
     };
 
+
     const saveTransaction = async (transactionDetails: TransactionDetails) => {
         try {
-            const response = await fetch('http://localhost:3000/transactions', {
+          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/transaction/save`, transactionDetails);
+          const data = response.data;
+        } catch (error) {
+        }
+      };
+
+    async function getConvertedAmount(usdcAmount: string | undefined) {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/crypto/convert-usdc-to-wei`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(transactionDetails),
+                body: JSON.stringify({ usdcAmount }),
             });
     
             if (!response.ok) {
-                throw new Error('Failed to save transaction');
+                throw new Error('Failed to convert USDC to Wei');
             }
     
             const data = await response.json();
-            console.log('Transaction saved:', data);
-            // Handle success
+            return data.hexWeiAmount;
         } catch (error) {
-            console.error('Error saving transaction:', error);
-            // Handle error
+            console.error('Error converting USDC to Wei:', error);
+            alert('Error converting currency. Please try again.');
         }
-    };
+    }
 
     const buyProduct = async () => {
         const accessToken = await getAccessToken();
-        console.log('buy product authentication status:', authenticated);
         try {
-            console.log('connected wallets:', wallets)
-    
             const wallet = wallets[0];
             const provider = await wallet.getEthereumProvider();
 
             // Confirm or switch to Base
             const chainId = wallet.chainId;
-            console.log('chainId:', chainId);
 
             if (chainId !== "eip155:8453") {
                 try {
-                    console.log('Attempting to switch chain...');
                     await wallet.switchChain(8453);
-                    console.log('Chain switched successfully.');
                 } catch (error: unknown) {
                     console.error('Error switching chain:', error);
                 
                     if (typeof error === 'object' && error !== null && 'code' in error) {
                         const errorCode = (error as { code: number }).code;
                         if (errorCode === 4001) {
-                            console.log('User declined to switch networks.');
                             alert('You need to switch networks to proceed.');
                         } else {
                             alert('Failed to switch the network. Please try again.');
@@ -246,9 +245,16 @@ const Listing = () => {
                     return;
                 }
             };
-    
-            const message = 'Confirm your purchase on Gogh';
             const address = wallet.address;
+            const message = 
+            `
+            Purchase confirmation. \n
+            Product: ${product?.title} \n
+            Price: ${product?.price} \n
+            Seller wallet address: ${product?.walletAddress} \n
+            Your wallet address: ${address}.
+            `;
+            
     
             // Sign the message
             let signature;
@@ -257,7 +263,6 @@ const Listing = () => {
                     method: 'personal_sign',
                     params: [message, address],
                 });
-                console.log('Signature:', signature);
             } catch (signError) {
                 console.error('Error signing message:', signError);
                 alert('Transaction cancelled or failed during signing.');
@@ -267,7 +272,7 @@ const Listing = () => {
     
             // Verify signature
             try {
-                const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/verifySignature`, {
+                const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/crypto/verify-signature`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -286,31 +291,53 @@ const Listing = () => {
                 }
 
                 const verificationResult = await response.json();
-    
+                
                 if (verificationResult.verified) {
-                    console.log('The signature is verified by the server.');
-
-                    const transactionRequest = {
-                        to: "0x62f57efB1a37B93DbF56975fc6c9F2CD64BDd91c",
-                        from: address,
-                        value: "500000000000",
-                    };
-                    console.log('Transaction request:', transactionRequest);
 
                     try {
+                        const sanitizedAmount = product?.price.replace(/[^0-9.]/g, '');
+                        const convertedAmount = await getConvertedAmount(sanitizedAmount);
+
+                        
+                        if (!user?.fid || !product || !product.user || !product.walletAddress || !product?.user?.fid) {
+                            console.error('Error occured. User or product information is missing.');
+                            alert('There was an error when trying to gather product or user information.');
+                            return;
+                        }
+
+                        if (!convertedAmount) {
+                            console.error('Error occured. Transaction amount is missing.');
+                            alert('There was an error calculating the transaction amount.');
+                            return;
+                        }
+
                         const transactionHash = await provider.request({
                             method: 'eth_sendTransaction',
-                            params: [transactionRequest],
+                            params: [
+                                {
+                                    from: address,
+                                    to: product.walletAddress,
+                                    value: convertedAmount,
+                                },
+                            ],
                         });
-                        console.log('Transaction Hash:', transactionHash);
 
                         const transactionDetails = {
-                            buyerFid: 'buyerFirebaseId', // Replace with actual buyer Firebase ID
-                            sellerFid: 'sellerFirebaseId', // Replace with actual seller Firebase ID
+                            buyerFid: user.fid,
+                            sellerFid: product.user.fid,
+                            sellerProfile: product.user.fc_url,
+                            sellerUsername: product.user.fc_username,
                             transactionHash: transactionHash,
-                            source: 'GoghMarketplace', // Adjust as necessary
+                            source: 'Website',
                         };
-                        await saveTransaction(transactionDetails);
+
+                        try {
+                            await saveTransaction(transactionDetails);
+                            navigate(`/success/${transactionHash}`);
+                        } catch (error) {
+                            console.error('Failed to save transaction details:', error);
+                            alert(`An error occured. You can still view your transaction on basescan.org. Transaction hash: ${transactionHash}.`);
+                        }
 
                     } catch (transactionError) {
                         console.error('Transaction failed:', transactionError);
@@ -319,7 +346,6 @@ const Listing = () => {
                         return;
                     }
                 } else {
-                    console.log('The signature could not be verified by the server.');
                     alert('Signature verification failed.');
                     setIsPurchaseInitiated(false);
                 }
@@ -373,7 +399,7 @@ const Listing = () => {
                 </div>
                 <div className='product-details'>
                     <div className='product-info'>
-                        <p className='product-price'>{product.price} USDC</p>
+                        <p className='product-price'>{product.price}</p>
                         <h1>{product.title}</h1>
                         <p className='product-location'>Pickup/Dropoff in {product.location}</p>
                         <p className='product-description'>{product.description}</p>
@@ -382,7 +408,6 @@ const Listing = () => {
                         <button
                         className='buy-button'
                         onClick={() => {
-                            console.log('Button clicked', { ready, authenticated, wallets, isPurchaseInitiated });
                             initiatePurchase();
                         }}
                         disabled={!ready}

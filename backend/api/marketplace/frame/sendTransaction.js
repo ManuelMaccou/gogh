@@ -1,26 +1,16 @@
 // https://gogh.shopping/api/marketplace/frame/send_transaction/65e8789f156969abddbbcf88
 
 import { Router } from 'express';
-const router = Router();
 import Product from '../../../models/marketplace/product.js';
 import Web3 from 'web3';
-import fetchEthPriceInUSDC from '../../../utils/crypto/fetchCryptoPrices.js'
+import { usdcToWei } from '../../../utils/crypto/cryptoConversions.js'
 import validateMessage from '../../../utils/validateFrameMessage.js'
 
-const web3 = new Web3(`https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
+const router = Router();
+
+const web3 = new Web3(process.env.ALCHEMY_API_URL);
 
 let buttonIndex, fid;
-
-
-const cryptoConversions = async (usdcAmount) => {
-
-  const ethPriceInUSDC = await fetchEthPriceInUSDC();
-  const ethEquivalent = Number(usdcAmount) / Number(ethPriceInUSDC);
-  const ethEquivalentRounded = Number(ethEquivalent.toFixed(10));
-  const weiEquivalent = web3.utils.toWei(ethEquivalentRounded, 'ether');
-
-  return weiEquivalent;
-};
 
 router.post('/:productId', async (req, res) => {
   const { productId } = req.params;
@@ -30,7 +20,6 @@ router.post('/:productId', async (req, res) => {
     try {
         const messageBytes = req.body.trustedData.messageBytes;
         const validatedFrameData = await validateMessage(messageBytes);
-        console.log("validated frame data:", validatedFrameData);
 
         buttonIndex = validatedFrameData.action?.tapped_button?.index;
         fid = validatedFrameData.action?.interactor?.fid;
@@ -38,11 +27,10 @@ router.post('/:productId', async (req, res) => {
         console.error('Error validating message:', error);
         return res.status(500).send('An error occurred during message validation.');
     }
-} else {
-    console.log("untrusted data:", req.body.untrustedData);
+  } else {
     buttonIndex = req.body.untrustedData.buttonIndex;
     fid = req.body.untrustedData.fid;
-}
+  }
 
   try {
     const product = await Product.findById(productId);
@@ -51,7 +39,7 @@ router.post('/:productId', async (req, res) => {
     }
 
     const sanitizedPrice = product.price.replace(/[^0-9.]/g, '');
-    const weiEquivalent = await cryptoConversions(sanitizedPrice);
+    const weiEquivalent = await usdcToWei(sanitizedPrice);
 
     if (product.walletAddress) {
     const response = {
@@ -59,14 +47,13 @@ router.post('/:productId', async (req, res) => {
       method: "eth_sendTransaction",
       params: {
         to: product.walletAddress, 
-        value: weiEquivalent.toString(),
+        value: weiEquivalent,
       },
     };
     res.status(200).json(response);
   }
 
   } catch (err) {
-    console.error('Error in POST /send_transaction/:productId', err);
     res.status(500).send('Internal Server Error');
   }
 });

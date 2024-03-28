@@ -223,7 +223,7 @@
     max-width: 1500px;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-around;
     gap: 50px;
     margin-top: 20px;
 }
@@ -334,7 +334,6 @@
 }
 
 .buy-button {
-    display: none;
     height: 40px;
     min-width: 250px;
     align-items: center;
@@ -351,7 +350,7 @@
 
 .product-price {
     font-weight: bold;
-    font-size: 20px;
+    font-size: 24px;
     margin-bottom: 5px;
 }
 
@@ -372,6 +371,7 @@
 
 .message-seller {
     display: flex;
+    font-family: 'Montserrat', sans-serif;
 }
 
 .message-button {
@@ -742,6 +742,32 @@ input[type="checkbox"] {
     max-width: 100%;
     height: auto;
     border-radius: 8px;
+}
+
+.success-container {
+    margin-left: 20px;
+    margin-right: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+    flex-direction: column;
+}
+
+.success-container .logo {
+    width: 200px;
+    height: 200px;
+}
+
+.success-container p,
+.success-container a {
+    font-family: 'Montserrat', sans-serif;
+}
+
+.success-container .message-seller {
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .get-started-button {

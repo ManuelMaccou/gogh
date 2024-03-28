@@ -281,7 +281,6 @@ function ManageStore() {
                 if (axios.isAxiosError(err)) {
                     const message = err.response?.data?.message || "An error occurred.";
                     if (err.response?.status === 404) {
-                        console.log('No products found for store');
                     } else if (err.response?.status === 401) {
                         setErrorMessage('Session has expired. Please log in again.');
                     } else {
@@ -479,7 +478,6 @@ function ManageStore() {
         };
 
         const onSignInSuccess = async (data: any) => {
-            console.log("Sign-in success with data:", data);
             
             try {
                 const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/user/farcaster_login`, {
@@ -492,7 +490,6 @@ function ManageStore() {
     
                     if (response.data.isAdmin !== undefined) {
                         localStorage.setItem('isAdmin', JSON.stringify(response.data.isAdmin));
-                        console.log("isAdmin:", response.data.isAdmin);
                     }
                     const redirectUrl = response.data.redirect;
                     window.location.reload();

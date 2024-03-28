@@ -19,6 +19,7 @@
     "@neynar/nodejs-sdk": "^1.10.0",
     "@privy-io/server-auth": "^1.7.2",
     "@sendgrid/mail": "^8.1.1",
+    "bignumber.js": "^9.1.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.4",
@@ -34,6 +35,6 @@
     "redis": "^4.6.13",
     "sharp": "^0.33.2",
     "uuid": "^9.0.1",
-    "web3": "^4.6.0"
+    "web3": "^4.7.0"
   }
 }

@@ -184,6 +184,7 @@ router.post('/product/:productId', async (req, res) => {
                 buyerFid: buyerFid,
                 sellerFid: sellerFid,
                 transactionHash: transactionHash,
+                source: "Farcaster frame",
             });
 
             await newTransaction.save(); 
@@ -219,6 +220,8 @@ router.post('/product/:productId', async (req, res) => {
                 buyerFid: buyerFid,
                 sellerFid: sellerFid,
                 transactionHash: transactionHash,
+                source: "Farcaster frame",
+                
             });
 
             await newTransaction.save();    

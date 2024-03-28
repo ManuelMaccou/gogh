@@ -207,7 +207,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
             setFeaturedImagePreview(null);
             setAdditionalImagesPreview([]);
             clearFormError();
-            console.log('added product:', product);
             return product;
         } catch (error) {
         }
@@ -278,7 +277,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         className='upload-featured-image-button'
                         type="button"
                         onClick={() => {
-                            console.log('Upload button clicked');
                             featuredImageInputRef.current?.click()}}>
                             Upload Featured Image
                         </button>
