@@ -61,7 +61,9 @@ app.use(
             directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "sha256-Ajrn2JfOTISCPhOetahUcaOhZ854HKtCcNBgJTdIGxM=", "sha256-UDHBHdd4da/v5O7d+qMgrwf9zOoyf3QWpe6JgGdMnHY=",
-            "sha256-FG186pX32/RqkjtL5kNb6LG7uYR99KhVlJGHiAbALxk=", "sha256-MslUGu1K02u908pcw8Mbxp0ZoMZEzz1debesfSEzmsE="],
+            "sha256-FG186pX32/RqkjtL5kNb6LG7uYR99KhVlJGHiAbALxk=", "sha256-MslUGu1K02u908pcw8Mbxp0ZoMZEzz1debesfSEzmsE=", "sha256-Ajrn2JfOTISCPhOetahUcaOhZ854HKtCcNBgJTdIGxM=",
+            "sha256-UDHBHdd4da/v5O7d+qMgrwf9zOoyf3QWpe6JgGdMnHY=", "sha256-FG186pX32/RqkjtL5kNb6LG7uYR99KhVlJGHiAbALxk=", "sha256-MslUGu1K02u908pcw8Mbxp0ZoMZEzz1debesfSEzmsE=",
+            "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=", "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=", ],
             imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com/", "https://*.cdn.bubble.io", "http://localhost:5001", "https://i.imgur.com"],
             scriptSrc: ["'self'", "'wasm-eval'", "https://auth.privy.io/apps", "https://challenges.cloudflare.com", "https://kit.fontawesome.com", "https://neynarxyz.github.io"],
             childSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org"],
@@ -69,7 +71,7 @@ app.use(
             connectSrc: ["'self'", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://ka-f.fontawesome.com",],
             reportUri: ["/csp-report"],
         },
-        reportOnly: false,
+        reportOnly: true,
     }}),
 );
 
