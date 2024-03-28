@@ -7,7 +7,7 @@ import Image from '../models/image.js';
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
-const imageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1711317562407x302987109357345100/swagcaster_preview_44d3398c-231b-4110-b669-97fc9fa98188.jpeg';
+const imageUrl = 'https://i.imgur.com/JeJ5WTf.jpeg';
 // const baseUrl = 'http://localhost:5001';
 const baseUrl = 'https://www.gogh.shopping';
 // const mongoURI = process.env.MONGO_URI;

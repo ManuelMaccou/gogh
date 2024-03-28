@@ -14,9 +14,9 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const router = Router();
 
 const faqFrames = [
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204427752x477688850444208700/faq1.jpg',
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204437954x612208291044247900/faq2.jpg',
-    'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1710204529991x893094894813133700/faq3.jpg',
+    'https://www.gogh.shopping/images/6605dbd325a16d8321422fca.jpg',
+    'https://www.gogh.shopping/images/6605dc103e1ccaa89f40d4fb.jpg',
+    'https://www.gogh.shopping/images/6605dc3c156ec6557c812e40.jpg',
 ];
 
 router.get('/product/:productId', async (req, res) => {

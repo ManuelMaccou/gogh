@@ -178,12 +178,12 @@ const HomePage = () => {
         const email = searchParams.get('email');
 
         if (ready) {
-            if (city && authenticated && createListingRef.current) {
+            if (title && authenticated && createListingRef.current) {
                 createListingRef.current.openCreateListingModal();
                 setInitialFormData({ location:city, title, description, price, walletAddress, email });
                 setShowCreateListingModal(true);
 
-            } else if (city && !authenticated && createListingRef.current) {
+            } else if (title && !authenticated && createListingRef.current) {
                 createListingRef.current.openCreateListingModal();
                 setInitialFormData({ location:city, title, description, price,walletAddress, email });
                 setShowCreateListingModal(true);
