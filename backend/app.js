@@ -75,10 +75,12 @@ app.use(
     }}),
 );
 
+/*
 app.post('/csp-report', express.json({type: 'application/csp-report'}), (req, res) => {
     console.log('CSP Violation:', req.body);
     res.status(204).end();
 });
+*/
 
 app.use(cors());
 
