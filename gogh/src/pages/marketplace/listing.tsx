@@ -399,7 +399,7 @@ const Listing = () => {
                 </div>
                 <div className='product-details'>
                     <div className='product-info'>
-                        <p className='product-price'>{product.price}</p>
+                        <p className='product-price'>{product.price ? `$${product.price}` : 'Free'}</p>
                         <h1>{product.title}</h1>
                         <p className='product-location'>Pickup/Dropoff in {product.location}</p>
                         <p className='product-description'>{product.description}</p>

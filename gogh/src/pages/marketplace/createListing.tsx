@@ -30,6 +30,7 @@ interface Product {
 interface CreateListingProps {
     onFormSubmit: (formData: FormData, file: File | null) => Promise<Product>;
     formError: string;
+    setFormError: (message: string) => void;
     clearFormError: () => void;
     supportedCities: string[];
     initialFormData?: Partial<FormDataState>;
@@ -56,6 +57,7 @@ Modal.setAppElement('#root');
 const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     onFormSubmit,
     formError,
+    setFormError,
     clearFormError,
     supportedCities,
     initialFormData,
@@ -118,6 +120,13 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = event.target;
+
+        if (name === 'price') {
+            const validPriceRegex = /^\d*\.?\d*$/;
+            if (!validPriceRegex.test(value)) {
+                return;
+            }
+        }
     
         if (event.target instanceof HTMLInputElement && event.target.type === 'file') {
             // Handling the featured image
@@ -168,6 +177,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData();
+        const priceRegex = /^\d+(\.\d+)?$/;
         Object.keys(formData).forEach((key) => {
             const value = formData[key as keyof FormDataState];
             if (value !== undefined) {
@@ -181,6 +191,11 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
 
         if (!featuredImage) {
             alert("Please upload a featured image.");
+            return;
+        }
+
+        if (!priceRegex.test(formData.price) && formData.price !== '') {
+            alert("Please use this format for the price: xxx.xx");
             return;
         }
 

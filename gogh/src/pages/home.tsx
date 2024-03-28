@@ -240,6 +240,7 @@ const HomePage = () => {
                     ref={createListingRef}
                     onFormSubmit={onFormSubmit} 
                     formError={formError} 
+                    setFormError={setFormError}
                     clearFormError={() => setFormError('')} 
                     supportedCities={supportedCities}
                     initialFormData={initialFormData}
