@@ -57,8 +57,6 @@ const HomePage = () => {
     const [formError, setFormError] = useState<string>('');
     const [products, setProducts] = useState<Product[]>([]);
     const { setUser } = useUser();
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const [isModalOpen, setIsProductModalOpen] = useState<boolean>(false);
     const [showCreateListingModal, setShowCreateListingModal] = useState(false);
 
     const createListingRef = useRef<{ openCreateListingModal: () => void }>(null);
@@ -162,11 +160,6 @@ const HomePage = () => {
     const openListingPage = (product: Product) => {
         const productId = product._id;
         navigate(`/listing/${productId}`);
-    };
-
-    const closeModal = () => {
-        setIsProductModalOpen(false);
-        setSelectedProduct(null);
     };
 
     useEffect(() => {
@@ -279,11 +272,6 @@ const HomePage = () => {
                         </div>
                     </div>
                     ))}
-                    <ProductDetailsModal
-                    isOpen={isModalOpen}
-                    onRequestClose={closeModal}
-                    product={selectedProduct}
-                    />
                 </div>
             </section>
             <section className="featured-stores-section">
