@@ -7,7 +7,7 @@ const transactionSchema = new Schema({
     sellerUsername: { type: String },
     transactionHash: { type: String, required: true },
     source: { type: String, required: true },
-});
+}, { timestamps: true });
 
 const MarketplaceTransaction = model('MarketplaceTransaction', transactionSchema);
 

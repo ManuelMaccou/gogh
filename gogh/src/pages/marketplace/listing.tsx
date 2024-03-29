@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import axios, { AxiosError } from 'axios';
 import { useParams } from 'react-router-dom';
 import { usePrivy, useWallets, useLogin, useConnectWallet } from '@privy-io/react-auth';
@@ -402,7 +402,14 @@ const Listing = () => {
                         <p className='product-price'>{product.price ? `$${product.price}` : 'Free'}</p>
                         <h1>{product.title}</h1>
                         <p className='product-location'>Pickup/Dropoff in {product.location}</p>
-                        <p className='product-description'>{product.description}</p>
+                        <p className='product-description'>
+                            {product.description.split('\n').map((line, index, array) => (
+                                <Fragment key={index}>
+                                    {line}
+                                    {index < array.length - 1 && <br />}
+                                </Fragment>
+                            ))}
+                        </p>
                     </div>
                     <div className='share-buy-listing'>
                         <button

@@ -8,7 +8,7 @@ const ShopifyVariantSchema = new Schema({
     frameImage: { type: String },
     price: { type: String },
     inventory_quantity: { type: String },
-}); // Optionally disable _id for subdocuments if not needed
+}, { timestamps: true });
 
 // Define Product Schema
 const ShopifyProductSchema = new Schema({
@@ -20,7 +20,7 @@ const ShopifyProductSchema = new Schema({
     frameImage: { type: String },
     price: { type: String },
     variants: [ShopifyVariantSchema],
-});
+}, { timestamps: true });
 
 // Define Store Schema
 const ShopifyStoreSchema = new Schema({
@@ -37,7 +37,7 @@ const ShopifyStoreSchema = new Schema({
     webhookSig: { type: String },
     cartBackgroundImageName: { type: String },
     defaultProductImage: { type: String },
-});
+}, { timestamps: true });
 
 // Index for faster retrieval
 ShopifyStoreSchema.index({ shopifyStoreUrl: 1, 'products.shopifyProductId': 1 }, { unique: true });
