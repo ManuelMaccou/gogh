@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent, forwardRef, useImperativeHandle, useRef } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent, forwardRef, useImperativeHandle, useRef } from 'react';
 import Modal from 'react-modal';
 import { usePrivy } from '@privy-io/react-auth';
 
