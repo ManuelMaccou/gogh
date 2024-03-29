@@ -44,6 +44,7 @@ const featuredStoreImages = [
 const supportedCities = [
     "NYC",
     "LA",
+    "San Francisco",
 ]
 
 
