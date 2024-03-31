@@ -12,7 +12,7 @@ async function storeImage(imageBuffer, contentType) {
   return image._id; // Returns the MongoDB ID of the saved image
 }
 
-export async function findOrCreateStore(baseUrl, storeName, defaultProductImage) {
+export async function findOrCreateStore(baseUrl, storeName, defaultProductImage, currency) {
   try {
       let store = await ShopifyStore.findOne({ shopifyStoreUrl: baseUrl });
 
@@ -24,6 +24,7 @@ export async function findOrCreateStore(baseUrl, storeName, defaultProductImage)
               shopifyStoreUrl: baseUrl,
               storeName: storeName,
               defaultProductImage: defaultProductImage,
+              currency: currency,
               products: []
           });
           await store.save();

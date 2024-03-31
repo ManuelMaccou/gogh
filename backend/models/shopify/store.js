@@ -19,6 +19,7 @@ const ShopifyProductSchema = new Schema({
     image: { type: String },
     frameImage: { type: String },
     price: { type: String },
+    currency: { type: String },
     variants: [ShopifyVariantSchema],
 }, { timestamps: true });
 

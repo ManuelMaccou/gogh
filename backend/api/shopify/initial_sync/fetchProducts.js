@@ -11,6 +11,7 @@ router.get('/', async (req, res) => {
     const storeUrl = req.body.shopifyStoreUrl;
     const storeName = req.body.storeName;
     const defaultProductImage = req.body.defaultProductImage;
+    const currency = req.body.currency;
     // const store = await ShopifyStore.findOne({ shopifyStoreUrl: storeUrl });
 
     const baseUrl = storeUrl
@@ -55,7 +56,7 @@ router.get('/', async (req, res) => {
         const { products } = await response.json();
 
         // Process Shopify store and products
-        const store = await findOrCreateStore(baseUrl, storeName, defaultProductImage);
+        const store = await findOrCreateStore(baseUrl, storeName, defaultProductImage, currency);
 
         // Store product data in the database
         console.log('Adding products to the store without frames')

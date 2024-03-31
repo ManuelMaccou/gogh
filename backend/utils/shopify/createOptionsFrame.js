@@ -75,7 +75,12 @@ async function createOptionsFrame(product, variant) {
             const priceBottomMargin = 30;
             const priceX = canvas.width - priceRightMargin;
             const priceY = canvas.height - priceBottomMargin;
-            const fullPrice = `$${variant.price}`
+            let fullPrice
+            if (product.currency) {
+                fullPrice = `${product.currency} ${variant.price}`
+            } else {
+                fullPrice = `$${variant.price}`
+            }
             ctx.fillText(fullPrice, priceX, priceY);
         }
 

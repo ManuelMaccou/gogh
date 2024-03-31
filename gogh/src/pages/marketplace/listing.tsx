@@ -220,6 +220,8 @@ const Listing = () => {
         const accessToken = await getAccessToken();
         try {
             const wallet = wallets[0];
+            const address = wallet.address;
+
             const provider = await wallet.getEthereumProvider();
 
             // Confirm or switch to Base
@@ -245,7 +247,8 @@ const Listing = () => {
                     return;
                 }
             };
-            const address = wallet.address;
+            
+            // Sign the message
             const message = 
             `
             Purchase confirmation. \n
@@ -255,8 +258,6 @@ const Listing = () => {
             Your wallet address: ${address}.
             `;
             
-    
-            // Sign the message
             let signature;
             try {
                 signature = await provider.request({
@@ -291,7 +292,9 @@ const Listing = () => {
                 }
 
                 const verificationResult = await response.json();
-                
+
+
+                // Send transaction
                 if (verificationResult.verified) {
 
                     try {
