@@ -12,7 +12,7 @@ async function storeImage(imageBuffer, contentType) {
   return image._id; // Returns the MongoDB ID of the saved image
 }
 
-export async function findOrCreateStore(baseUrl, storeName, defaultProductImage, currency) {
+export async function findOrCreateStore(baseUrl, storeName, defaultProductImage) {
   try {
       let store = await ShopifyStore.findOne({ shopifyStoreUrl: baseUrl });
 
@@ -24,7 +24,6 @@ export async function findOrCreateStore(baseUrl, storeName, defaultProductImage,
               shopifyStoreUrl: baseUrl,
               storeName: storeName,
               defaultProductImage: defaultProductImage,
-              currency: currency,
               products: []
           });
           await store.save();
@@ -42,7 +41,7 @@ export async function findOrCreateStore(baseUrl, storeName, defaultProductImage,
 }
 
 
-export async function storeProductData(productsData, storeId) {
+export async function storeProductData(productsData, storeId, currency) {
 
   const store = await ShopifyStore.findById(storeId);
 
@@ -72,6 +71,7 @@ export async function storeProductData(productsData, storeId) {
         shopifyProductId: productData.id.toString(),
         title: productData.title,
         originalDescription: productData.body_html,
+        currency: currency,
         image: productImageSrc,
         variants: filteredVariants.map(variant => {
           const variantImageSrc = variant.image_id 

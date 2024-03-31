@@ -56,11 +56,11 @@ router.get('/', async (req, res) => {
         const { products } = await response.json();
 
         // Process Shopify store and products
-        const store = await findOrCreateStore(baseUrl, storeName, defaultProductImage, currency);
+        const store = await findOrCreateStore(baseUrl, storeName, defaultProductImage);
 
         // Store product data in the database
         console.log('Adding products to the store without frames')
-        await storeProductData(products, store._id);
+        await storeProductData(products, store._id, currency);
         console.log('Finished adding products to the store without frames')
 
         // Update the products with frame images
