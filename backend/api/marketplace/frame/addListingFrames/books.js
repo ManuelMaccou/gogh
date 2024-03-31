@@ -27,7 +27,8 @@ router.get('/', async (req, res) => {
             <meta property="fc:frame:image:aspect_ratio" content="" />
             <meta property="fc:frame:button:1" content="NYC" />
             <meta property="fc:frame:button:2" content="LA" />
-            <meta property="fc:frame:button:3" content="How's it work?" />
+            <meta property="fc:frame:button:3" content="SF" />
+            <meta property="fc:frame:button:4" content="FAQ" />
         </head>
     </html>
     `;
@@ -246,7 +247,8 @@ function generateFrameHtml(bookFrames, verifiedAddresses, redisData, sessionId, 
                 <meta property="fc:frame:image" content="${bookFrame}" />
                 <meta property="fc:frame:button:1" content="NYC" />
                 <meta property="fc:frame:button:2" content="LA" />
-                <meta property="fc:frame:button:3" content="How's it work?" />
+                <meta property="fc:frame:button:3" content="SF" />
+                <meta property="fc:frame:button:4" content="FAQ" />
             `;
             break;
 
