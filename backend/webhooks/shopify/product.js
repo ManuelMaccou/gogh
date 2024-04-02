@@ -57,6 +57,7 @@ async function createNewProduct(productData, store) {
             title: title,
             image: image ? image.src : null,
             originalDescription: body_html,
+            currency: store.currency,
             variants: filteredVariants.map(variant => ({
                 shopifyVariantId: variant.id.toString(),
                 title: variant.title,
@@ -64,6 +65,30 @@ async function createNewProduct(productData, store) {
                 price: variant.price.toString(),
             })),
         };
+
+        // Create new product frame
+        try {
+            const generatedProductFrameBuffer = await createProductFrame(newProduct);
+            const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
+
+            newProduct.frameImage = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
+            console.log(`Frame images created for product ${newProduct.shopifyProductId}`);
+        } catch (error) {
+            console.error('Failed to generate product frame:', error);
+        }
+
+        // Create new variants frames
+        for (const variant of newProduct.variants) {
+            try {
+                const generatedOptionsFrameBuffer = await createOptionsFrame(newProduct, variant);
+                const variantImageId = await storeImage(generatedOptionsFrameBuffer, 'image/jpeg');
+                variant.frameImage = `${process.env.BASE_URL}/images/${variantImageId}.jpg`;
+                console.log(`Frame image created for variant ${variant.shopifyVariantId}`);
+            } catch (error) {
+                console.error(`Failed to generate option frame for variant ${variant.shopifyVariantId}:`, error);
+                // Decide whether to continue, return, or throw based on your error handling policy
+            }
+        }
 
         // Save the product in the database
         store.products.push(newProduct);
@@ -89,6 +114,8 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
             console.log('Store not found for Shopify Domain:', shopifyDomain);
             return;
         }
+
+        console.log('Store found for Shopify Domain:', shopifyDomain);
 
         // Check if the product exists
         const productIndex = store.products.findIndex(product => product.shopifyProductId === id.toString());
