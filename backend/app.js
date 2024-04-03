@@ -1,4 +1,6 @@
 import 'dotenv/config'
+import { connectRedis } from './redis.js';
+
 import express, { json, static as expressStatic } from 'express';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -54,6 +56,8 @@ app.set('trust proxy', true);
 
 // Connect to Database
 connectDB();
+connectRedis();
+
 
 
 app.use(

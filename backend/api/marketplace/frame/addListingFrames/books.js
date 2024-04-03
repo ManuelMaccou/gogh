@@ -5,9 +5,7 @@ import { Router } from 'express';
 import { query, validationResult } from 'express-validator';
 import validateMessage from '../../../../utils/validateFrameMessage.js';
 import { v4 as uuidv4 } from 'uuid';
-import { client, connectRedis } from '../../../../redis.js';
-
-connectRedis()
+import { client } from '../../../../redis.js';
 
 const router = Router();
 

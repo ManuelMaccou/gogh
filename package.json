@@ -6,12 +6,13 @@
         "install:gogh": "cd gogh && npm install",
         "build:gogh": "cd gogh && npm run build",
         "build": "npm run install:backend && npm run install:gogh && npm run build:gogh",
-        "start": "node backend/app.js"
-    },
+        "start": "pm2-runtime start ecosystem.config.js",
+        "postinstall": "npm install pm2"
+      },
     "optionalDependencies": {
         "canvas": "*"
-      },
-    "dependencies": {},
-    "devDependencies": {}
-  }
-  
+    },
+    "dependencies": {
+        "pm2": "^5.3.1"
+    }
+}
