@@ -3,7 +3,6 @@ import Image from '../../models/image.js';
 import pkg from 'jsonwebtoken';
 import sharp from 'sharp';
 import multer from 'multer';
-// import createProductPreview from '../../utils/marketplace/createProductPreview.js';
 import MarketplaceProduct from'../../models/marketplace/product.js';
 import User from'../../models/user.js';
 import createMarketplaceProductFrame from '../../utils/marketplace/createMarketplaceProductFrame.js';
@@ -38,7 +37,7 @@ router.post('/add', auth, upload.fields([
     }
 
     try {
-        const { location, title, description, price, walletAddress, email } = req.body;
+        const { location, farcon, title, description, price, walletAddress, email } = req.body;
 
         const featuredImageFile = req.files['featuredImage'][0];
         const processedFeaturedImageBuffer = await sharp(featuredImageFile.buffer)
@@ -79,6 +78,7 @@ router.post('/add', auth, upload.fields([
         
         const product = new MarketplaceProduct({
             location,
+            farcon,
             title,
             description,
             productFrame,

@@ -10,6 +10,7 @@ import Header from '../header';
 interface Product {
     _id: string;
     location: string;
+    farcon: boolean;
     title: string;
     description: string;
     featuredImage: string;
@@ -374,6 +375,11 @@ const Listing = () => {
 
     return (
         <>
+            {product.farcon && (
+                <div className="farcon-ribbon-listing">
+                    <span>Option to pick up at FarCon</span>
+                </div>
+            )}
             <Header />
             <div className='listing-body'>
                 <div className='image-gallery'>

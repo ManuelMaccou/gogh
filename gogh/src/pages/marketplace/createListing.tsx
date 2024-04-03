@@ -16,6 +16,7 @@ interface User {
 
 interface Product {
     _id: string;
+    farcon: boolean;
     location: string;
     title: string;
     description: string;
@@ -40,6 +41,7 @@ interface CreateListingProps {
 }
   
 interface FormDataState {
+    farcon: boolean;
     location: string;
     title: string;
     description: string;
@@ -67,6 +69,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
 }, ref) => {
     const { ready, authenticated } = usePrivy();
     const [formData, setFormData] = useState<FormDataState>({
+        farcon: false,
         location: '',
         title: '',
         description: '',
@@ -86,6 +89,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     useEffect(() => {
         if (initialFormData) {
             setFormData({
+                farcon: initialFormData.farcon || false,
                 location: initialFormData.location || '',
                 title: initialFormData.title || '',
                 description: initialFormData.description || '',
@@ -119,7 +123,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     };
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = event.target;
+        const { name, value, type } = event.target;
 
         if (name === 'price') {
             const validPriceRegex = /^\d*\.?\d*$/;
@@ -159,6 +163,11 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                     alert(`Only 3 photos can be added.`);
                 }
             }
+
+        } else if (type === 'checkbox') {
+            const isChecked = (event.target as HTMLInputElement).checked;
+            setFormData(prevState => ({ ...prevState, [name]: isChecked }));
+
         } else {
             setFormData(prevState => ({ ...prevState, [name]: value }));
         }
@@ -179,7 +188,12 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         const data = new FormData();
         const priceRegex = /^\d+(\.\d+)?$/;
         Object.keys(formData).forEach((key) => {
-            const value = formData[key as keyof FormDataState];
+            let value = formData[key as keyof FormDataState];
+
+            if (typeof value === 'boolean') {
+                value = value.toString();
+            }
+
             if (value !== undefined) {
             data.append(key, value);
             }
@@ -210,6 +224,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
             handleCloseModal();
             // Reset form and file states
             setFormData({
+                farcon: false,
                 location: '',
                 title: '',
                 description: '',
@@ -266,6 +281,16 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                                 <option key={index} value={city}>{city}</option>
                             ))}
                         </select>
+                        <label htmlFor="farcon" className='checkbox-container'>
+                            <input
+                                name="farcon"
+                                type="checkbox"
+                                id="farcon"
+                                checked={formData.farcon === true}
+                                onChange={handleChange}
+                            />
+                            Pickup available at FarCon
+                        </label>
                         <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
                         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
                         {/* Hidden file input */}

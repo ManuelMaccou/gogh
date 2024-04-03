@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 import { useLocation } from 'react-router-dom';
 import CreateListing from './marketplace/createListing';
-import ProductDetailsModal from './marketplace/productDetailsModal';
 import { usePrivy, useLogin } from '@privy-io/react-auth';
 import { useUser } from '../contexts/userContext';
 import Header from './header';
@@ -23,6 +22,7 @@ interface User {
 
 interface Product {
     _id: string;
+    farcon: boolean;
     location: string;
     title: string;
     description: string;
@@ -246,7 +246,16 @@ const HomePage = () => {
             <section className="submitted-products">
                 <div className="marketplace-products-grid">
                 {products.map((product) => (
-                    <div key={product._id} className="marketplace-product-card" onClick={() => openListingPage(product)}>
+                    <div 
+                        key={product._id}
+                        className={`marketplace-product-card ${product.farcon ? 'farcon-border' : ''}`}
+                        onClick={() => openListingPage(product)}
+                    >
+                        {product.farcon && (
+                            <div className="farcon-ribbon">
+                                <span>Pick up at FarCon</span>
+                            </div>
+                        )}
                         <div>
                             <img src={product.featuredImage} alt={product.title} className='marketplace-img'/>
                             <h3>{product.title}</h3>
