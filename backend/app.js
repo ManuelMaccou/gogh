@@ -26,6 +26,7 @@ import shopifyInitialRoutes from './api/shopify/initial_sync/fetchProducts.js';
 import shopifyProductRoutes from './api/shopify/product.js';
 import shopifyStoreRoutes from './api/shopify/store.js';
 import shopifyFrameRoutes from './api/shopify/frame.js';
+import shopifySingleProductFrameRoutes from './api/shopify/singleProductFrame.js';
 
 import shopifyProductWebhooks from './webhooks/shopify/product.js';
 
@@ -113,6 +114,7 @@ app.use('/api/shopify/initial_sync', shopifyInitialRoutes);
 app.use('/api/shopify/product', shopifyProductRoutes);
 app.use('/api/shopify/store', shopifyStoreRoutes);
 app.use('/api/shopify/frame', shopifyFrameRoutes);
+app.use('/api/shopify/singleProductFrame', shopifySingleProductFrameRoutes);
 
 app.use('/webhooks/shopify/product', shopifyProductWebhooks);
 

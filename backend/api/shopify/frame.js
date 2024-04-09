@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import fetch from 'node-fetch';
 import { existsSync, mkdirSync, appendFile } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -204,10 +203,10 @@ router.post('/:storeId', async (req, res) => {
                 
                         } catch (error) {
                             console.error('Failed to generate cart frame image:', error);
-                            cartImageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708806196513x879260076400543000/cart-error.jpg';
+                            cartImageUrl = 'https://www.gogh.shopping/images/661563f0d12a0c1d22833bf0.jpg';
                         }
                     } else {
-                        cartImageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708805708015x538517546794712300/empty_cart.jpg';
+                        cartImageUrl = 'https://www.gogh.shopping/images/6615644562ade536454a7621.jpg';
                     }
                 }
 
@@ -363,14 +362,14 @@ function constructMetadata(store, frameType, product, variant, storeId, productI
                 metadata["fc:frame:button:1"] = "Previous";
                 metadata["fc:frame:button:2"] = "Next";
                 metadata["fc:frame:button:3"] = "Add to Cart";
-                metadata["fc:frame:button:4"] = "View cart";
+                metadata["fc:frame:button:4"] = "Cart";
             } else {
                 metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
                 metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
                 metadata["fc:frame:button:1"] = "Previous";
                 metadata["fc:frame:button:2"] = "Next";
-                metadata["fc:frame:button:3"] = "View Options";
-                metadata["fc:frame:button:4"] = "View cart";
+                metadata["fc:frame:button:3"] = "Options";
+                metadata["fc:frame:button:4"] = "Cart";
             }
             break;
 

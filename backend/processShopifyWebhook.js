@@ -102,12 +102,12 @@ export async function processShopifyWebhook(webhookData) {
                 variant.inventory_quantity > 0 || variant.inventory_management === null
             );
 
-            // Check if product should be deleted based on new conditions
+            // Check if product should be deleted
             if (variants.length > 0 && variantsToKeep.length === 0) {
                 // All variants have inventory_quantity <= 0 and inventory_management is not null
                 const deleteSuccess = await deleteProduct(id);
                 if (deleteSuccess) {
-                    console.log(`Product ${id} deleted as all variants are out of stock or not managed.`);
+                    console.log(`Product ${id} deleted as all variants are out of stock.`);
                 } else {
                     console.log(`Failed to delete Product ${id}.`);
                 }

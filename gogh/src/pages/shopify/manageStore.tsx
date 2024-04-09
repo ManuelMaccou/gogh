@@ -322,7 +322,7 @@ function ManageShopifyStore() {
             <div className="submit-product-container">
                 <div className="product-form-section">
                     <div className="product-form-box">
-                        <h2>{selectedProductForEdit ? 'Edit Product' : 'Submit New Product'}</h2>
+                        <h2>{selectedProductForEdit ? 'Edit Product' : ''}</h2>
                         <form onSubmit={onSubmit} className="product-form">
 
                             <div className="form-group">
@@ -354,7 +354,7 @@ function ManageShopifyStore() {
                                 <span className="field-hint">Character Count: {charCount} / {maxChars}</span>
                                 <span className="field-hint">Line Count: {lineCount} / {maxLines}</span>
                             </div>
-                            <button type="submit">{selectedProductForEdit ? 'Update Product' : 'Add Product'}</button>
+                            <button type="submit">Update Product</button>
                             {errorMessage && <p className="error-message">{errorMessage}</p>}
                         </form>
                         {confirmationMessage && <div className="confirmation-message">{confirmationMessage}</div>}
@@ -402,10 +402,8 @@ function ManageShopifyStore() {
                         <h2>{isEditMode ? 'Select products to edit' : ''}</h2>
 
                         <div className="deletion-buttons">
-
-                                        <button className="edit-button" onClick={toggleEditMode}>{isEditMode ? 'Cancel' : 'Edit Products'}</button>
-
-                            </div>
+                            <button className="edit-button" onClick={toggleEditMode}>{isEditMode ? 'Cancel' : 'Edit Description'}</button>
+                        </div>
                         {store?.products.map(product => (
                             <div 
                             className={`product-card ${isEditMode && selectedProductForEdit && selectedProductForEdit._id === product._id ? 'selected' : 'deselected'}`}
@@ -415,7 +413,9 @@ function ManageShopifyStore() {
                                 <div className='product-preview-card'>
                                     {product.frameImage && <img src={product.frameImage} alt={product.title} className="product-frame"/>}
                                 </div>
-
+                                <div className='create-frame'>
+                                    <button onClick={() => navigator.clipboard.writeText(`${process.env.REACT_APP_BASE_URL}/product-page/shopify/${store._id}/${product._id}`)}>Copy frame URL</button>
+                                </div>
                             </div>
                         ))}
                     </div>

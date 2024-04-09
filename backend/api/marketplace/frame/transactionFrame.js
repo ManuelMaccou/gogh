@@ -130,7 +130,6 @@ router.post('/product/:productId', async (req, res) => {
                 console.log('Gethering Neynar data');
                 const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, options);
                 const data = await response.json();
-                console.log('Neynar data gathered');
 
                 const username = data.users[0].username;
                 const displayName = data.users[0].display_name;
@@ -149,6 +148,11 @@ router.post('/product/:productId', async (req, res) => {
                         dynamicTemplateData: {
                             transaction_hash: transactionHash,
                         },
+                        cc: [
+                            {
+                                email: 'manuel@gogh.shopping',
+                            },
+                        ],
                     };
                     emailSendingResults.push(sgMail.send(msgBuyer));
                 }
@@ -166,6 +170,11 @@ router.post('/product/:productId', async (req, res) => {
                             buyer_profile_url: buyerProfileUrl,
 
                         },
+                        cc: [
+                            {
+                                email: 'manuel@gogh.shopping',
+                            },
+                        ],
                     };
                     emailSendingResults.push(sgMail.send(msgSeller));
                 }
@@ -241,7 +250,6 @@ router.post('/product/:productId', async (req, res) => {
                 console.log('Gethering Neynar data');
                 const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, options);
                 const data = await response.json();
-                console.log('Neynar data gathered');
 
                 const username = data.users[0].username;
                 const displayName = data.users[0].display_name;
