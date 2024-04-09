@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import fetch from 'node-fetch';
 import { existsSync, mkdirSync, appendFile } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -363,14 +362,14 @@ function constructMetadata(store, frameType, product, variant, storeId, productI
                 metadata["fc:frame:button:1"] = "Previous";
                 metadata["fc:frame:button:2"] = "Next";
                 metadata["fc:frame:button:3"] = "Add to Cart";
-                metadata["fc:frame:button:4"] = "View cart";
+                metadata["fc:frame:button:4"] = "Cart";
             } else {
                 metadata["og:image"] = metadata["fc:frame:image"] = productImageUrl;
                 metadata["fc:frame:image:aspect_ratio"] = "1.91:1";
                 metadata["fc:frame:button:1"] = "Previous";
                 metadata["fc:frame:button:2"] = "Next";
-                metadata["fc:frame:button:3"] = "View Options";
-                metadata["fc:frame:button:4"] = "View cart";
+                metadata["fc:frame:button:3"] = "Options";
+                metadata["fc:frame:button:4"] = "Cart";
             }
             break;
 

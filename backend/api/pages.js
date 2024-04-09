@@ -30,7 +30,7 @@ router.get('/:uniqueId', async (req, res) => {
     }
 });
 
-
+// Response to generate frame for a store
 router.get('/shopify/:storeId', async (req, res) => {
     try {
         const storeId = req.params.storeId;
@@ -51,6 +51,46 @@ router.get('/shopify/:storeId', async (req, res) => {
         }
         
         res.send(store.pageHtml);
+    } catch (err) {
+        console.error('Error in GET /:uniqueId', err);
+        res.status(500).send('Server error');
+    }
+});
+
+// Response to generate frame for a product within a specific store
+router.get('/shopify/:storeId/:productId', async (req, res) => {
+    try {
+        const storeId = req.params.storeId;
+        const productId = req.params.productId;
+
+        const storeWithProduct = await ShopifyStore.findOne({ 
+            _id: storeId, 
+            'products._id': productId 
+        }, {
+            'products.$': 1
+        });
+    
+        if (!storeWithProduct) {
+            return res.status(404).send('Product not found in the specified store');
+        }
+    
+        const product = storeWithProduct.products[0];
+        
+        const pageHtml = `
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <meta property="fc:frame" content="vNext">
+                <meta name="fc:frame:post_url" content="${process.env.BASE_URL}/api/shopify/singleProductFrame/${storeId}/${productId}?frameType=productFrame">
+                <meta property="fc:frame:image" content="${product.frameImage}">
+                <meta property="fc:frame:image:aspect_ratio" content="">
+                <meta property="fc:frame:button:1" content="Options">
+                <meta property="fc:frame:button:2" content="View cart">
+            </head>
+        </html>
+        `;
+        
+        res.send(pageHtml);
     } catch (err) {
         console.error('Error in GET /:uniqueId', err);
         res.status(500).send('Server error');
