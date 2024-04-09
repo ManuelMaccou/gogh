@@ -203,10 +203,10 @@ router.post('/:storeId', async (req, res) => {
                 
                         } catch (error) {
                             console.error('Failed to generate cart frame image:', error);
-                            cartImageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708806196513x879260076400543000/cart-error.jpg';
+                            cartImageUrl = 'https://www.gogh.shopping/images/661563f0d12a0c1d22833bf0.jpg';
                         }
                     } else {
-                        cartImageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708805708015x538517546794712300/empty_cart.jpg';
+                        cartImageUrl = 'https://www.gogh.shopping/images/6615644562ade536454a7621.jpg';
                     }
                 }
 

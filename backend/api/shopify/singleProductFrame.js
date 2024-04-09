@@ -1,4 +1,4 @@
-// https://www.gogh.shopping/product-page/shopify/65fc35ffc72d259502652886/660b4ceef18d6c25a1e69914
+// https://www.gogh.shopping/product-page/shopify/65d8bd708756613cd280d096/66022e117c6a5c28f82b8636
 
 import { Router } from 'express';
 import createCartFrame from '../../utils/shopify/createCartFrame.js';
@@ -103,7 +103,7 @@ router.post('/:storeId/:productId', async (req, res) => {
 
                 if (cartUrlParams) {                        
                     try {
-                        const cartFrameImageBuffer = await createCartFrame(cartUrlParams, store);
+                        const cartFrameImageBuffer = await createCartFrame(cartUrlParams, storeWithProduct);
                         const contentType = 'image/jpeg'; 
             
                         // Store the image buffer in DB
@@ -114,10 +114,10 @@ router.post('/:storeId/:productId', async (req, res) => {
             
                     } catch (error) {
                         console.error('Failed to generate cart frame image:', error);
-                        cartImageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708806196513x879260076400543000/cart-error.jpg';
+                        cartImageUrl = 'https://www.gogh.shopping/images/661563f0d12a0c1d22833bf0.jpg';
                     }
                 } else {
-                    cartImageUrl = 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1708805708015x538517546794712300/empty_cart.jpg';
+                    cartImageUrl = 'https://www.gogh.shopping/images/6615644562ade536454a7621.jpg';
                 }
             } 
 
