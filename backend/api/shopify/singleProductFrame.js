@@ -1,3 +1,5 @@
+// https://www.gogh.shopping/product-page/shopify/65fc35ffc72d259502652886/660b4ceef18d6c25a1e69914
+
 import { Router } from 'express';
 import createCartFrame from '../../utils/shopify/createCartFrame.js';
 import ShopifyStore from '../../models/shopify/store.js';
@@ -26,7 +28,6 @@ router.post('/:storeId/:productId', async (req, res) => {
     let cartImageUrl = null;
 
     let variantIndex = parseInt(req.query.variantIndex) || 0;
-    console.log('variantIndex:', variantIndex);
 
     const isProduction = process.env.NODE_ENV === 'production';
 
@@ -35,15 +36,13 @@ router.post('/:storeId/:productId', async (req, res) => {
     const storeWithProduct = await ShopifyStore.findOne({ 
         _id: storeId, 
         'products._id': productId 
-    }, {
-        'products.$': 1
     });
 
     if (!storeWithProduct) {
         return res.status(404).send('Product not found in the specified store');
     }
 
-    const product = storeWithProduct.products[0];
+    const product = storeWithProduct.products.find(p => p._id.toString() === productId);
 
     // Validate frame interaction first
     if (isProduction) {
@@ -76,10 +75,8 @@ router.post('/:storeId/:productId', async (req, res) => {
         }
 
         let variant = product.variants[variantIndex];
-        console.log('variant:', variant);
 
         const totalVariants = product.variants.length;
-        console.log('totalVariants:', totalVariants);
 
         if (frameType === "productFrame") {
             if (buttonIndex === 1 && totalVariants === 1) {
@@ -218,7 +215,7 @@ function generateFrameHtml(storeWithProduct, product, variant, storeId, productI
 function constructMetadata(storeWithProduct, frameType, product, variant, storeId, productId, variantIndex, cartUrlParams, totalVariants, cartImageUrl) {
 
     const baseUrl = process.env.BASE_URL;
-    const checkoutUrl = `${storeWithProduct.shopifyStoreUrl}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
+    const checkoutUrl = `https://${storeWithProduct.shopifyStoreUrl}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
 
     let metadata = {
         "og:url": "https://www.gogh.shopping",
