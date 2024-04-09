@@ -922,6 +922,20 @@
     margin: 0 10px;
 }
 
+.create-frame {
+    width: 75%;
+}
+
+.create-frame button {
+    color: white;
+    width: 100%;
+    background: #6944BA;
+    height: 30px;
+    border-radius: 3px;
+    border: 1px solid #f4f4f4;
+}
+
+
 .description-frame {
     width: 100%;
     height: auto;
