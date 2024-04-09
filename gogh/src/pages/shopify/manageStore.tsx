@@ -322,7 +322,7 @@ function ManageShopifyStore() {
             <div className="submit-product-container">
                 <div className="product-form-section">
                     <div className="product-form-box">
-                        <h2>{selectedProductForEdit ? 'Edit Product' : 'Submit New Product'}</h2>
+                        <h2>{selectedProductForEdit ? 'Edit Product' : ''}</h2>
                         <form onSubmit={onSubmit} className="product-form">
 
                             <div className="form-group">
@@ -354,7 +354,7 @@ function ManageShopifyStore() {
                                 <span className="field-hint">Character Count: {charCount} / {maxChars}</span>
                                 <span className="field-hint">Line Count: {lineCount} / {maxLines}</span>
                             </div>
-                            <button type="submit">{selectedProductForEdit ? 'Update Product' : 'Add Product'}</button>
+                            <button type="submit">Update Product</button>
                             {errorMessage && <p className="error-message">{errorMessage}</p>}
                         </form>
                         {confirmationMessage && <div className="confirmation-message">{confirmationMessage}</div>}

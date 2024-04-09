@@ -75,8 +75,27 @@ router.get('/shopify/:storeId/:productId', async (req, res) => {
         }
     
         const product = storeWithProduct.products[0];
+        const totalVariants = product.variants.length;
+        let pageHtml;
+
+        if (totalVariants === 1) {
         
-        const pageHtml = `
+        pageHtml = `
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <meta property="fc:frame" content="vNext">
+                <meta name="fc:frame:post_url" content="${process.env.BASE_URL}/api/shopify/singleProductFrame/${storeId}/${productId}?frameType=productFrame">
+                <meta property="fc:frame:image" content="${product.frameImage}">
+                <meta property="fc:frame:image:aspect_ratio" content="">
+                <meta property="fc:frame:button:1" content="Add to cart">
+                <meta property="fc:frame:button:2" content="View cart">
+            </head>
+        </html>
+        `;
+
+        } else {
+            pageHtml = `
         <!DOCTYPE html>
         <html>
             <head>
@@ -89,6 +108,7 @@ router.get('/shopify/:storeId/:productId', async (req, res) => {
             </head>
         </html>
         `;
+        }
         
         res.send(pageHtml);
     } catch (err) {
