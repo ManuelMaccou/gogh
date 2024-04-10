@@ -6,6 +6,7 @@ import { useUser } from '../../contexts/userContext';
 import { useNavigate } from 'react-router-dom';
 import Web3 from 'web3';
 import Header from '../header';
+import { createEscrow, getGoghContract, toEscrow, } from "../../utils/goghContract";
 
 interface Product {
     _id: string;
@@ -161,8 +162,7 @@ const Listing = () => {
     });
 
     const { connectWallet } = useConnectWallet({
-        onSuccess: (wallet) => {
-        },
+        onSuccess: (wallet) => {},
         onError: (error) => {
             console.log(error);
             setIsPurchaseInitiated(false);
@@ -226,6 +226,31 @@ const Listing = () => {
         }
     }
 
+    async function getConvertedAmountWithoutHext(usdcAmount: string | undefined) {
+        try {
+          const response = await fetch(
+            `${process.env.REACT_APP_BASE_URL}/api/crypto/convert-usdc-to-wei-without-hex`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ usdcAmount }),
+            }
+          );
+    
+          if (!response.ok) {
+            throw new Error("Failed to convert USDC to Wei");
+          }
+    
+          const data = await response.json();
+          return data.weiAmount;
+        } catch (error) {
+          console.error("Error converting USDC to Wei:", error);
+          alert("Error converting currency. Please try again.");
+        }
+      }
+
     const buyProduct = async () => {
         const accessToken = await getAccessToken();
         try {
@@ -266,123 +291,70 @@ const Listing = () => {
                 }
             };
             
-            // Sign the message
-            const message = 
-            `
-            Purchase confirmation. \n
-            Product: ${product?.title} \n
-            Price: ${product?.price} \n
-            Seller wallet address: ${product?.walletAddress} \n
-            Your wallet address: ${address}.
-            `;
-            
-            let signature;
-            try {
-                signature = await provider.request({
-                    method: 'personal_sign',
-                    params: [message, address],
-                });
-            } catch (signError) {
-                console.error('Error signing message:', signError);
-                alert('Transaction cancelled or failed during signing.');
-                setIsPurchaseInitiated(false);
+            const ethersProvider = await wallet.getEthersProvider();
+            const signer = ethersProvider.getSigner();
+            const goghContract = getGoghContract(signer);
+            const uid = parseInt(Math.random().toString().slice(-15));
+            const sanitizedAmount = product?.price.replace(/[^0-9.]/g, "");
+            const convertedAmount = await getConvertedAmountWithoutHext(
+                sanitizedAmount
+            );
+            if (!convertedAmount) {
+                console.error("Error occured. Transaction amount is missing.");
+                alert("There was an error calculating the transaction amount.");
                 return;
             }
+
+            const escrow = await createEscrow({
+                contract: goghContract,
+                uid,
+                recipientAddress: product?.walletAddress || "",
+                tokenAddress: "0x0000000000000000000000000000000000000001",
+                amount: convertedAmount,
+            });
     
-            // Verify signature
-            try {
-                const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/crypto/verify-signature`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({
-                        signature,
-                        message,
-                        address,
-                    }),
-                });
+            ethersProvider.once(escrow.hash, async (transactionReceipt) => {
+                transactionReceipt.logs.forEach(async (t: any, index: number) => {
+                    const logVals = goghContract.interface.parseLog(
+                    transactionReceipt.logs[index]
+                    )?.args;
+                    if (logVals) {
+                        const arryOfLog = Array.from(logVals);
+                        if (arryOfLog[0] == uid) {
+                            const escrowId = arryOfLog[1];
+                            let escrowTemp = await goghContract.getEscrowDetails(escrowId);
+                            let escrowData = toEscrow(escrowTemp);
 
-                if (!response.ok) {
-                    setIsPurchaseInitiated(false);
-                    throw new Error('Network response was not ok');
-                }
-
-                const verificationResult = await response.json();
-
-
-                // Send transaction
-                if (verificationResult.verified) {
-
-                    try {
-                        const sanitizedAmount = product?.price.replace(/[^0-9.]/g, '');
-                        const convertedAmount = await getConvertedAmount(sanitizedAmount);
-
-                        
-                        if (!user?.fid || !product || !product.user || !product.walletAddress || !product?.user?.fid) {
-                            console.error('Error occured. User or product information is missing.');
-                            alert('There was an error when trying to gather product or user information.');
-                            return;
-                        }
-
-                        if (!convertedAmount) {
-                            console.error('Error occured. Transaction amount is missing.');
-                            alert('There was an error calculating the transaction amount.');
-                            return;
-                        }
-
-                        const transactionHash = await provider.request({
-                            method: 'eth_sendTransaction',
-                            params: [
-                                {
-                                    from: address,
-                                    to: product.walletAddress,
-                                    value: convertedAmount,
+                            const transactionDetails = {
+                                marketplaceProductId: product?._id,
+                                sellerId: product?.user._id,
+                                buyerFid: user?.fid,
+                                sellerFid: product?.user?.fid,
+                                sellerProfile: product?.user?.fc_url,
+                                sellerUsername: product?.user?.fc_username,
+                                transactionHash: escrow.hash,
+                                source: "Website",
+                                escrowId,
+                                uid: escrowData.uid.toString(),
+                                metadata: {
+                                    ...escrowData,
+                                    amount: escrowData.amount.toString(),
+                                    timestamp: escrowData.timestamp.toString(),
+                                    uid: escrowData.uid.toString(),
                                 },
-                            ],
-                        });
-
-                        const transactionDetails = {
-                            marketplaceProductId: product._id,
-                            sellerId: product.user._id,
-                            buyerFid: user.fid,
-                            sellerFid: product.user.fid,
-                            sellerProfile: product.user.fc_url,
-                            sellerUsername: product.user.fc_username,
-                            transactionHash: transactionHash,
-                            source: 'Website',
-                        };
-
-                        try {
-                            const response = await saveTransaction(transactionDetails);
-                            if (response && response.status === 201) {
-                                navigate(`/success/${transactionHash}`);
-                            } else {
-                                // Handle unexpected responses
-                                console.error('Unexpected response:', response);
+                            };
+                            
+                            try {
+                                await saveTransaction(transactionDetails as any);
+                                navigate(`/success/${escrow.hash}`);
+                            } catch (error) {
+                                console.error("Failed to save transaction details:", error);
+                                alert( `An error occured. You can still view your transaction on basescan.org. Transaction hash: ${escrow.hash}.`);
                             }
-                        } catch (error) {
-                            console.error('Failed to save transaction details:', error);
-                            alert(`An error occurred. You can still view your transaction on basescan.org. Transaction hash: ${transactionHash}.`);
                         }
-
-                    } catch (transactionError) {
-                        console.error('Transaction failed:', transactionError);
-                        alert('Transaction failed. Please try again.');
-                        setIsPurchaseInitiated(false);
-                        return;
                     }
-                } else {
-                    alert('Signature verification failed.');
-                    setIsPurchaseInitiated(false);
-                }
-            } catch (verificationError) {
-                console.error('An error occurred during signature verification:', verificationError);
-                alert('An error occurred during the verification process. Please try again.');
-                setIsPurchaseInitiated(false);
-            }
-    
+                });
+            });
         } catch (error) {
             console.error('Unexpected error in buyProduct:', error);
             alert('An unexpected error occurred. Please try again.');
