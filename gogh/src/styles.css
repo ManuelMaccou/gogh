@@ -923,6 +923,7 @@
 }
 
 .create-frame {
+    cursor: pointer;
     width: 75%;
 }
 
