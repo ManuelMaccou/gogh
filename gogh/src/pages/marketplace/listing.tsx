@@ -1,21 +1,12 @@
 import { useEffect, useState, Fragment } from "react";
 import axios, { AxiosError } from "axios";
 import { useParams } from "react-router-dom";
-import {
-  usePrivy,
-  useWallets,
-  useLogin,
-  useConnectWallet,
-} from "@privy-io/react-auth";
+import { usePrivy, useWallets, useLogin, useConnectWallet } from "@privy-io/react-auth";
 import { useUser } from "../../contexts/userContext";
 import { useNavigate } from "react-router-dom";
 import Web3 from "web3";
 import Header from "../header";
-import {
-  createEscrow,
-  getGoghContract,
-  toEscrow,
-} from "../../utils/goghContract";
+import { createEscrow, getGoghContract, toEscrow } from "../../utils/goghContract";
 
 interface Product {
   _id: string;
