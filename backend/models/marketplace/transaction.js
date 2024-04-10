@@ -7,15 +7,19 @@ const transactionSchema = new Schema(
     recipientSignature: { type: String },
     uid: { type: String },
     escrowId: { type: String },
+    buyer: { type: Schema.Types.ObjectId, ref: 'User' },
+    seller: { type: Schema.Types.ObjectId, ref: 'User' },
     buyerFid: { type: String },
     sellerFid: { type: String },
     sellerProfile: { type: String },
     sellerUsername: { type: String },
     transactionHash: { type: String, required: true },
     source: { type: String, required: true },
+    marketplaceProduct: { type: Schema.Types.ObjectId, ref: 'MarketplaceProduct' },
   },
   { timestamps: true }
 );
+
 
 const MarketplaceTransaction = model(
   "MarketplaceTransaction",

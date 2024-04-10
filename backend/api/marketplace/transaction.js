@@ -1,45 +1,48 @@
 import { Router } from "express";
+import auth from '../../middleware/auth.js';
+import User from "../../models/user.js";
 import MarketplaceTransaction from "../../models/marketplace/transaction.js";
 
 const router = Router();
 
-router.post("/save", async (req, res) => {
-  try {
-    const {
-      buyerFid,
-      sellerFid,
-      sellerProfile,
-      sellerUsername,
-      transactionHash,
-      source,
-      metadata,
-      uid,
-      escrowId,
-    } = req.body;
+router.post("/save", auth, async (req, res) => {
 
-    // Create a new transaction instance
-    const newTransaction = new MarketplaceTransaction({
-      buyerFid,
-      sellerFid,
-      sellerProfile,
-      sellerUsername,
-      transactionHash,
-      source,
-      metadata,
-      uid,
-      escrowId,
+  let buyer;
+  let newTransaction;
+  let userUpdated = false;
+
+  try {
+    const { marketplaceProductId, sellerId, buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, metadata, uid, escrowId, } = req.body;
+
+    buyer = await User.findOne({ privyId: req.user });
+
+    if (!buyer) {
+      return res.status(404).send({ message: "Buyer not found." });
+    }
+
+    // Create a new transaction record
+    newTransaction = new MarketplaceTransaction({
+      marketplaceProduct: marketplaceProductId,
+      buyer: buyer._id,
+      seller: sellerId,
+      buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, metadata, uid, escrowId,
     });
 
-    // Save the transaction to the database
     await newTransaction.save();
 
-    res
-      .status(201)
-      .send({ message: "Transaction saved successfully", newTransaction });
+    buyer.marketplaceProductPurchases.push(newTransaction._id);
+    await buyer.save();
+    userUpdated = true; // Update was successful
   } catch (error) {
-    console.error("Failed to save transaction:", error);
-    res.status(400).send({ error: error.message });
+    console.error("Failed to save transaction or update user:", error);
   }
+
+  // Send a single response indicating the outcome
+  res.status(201).send({ 
+      message: userUpdated ? "Transaction saved and user updated successfully" : "Transaction saved but failed to update user.", 
+      transactionId: newTransaction ? newTransaction._id : null,
+      userUpdated: userUpdated
+  });
 });
 
 router.get("/:transactionHash", async (req, res) => {

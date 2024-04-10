@@ -1,5 +1,5 @@
 import { useEffect, useState, Fragment } from 'react';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import { useParams } from 'react-router-dom';
 import { usePrivy, useWallets, useLogin, useConnectWallet } from '@privy-io/react-auth';
 import { useUser } from '../../contexts/userContext';
@@ -28,6 +28,8 @@ interface User {
     fc_pfp?: string;
     fc_bio?: string;
     fc_url?: string;
+    facebookUser?: boolean;
+    fb_url?: string;
     email?: string;
     walletAddress?: string;
 }
@@ -56,6 +58,8 @@ const Listing = () => {
     
     const {wallets} = useWallets();
     const walletAddress = wallets[0]?.address;
+    
+    
 
     const navigate = useNavigate();
 
@@ -187,13 +191,18 @@ const Listing = () => {
     };
 
 
-    const saveTransaction = async (transactionDetails: TransactionDetails) => {
+    const saveTransaction = async (transactionDetails: TransactionDetails): Promise<AxiosResponse<any>> => {
         try {
-          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/transaction/save`, transactionDetails);
-          const data = response.data;
+            const accessToken = await getAccessToken();
+
+            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/transaction/save`, transactionDetails, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            return response;
         } catch (error) {
+            throw new Error('Failed to save transaction. Please try again.');
         }
-      };
+    };
 
     async function getConvertedAmount(usdcAmount: string | undefined) {
         try {
@@ -226,11 +235,19 @@ const Listing = () => {
             const provider = await wallet.getEthereumProvider();
 
             // Confirm or switch to Base
-            const chainId = wallet.chainId;
+            const privyChainId = wallet.chainId;
+            const chainIdNum = process.env.REACT_APP_CHAIN_ID ? Number(process.env.REACT_APP_CHAIN_ID) : null;
 
-            if (chainId !== "eip155:8453") {
+            if (chainIdNum === null || isNaN(chainIdNum)) {
+                console.error("Invalid chain ID in environment variables.");
+                // Handle the error appropriately.
+                setIsPurchaseInitiated(false);
+                return;
+            }
+
+            if (privyChainId !== `eip155:${chainIdNum}`) {
                 try {
-                    await wallet.switchChain(8453);
+                    await wallet.switchChain(chainIdNum);
                 } catch (error: unknown) {
                     console.error('Error switching chain:', error);
                 
@@ -327,6 +344,8 @@ const Listing = () => {
                         });
 
                         const transactionDetails = {
+                            marketplaceProductId: product._id,
+                            sellerId: product.user._id,
                             buyerFid: user.fid,
                             sellerFid: product.user.fid,
                             sellerProfile: product.user.fc_url,
@@ -336,11 +355,16 @@ const Listing = () => {
                         };
 
                         try {
-                            await saveTransaction(transactionDetails);
-                            navigate(`/success/${transactionHash}`);
+                            const response = await saveTransaction(transactionDetails);
+                            if (response && response.status === 201) {
+                                navigate(`/success/${transactionHash}`);
+                            } else {
+                                // Handle unexpected responses
+                                console.error('Unexpected response:', response);
+                            }
                         } catch (error) {
                             console.error('Failed to save transaction details:', error);
-                            alert(`An error occured. You can still view your transaction on basescan.org. Transaction hash: ${transactionHash}.`);
+                            alert(`An error occurred. You can still view your transaction on basescan.org. Transaction hash: ${transactionHash}.`);
                         }
 
                     } catch (transactionError) {
@@ -435,9 +459,11 @@ const Listing = () => {
                         <i className="fa-regular fa-share-from-square"></i>
                         </a>
                     </div>
-                    {product.user?.fid && (
+                    {(product.user?.fid || product.user?.facebookUser) && (
                     <div className='seller-section'>
                         <h2>Meet the seller</h2>
+                        {product.user?.fid && (
+                        <>
                         <div className='seller-profile'>
                             <img src={profilePicture} alt="User profile picture" className='seller-pfp' />
                             <div className='seller-info'>
@@ -450,6 +476,20 @@ const Listing = () => {
                                 Message {userName}
                             </a>
                         </div>
+                        </>
+                        )}
+                        {product.user?.facebookUser && !product.user?.fid && (
+                            <>
+                            <div className='seller-profile'>
+                                <p>This seller is a Facebook user</p>
+                            </div>
+                            <div className='message-seller'>
+                                <a href={product.user.fb_url} target="_blank" rel="noopener noreferrer" className='message-button'>
+                                    View profile
+                                </a>
+                            </div>
+                            </>
+                        )}
                     </div>
                     )}
                 </div>
