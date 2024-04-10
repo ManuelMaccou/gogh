@@ -40,9 +40,7 @@ interface TransactionDetails {
     sellerFid: string;
     transactionHash: string;
     source: string;
-  }
-
- 
+}
 
 const Listing = () => {
 
@@ -59,13 +57,8 @@ const Listing = () => {
     
     const {wallets} = useWallets();
     const walletAddress = wallets[0]?.address;
-    
-    
 
     const navigate = useNavigate();
-
-    // useEffect(() => {
-    // }, [authenticated, ready]);
 
     const fetchSingleProduct = async () => {
         try {
@@ -189,7 +182,6 @@ const Listing = () => {
             buyProduct();
         }
     };
-
 
     const saveTransaction = async (transactionDetails: TransactionDetails): Promise<AxiosResponse<any>> => {
         try {
