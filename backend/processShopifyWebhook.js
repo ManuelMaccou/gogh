@@ -78,6 +78,7 @@ export async function processShopifyWebhook(webhookData) {
 
     console.log ('webhook data:', webhookData);
     console.log ('payload:', payload);
+    console.log ('payload-status:', status);
 
     try {
         // Find the relevant store
@@ -92,12 +93,16 @@ export async function processShopifyWebhook(webhookData) {
         // Check if the product exists
         const productIndex = store.products.findIndex(product => product.shopifyProductId === id.toString());
 
-        if (status === 'draft' && productIndex !== -1) {
-            // If the status is "draft" and the product exists, delete it
-            store.products.splice(productIndex, 1); // Removes the product from the array
-            await store.save();
-            console.log(`Product ${id} with status "draft" removed from the store.`);
+        if (status === 'draft') {
+            if (productIndex !== -1) {
+                store.products.splice(productIndex, 1);
+                await store.save();
+                console.log(`Draft product ${id} removed from the store.`);
+            } else {
+                console.log(`Draft product ${id} ignored.`);
+            }
             return;
+            
         } else if (status === 'active') {
             if (productIndex === -1) {
                 // If the status is "active" and the product doesn't exist, add it

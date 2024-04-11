@@ -32,7 +32,7 @@ async function deleteProduct(productId) {
 
 // Update products from webhook
 router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopifyWebhook, async (req, res) => {
-    console.log('Received product update webhook');
+    console.log('Received product update webhook with request body:', req.body);
     res.status(200).send('Webhook received');
 
     const shopifyWebhookId = req.headers['x-shopify-webhook-id'];
