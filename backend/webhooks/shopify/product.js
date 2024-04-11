@@ -45,8 +45,8 @@ router.post('/update', bodyParser.json({ verify: rawBodyBuffer }), verifyShopify
     });
 
     try {
-        await client.lPush('shopifyUpdatesQueue', webhookData);
-        console.log('Webhook payload queued successfully');
+        const pushResult = await client.lPush('shopifyUpdatesQueue', webhookData);
+        console.log('Webhook payload queued successfully, result:', pushResult);
     } catch (error) {
         console.error('Error queuing webhook data:', error);
     }
