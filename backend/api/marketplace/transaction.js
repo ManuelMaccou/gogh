@@ -2,6 +2,7 @@ import { Router } from "express";
 import auth from '../../middleware/auth.js';
 import User from "../../models/user.js";
 import MarketplaceTransaction from "../../models/marketplace/transaction.js";
+import { isObject } from "../../utils/misc.js";
 
 const router = Router();
 
@@ -60,6 +61,36 @@ router.get('/:transactionHash', async (req, res) => {
         console.error('Failed to fetch transaction:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
+});
+router.put("/:transactionHash", async (req, res) => {
+  const { transactionHash } = req.params;
+  const {ownerSignature,recipientSignature,metadata} = req.body;
+
+  try {
+    const transaction = await MarketplaceTransaction.findOne({
+      transactionHash: transactionHash,
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+    if(ownerSignature){
+      transaction.ownerSignature = ownerSignature
+    }
+    if(recipientSignature){
+      transaction.recipientSignature = recipientSignature
+    }
+    if(metadata && isObject(metadata)) {
+    transaction.metadata = {...metadata}
+    }
+
+    await transaction.save()
+
+    res.json(transaction);
+  } catch (error) {
+    console.error("Failed to fetch transaction:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 export default router;
