@@ -74,7 +74,7 @@ async function createNewProduct(productData, store) {
 
 export async function processShopifyWebhook(webhookData) {
     const { shopifyDomain, payload } = webhookData;
-    const { id, title, image, images, variants } = payload;
+    const { id, title, image, images, variants, status } = payload;
 
     console.log ('webhook data:', webhookData);
     console.log ('payload:', payload);
@@ -91,152 +91,164 @@ export async function processShopifyWebhook(webhookData) {
 
         // Check if the product exists
         const productIndex = store.products.findIndex(product => product.shopifyProductId === id.toString());
-        if (productIndex !== -1) {
-            // Product exists, check for updates and add new variants
-            let productUpdated = false;
-            let needsNewProductFrame = false;
-            const existingProduct = store.products[productIndex];
 
-            // Only keep variants with inventory or are unmanaged.
-            const variantsToKeep = variants.filter(variant =>
-                variant.inventory_quantity > 0 || variant.inventory_management === null
-            );
+        if (status === 'draft' && productIndex !== -1) {
+            // If the status is "draft" and the product exists, delete it
+            store.products.splice(productIndex, 1); // Removes the product from the array
+            await store.save();
+            console.log(`Product ${id} with status "draft" removed from the store.`);
+            return;
+        } else if (status === 'active') {
+            if (productIndex === -1) {
+                // If the status is "active" and the product doesn't exist, add it
+                console.log('Product not found, creating new product');
+                await createNewProduct({ id, title, body_html: payload.body_html, image, images, variants }, store);
+            } else {
 
-            // Check if product should be deleted
-            if (variants.length > 0 && variantsToKeep.length === 0) {
-                // All variants have inventory_quantity <= 0 and inventory_management is not null
-                const deleteSuccess = await deleteProduct(id);
-                if (deleteSuccess) {
-                    console.log(`Product ${id} deleted as all variants are out of stock.`);
-                } else {
-                    console.log(`Failed to delete Product ${id}.`);
+                console.log(`Product ${id} with status "active" already exists. Checking for updates...`);
+
+                // Product exists, check for updates and add new variants
+                let productUpdated = false;
+                let needsNewProductFrame = false;
+                const existingProduct = store.products[productIndex];
+
+                // Only keep variants with inventory or are unmanaged.
+                const variantsToKeep = variants.filter(variant =>
+                    variant.inventory_quantity > 0 || variant.inventory_management === null
+                );
+
+                // Check if product should be deleted
+                if (variants.length > 0 && variantsToKeep.length === 0) {
+                    // All variants have inventory_quantity <= 0 and inventory_management is not null
+                    const deleteSuccess = await deleteProduct(id);
+                    if (deleteSuccess) {
+                        console.log(`Product ${id} deleted as all variants are out of stock.`);
+                    } else {
+                        console.log(`Failed to delete Product ${id}.`);
+                    }
+                    return; // Stop further processing
                 }
-                return; // Stop further processing
-            }
 
-            // Check and update product title
-            if (title && title !== existingProduct.title) {
-                existingProduct.title = title;
-                productUpdated = true;
-                needsNewProductFrame = true;
-            }
-
-            // Check and update product image
-            const newImageSrc = image ? image.src : null;
-            if (newImageSrc !== null && newImageSrc !== existingProduct.image) {
-                existingProduct.image = newImageSrc || existingProduct.image; // Fallback to existing image if newImageSrc is null
-                productUpdated = true;
-                needsNewProductFrame = true;
-            }
-
-            // Update productFrame if necessary
-            if (needsNewProductFrame) {
-                try {
-                    // Generate frame image for the product
-                    const generatedProductFrameBuffer = await createProductFrame(existingProduct);
-                    const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
-
-                    existingProduct.frameImage = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
-                    console.log('Frame images updated for product');
-                } catch (error) {
-                console.error(`Error generating frame images for product ${product.shopifyProductId}:`, error);
+                // Check and update product title
+                if (title && title !== existingProduct.title) {
+                    existingProduct.title = title;
+                    productUpdated = true;
+                    needsNewProductFrame = true;
                 }
-            }
 
-            // Prepare a list of variant IDs from the webhook with inventory_quantity > 0
-            const variantIdsWithPositiveInventory = variants
-            .filter(variant => variant.inventory_quantity > 0 || variant.inventory_management === null)
-            .map(variant => variant.id.toString());
+                // Check and update product image
+                const newImageSrc = image ? image.src : null;
+                if (newImageSrc !== null && newImageSrc !== existingProduct.image) {
+                    existingProduct.image = newImageSrc || existingProduct.image; // Fallback to existing image if newImageSrc is null
+                    productUpdated = true;
+                    needsNewProductFrame = true;
+                }
 
-            // Filter out variants that no longer exist or have inventory_quantity of 0
-            const filteredVariants = existingProduct.variants.filter(existingVariant =>
-                variantIdsWithPositiveInventory.includes(existingVariant.shopifyVariantId) ||
-                variants.some(variant => variant.id.toString() === existingVariant.shopifyVariantId && variant.inventory_quantity > 0 || variant.inventory_management === null)
-            );
+                // Update productFrame if necessary
+                if (needsNewProductFrame) {
+                    try {
+                        // Generate frame image for the product
+                        const generatedProductFrameBuffer = await createProductFrame(existingProduct);
+                        const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
 
-            // Check if any variants were removed based on the inventory quantity
-            if (existingProduct.variants.length !== filteredVariants.length) {
-                existingProduct.variants = filteredVariants;
-                productUpdated = true;
-            }
-
-            // Update variants
-            for (const variant of variants) {
-                let needsNewVariantFrame = false;
-
-                const variantIndex = existingProduct.variants.findIndex(v => v.shopifyVariantId === variant.id.toString());
-                if (variantIndex !== -1) {
-                    // Existing variant found, update it
-                    let existingVariant = existingProduct.variants[variantIndex];
-                    let variantUpdated = false;
-            
-                    // Update variant title if it has changed
-                    if (variant.title && variant.title !== existingVariant.title) {
-                        if (variant.title === "Default Title") {
-                            existingVariant.title = "Only option"
-                        } else {
-                            existingVariant.title = variant.title;
-                        }
-                        variantUpdated = true;
-                        needsNewVariantFrame = true;
+                        existingProduct.frameImage = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
+                        console.log('Frame images updated for product');
+                    } catch (error) {
+                    console.error(`Error generating frame images for product ${product.shopifyProductId}:`, error);
                     }
-            
-                    // Update variant image if it has changed
-                    const variantImageSrc = variant.image_id ? images.find(image => image.id === variant.image_id)?.src : existingVariant.image;
-                    if (variantImageSrc !== null && variantImageSrc !== existingVariant.image) {
-                        existingVariant.image = variantImageSrc || existingVariant.image; // Fallback to existing image if variantImageSrc is null
-                        variantUpdated = true;
-                        needsNewVariantFrame = true;
-                    }
-            
-                    // Update variant inventory quantity if it has changed
-                    if (variant.inventory_quantity !== undefined && variant.inventory_quantity !== existingVariant.inventory_quantity) {
-                        existingVariant.inventory_quantity = variant.inventory_quantity;
-                        variantUpdated = true;
-                        needsNewVariantFrame = true;
-                    }
+                }
 
-                    // Update variantFrame if necessary
-                    if (variantUpdated && needsNewVariantFrame) {
-                        try {
-                            // Generate frame images for each variant
-                            const generatedVariantFrameBuffer = await createOptionsFrame(existingProduct, existingVariant);
-                            const variantImageId = await storeImage(generatedVariantFrameBuffer, 'image/jpeg');
-                            existingVariant.frameImage = `${process.env.BASE_URL}/images/${variantImageId}.jpg`;
-                            console.log('Frame images updated for variant');
-                        } catch (error) {
-                        console.error('Error generating frame images for variant', error);
-                        }
-                    }
-            
-                    // Mark the product as updated if any variant was updated
-                    if (variantUpdated) {
-                        productUpdated = true;
-                    }
-                } else if (variant.inventory_quantity > 0 || variant.inventory_management === null) {
-                    // Add the new variant with positive inventory if it doesn't already exist
-                    existingProduct.variants.push({
-                        shopifyVariantId: variant.id.toString(),
-                        title: variant.title,
-                        image: variant.image_id ? images.find(image => image.id === variant.image_id)?.src : existingProduct.image,
-                        price: variant.price.toString(),
-                    });
+                // Prepare a list of variant IDs from the webhook with inventory_quantity > 0
+                const variantIdsWithPositiveInventory = variants
+                .filter(variant => variant.inventory_quantity > 0 || variant.inventory_management === null)
+                .map(variant => variant.id.toString());
+
+                // Filter out variants that no longer exist or have inventory_quantity of 0
+                const filteredVariants = existingProduct.variants.filter(existingVariant =>
+                    variantIdsWithPositiveInventory.includes(existingVariant.shopifyVariantId) ||
+                    variants.some(variant => variant.id.toString() === existingVariant.shopifyVariantId && variant.inventory_quantity > 0 || variant.inventory_management === null)
+                );
+
+                // Check if any variants were removed based on the inventory quantity
+                if (existingProduct.variants.length !== filteredVariants.length) {
+                    existingProduct.variants = filteredVariants;
                     productUpdated = true;
                 }
-            }
 
-            if (productUpdated) {
-                await store.save();
-                console.log('Product updated successfully');
-            } else {
-                console.log('No updates detected');
+                // Update variants
+                for (const variant of variants) {
+                    let needsNewVariantFrame = false;
+
+                    const variantIndex = existingProduct.variants.findIndex(v => v.shopifyVariantId === variant.id.toString());
+                    if (variantIndex !== -1) {
+                        // Existing variant found, update it
+                        let existingVariant = existingProduct.variants[variantIndex];
+                        let variantUpdated = false;
+                
+                        // Update variant title if it has changed
+                        if (variant.title && variant.title !== existingVariant.title) {
+                            if (variant.title === "Default Title") {
+                                existingVariant.title = "Only option"
+                            } else {
+                                existingVariant.title = variant.title;
+                            }
+                            variantUpdated = true;
+                            needsNewVariantFrame = true;
+                        }
+                
+                        // Update variant image if it has changed
+                        const variantImageSrc = variant.image_id ? images.find(image => image.id === variant.image_id)?.src : existingVariant.image;
+                        if (variantImageSrc !== null && variantImageSrc !== existingVariant.image) {
+                            existingVariant.image = variantImageSrc || existingVariant.image; // Fallback to existing image if variantImageSrc is null
+                            variantUpdated = true;
+                            needsNewVariantFrame = true;
+                        }
+                
+                        // Update variant inventory quantity if it has changed
+                        if (variant.inventory_quantity !== undefined && variant.inventory_quantity !== existingVariant.inventory_quantity) {
+                            existingVariant.inventory_quantity = variant.inventory_quantity;
+                            variantUpdated = true;
+                            needsNewVariantFrame = true;
+                        }
+
+                        // Update variantFrame if necessary
+                        if (variantUpdated && needsNewVariantFrame) {
+                            try {
+                                // Generate frame images for each variant
+                                const generatedVariantFrameBuffer = await createOptionsFrame(existingProduct, existingVariant);
+                                const variantImageId = await storeImage(generatedVariantFrameBuffer, 'image/jpeg');
+                                existingVariant.frameImage = `${process.env.BASE_URL}/images/${variantImageId}.jpg`;
+                                console.log('Frame images updated for variant');
+                            } catch (error) {
+                            console.error('Error generating frame images for variant', error);
+                            }
+                        }
+                
+                        // Mark the product as updated if any variant was updated
+                        if (variantUpdated) {
+                            productUpdated = true;
+                        }
+                    } else if (variant.inventory_quantity > 0 || variant.inventory_management === null) {
+                        // Add the new variant with positive inventory if it doesn't already exist
+                        existingProduct.variants.push({
+                            shopifyVariantId: variant.id.toString(),
+                            title: variant.title,
+                            image: variant.image_id ? images.find(image => image.id === variant.image_id)?.src : existingProduct.image,
+                            price: variant.price.toString(),
+                        });
+                        productUpdated = true;
+                    }
+                }
+
+                if (productUpdated) {
+                    await store.save();
+                    console.log('Product updated successfully');
+                } else {
+                    console.log('No updates detected');
+                }
             }
-        } else {
-            // Product not found, create it with variants having inventory_quantity > 0
-            console.log('Product not found, creating new product');
-            // Product doesnt exist, create it.
-            await createNewProduct({ id, title, body_html: payload.body_html, image, images, variants }, store);
         }
+        
     } catch (error) {
         console.error('Error processing product update webhook:', error);
     }
