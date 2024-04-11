@@ -95,6 +95,9 @@ export async function processShopifyWebhook(webhookData) {
 
         if (status === 'draft') {
             if (productIndex !== -1) {
+                const productToRemove = store.products[productIndex];
+                console.log(`Removing draft product with _id: ${productToRemove._id} and Shopify ID: ${id} from the store.`);
+                
                 store.products.splice(productIndex, 1);
                 await store.save();
                 console.log(`Draft product ${id} removed from the store.`);

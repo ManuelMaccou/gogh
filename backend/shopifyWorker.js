@@ -23,8 +23,9 @@ async function processQueue() {
     console.log('Listening for queue items...');
 
     while (true) {
+        console.log('Waiting for data in queue...');
         try {
-            const data = await client.brPop('shopifyUpdatesQueue', 5);
+            const data = await client.brPop('shopifyUpdatesQueue', 0);
             if (data && data.element) {
                 const webhookData = JSON.parse(data.element);
                 console.log('Parsed webhookData:', webhookData);
@@ -34,6 +35,7 @@ async function processQueue() {
                     continue;
                 }
 
+                console.log(`Processing webhook ${webhookData.shopifyWebhookId}...`);
                 try {
                     await processShopifyWebhook(webhookData);
                     await markWebhookAsProcessed(webhookData.shopifyWebhookId);
