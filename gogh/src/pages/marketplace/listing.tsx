@@ -183,8 +183,7 @@ const Listing = () => {
         }
     };
 
-
-    const saveTransaction = async (transactionDetails: TransactionDetails) => {
+    const saveTransaction = async (transactionDetails: TransactionDetails): Promise<AxiosResponse<any>> => {
         try {
             const accessToken = await getAccessToken();
 
@@ -320,7 +319,7 @@ const Listing = () => {
 
                             const transactionDetails = {
                                 marketplaceProductId: product?._id,
-                                sellerId: product?.user._id,
+                                sellerId: product?.user?._id,
                                 buyerFid: user?.fid,
                                 sellerFid: product?.user?.fid,
                                 sellerProfile: product?.user?.fc_url,

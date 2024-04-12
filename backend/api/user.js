@@ -78,13 +78,37 @@ router.get('/purchases', auth, async (req, res) => {
 
     try {
       const user = await User.findOne({ privyId: userIdFromToken }) 
-        .populate('marketplaceProductPurchases');
+        .populate({
+            path: 'marketplaceProductPurchases',
+            populate: {
+                path: 'marketplaceProduct',
+                model: 'MarketplaceProduct',
+            }
+        });
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
       
       res.json(user.marketplaceProductPurchases);
+    } catch (error) {
+      console.error("Failed to get transactions:", error);
+      res.status(500).send("Internal Server Error");
+    }
+});
+
+router.get('/listings', auth, async (req, res) => {
+    const userIdFromToken = req.user;
+
+    try {
+      const user = await User.findOne({ privyId: userIdFromToken }) 
+        .populate('marketplaceProductListings');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+      
+      res.json(user.marketplaceProductListings);
     } catch (error) {
       console.error("Failed to get transactions:", error);
       res.status(500).send("Internal Server Error");

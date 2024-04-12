@@ -8,7 +8,6 @@ import User from'../../models/user.js';
 import createMarketplaceProductFrame from '../../utils/marketplace/createMarketplaceProductFrame.js';
 import auth from '../../middleware/auth.js';
 
-
 const router = Router();
 const { verify } = pkg;
 
@@ -75,6 +74,9 @@ router.post('/add', auth, upload.fields([
         }
 
         const user = await User.findOne({ privyId: req.user });
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
         
         const product = new MarketplaceProduct({
             location,
@@ -91,12 +93,15 @@ router.post('/add', auth, upload.fields([
         });
 
         await product.save();
+
+        user.marketplaceProductListings.push(product._id);
+        await user.save();
+
         res.status(201).json(product);
     } catch (error) {
             const errorMessage = error.response ? (error.response.data.message || "Failed to create product.") : error.message;
             console.error('Failed to create product:', errorMessage);
-            setFormError(errorMessage);
-            throw error;
+        res.status(500).json({ message: 'Failed to create product.' });
     }
 });
 

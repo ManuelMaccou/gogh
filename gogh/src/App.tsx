@@ -7,6 +7,7 @@ import ManageShopifyStore from './pages/shopify/manageStore'
 import Listing from './pages/marketplace/listing'
 import Success from './pages/marketplace/success'
 import PurchasesPage from './pages/profile/purchases'
+import ListingsPage from './pages/profile/listings'
 
 const App: React.FC = () => {
 
@@ -17,6 +18,7 @@ const App: React.FC = () => {
                         <Routes>
                             <Route path="/" element={<HomePage />} />
                             <Route path="/profile/purchases" element={<PurchasesPage />} />
+                            <Route path="/profile/listings" element={<ListingsPage />} />
                             <Route path="/manage-store" element={<ManageStore />} />
                             <Route path="/manage-shopify-store" element={<ManageShopifyStore />} />
                             <Route path="/listing/:productId" element={<Listing />} />
