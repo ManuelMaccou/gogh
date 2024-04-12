@@ -111,6 +111,7 @@ router.get('/listings', auth, async (req, res) => {
         model: 'MarketplaceTransaction',
       })
     .exec();
+    
       res.json(marketplaceProductListings);
     } catch (error) {
       console.error("Failed to get transactions:", error);
