@@ -4,6 +4,7 @@ import auth_old from '../middleware/auth_old.js';
 import axios from 'axios';
 import User from '../models/user.js';
 import pkg from 'jsonwebtoken';
+import MarketplaceProduct from '../models/marketplace/product.js';
 
 const router = Router();
 const { sign: jwtSign } = pkg;
@@ -101,14 +102,16 @@ router.get('/listings', auth, async (req, res) => {
     const userIdFromToken = req.user;
 
     try {
-      const user = await User.findOne({ privyId: userIdFromToken }) 
-        .populate('marketplaceProductListings');
-
+      const user = await User.findOne({ privyId: userIdFromToken }).exec();
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-      
-      res.json(user.marketplaceProductListings);
+      const marketplaceProductListings = await MarketplaceProduct.find({user : user.id}).populate({
+        path: 'transactions',
+        model: 'MarketplaceTransaction',
+      })
+    .exec();
+      res.json(marketplaceProductListings);
     } catch (error) {
       console.error("Failed to get transactions:", error);
       res.status(500).send("Internal Server Error");
