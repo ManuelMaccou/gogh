@@ -928,6 +928,7 @@
 }
 
 .create-frame button {
+    cursor: pointer;
     color: white;
     width: 100%;
     background: #6944BA;
