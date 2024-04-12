@@ -183,7 +183,8 @@ const Listing = () => {
         }
     };
 
-    const saveTransaction = async (transactionDetails: TransactionDetails): Promise<AxiosResponse<any>> => {
+
+    const saveTransaction = async (transactionDetails: TransactionDetails) => {
         try {
             const accessToken = await getAccessToken();
 
