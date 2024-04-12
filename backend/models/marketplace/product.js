@@ -15,6 +15,12 @@ const marketplaceProductSchema = new Schema({
     user: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
 }, { timestamps: true });
 
+marketplaceProductSchema.virtual('transactions', {
+    ref: 'MarketplaceTransaction',
+    localField: '_id',
+    foreignField: 'marketplaceProduct',
+  });
+  
 const MarketplaceProduct = model('MarketplaceProduct', marketplaceProductSchema);
 
 export default MarketplaceProduct;

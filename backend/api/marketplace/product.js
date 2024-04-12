@@ -110,6 +110,10 @@ router.get('/', async (req, res) => {
         const products = await MarketplaceProduct.find({})
             .sort({_id: -1}) 
             .populate('user', 'fc_username fc_pfp fc_url fc_bio walletAddress')
+            .populate({
+                path: 'transactions',
+                model: 'MarketplaceTransaction',
+              })
             .exec();
 
         res.json(products);
