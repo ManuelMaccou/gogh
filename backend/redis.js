@@ -1,9 +1,10 @@
 import { createClient } from 'redis';
 
+const redisURL = process.env.NODE_ENV === 'production' ? process.env.REDIS_PRIVATE_URL : process.env.REDIS_URL;
 console.log('REDIS_URL:', process.env.REDIS_URL);
 
 const client = createClient({
-    url: process.env.REDIS_URL,
+    url: redisURL,
     socket: {
         reconnectStrategy: (retries) => {
             if (retries > 10) return new Error('Retry count exceeded');
