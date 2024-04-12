@@ -8,14 +8,8 @@ const userSchema = new Schema({
     fc_bio: { type: String },
     fc_username: { type: String },
     fc_url: { type: String },
-    facebookUser: {type: Boolean},
-    fb_url: { type: String },
     email: { type: String },
     walletAddress: { type: String },
-    shopifyStores: [{ type: Schema.Types.ObjectId, ref: 'ShopifyStore' }],
-    customStores: [{ type: Schema.Types.ObjectId, ref: 'Store' }],
-    marketplaceProductListings: [{ type: Schema.Types.ObjectId, ref: 'MarketplaceProduct' }],
-    marketplaceProductPurchases: [{ type: Schema.Types.ObjectId, ref: 'MarketplaceTransaction' }],
 });
 
 const User = model('User', userSchema);

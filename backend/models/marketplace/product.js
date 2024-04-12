@@ -1,5 +1,4 @@
 import { Schema, model } from 'mongoose';
-// import User from '../user.js';
 
 const marketplaceProductSchema = new Schema({
     location: { type: String, required: true },
@@ -12,7 +11,7 @@ const marketplaceProductSchema = new Schema({
     price: { type: String, required: false },
     walletAddress: { type: String, required: true },
     email: { type: String, required: true },
-    user: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+    user: { type: Schema.Types.ObjectId, required: true, ref: 'User' }
 }, { timestamps: true });
 
 const MarketplaceProduct = model('MarketplaceProduct', marketplaceProductSchema);

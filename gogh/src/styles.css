@@ -1186,29 +1186,6 @@
     cursor: pointer;
 }
 
-.transactions-container {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .transaction-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .product-image {
-    width: 100px;
-    height: 100px;
-    margin-right: 20px;
-  }
-  
-  .cancel-button, .confirm-button {
-    display: block;
-    margin-bottom: 10px;
-  }
-
 @media (max-width: 768px) {
     .navigation {
         height: 50px;

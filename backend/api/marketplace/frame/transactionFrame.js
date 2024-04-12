@@ -3,7 +3,6 @@
 import { Router } from 'express';
 import sgMail from '@sendgrid/mail';
 import { body, validationResult } from 'express-validator';
-import privy from '../../../services/privyClient.js';
 import fetch from 'node-fetch';
 import MarketplaceProduct from '../../../models/marketplace/product.js';
 import MarketplaceTransaction from '../../../models/marketplace/transaction.js';
@@ -134,45 +133,9 @@ router.post('/product/:productId', async (req, res) => {
 
                 const username = data.users[0].username;
                 const displayName = data.users[0].display_name;
-                const ethAddress = data.users[0].verified_addresses.eth_addresses[0] || data.users[0].custody_address;
                 console.log(`Username: ${username}, Display Name: ${displayName}`);
 
                 const buyerProfileUrl = `https://warpcast.com/${username}`
-                let productBuyer;
-
-                try {
-                    const existingUser = await User.findOne({ fid: fid });
-                    if (existingUser) {
-                        console.log('User already exists in the database. Skipping creation.');
-                        productBuyer = existingUser;
-
-                    } else {
-                        const newPrivyUser = await privy.importUser({
-                            linkedAccounts: [
-                                {
-                                    type: 'farcaster',
-                                    fid: fid,
-                                    username: username,
-                                    display_name: displayName,
-                                    owner_address: ethAddress,
-                                },
-                            ]
-                        });
-                        console.log('Privy user created:', newPrivyUser);
-                
-                        const newAppUser = new User({
-                            privyId: newPrivyUser.id,
-                            fid: fid,
-                        });
-
-                        await newAppUser.save();
-                        productBuyer = newAppUser;
-                        console.log('New user saved successfully in the app database.');
-                    }
-                } catch (error) {
-                    console.error('Error checking for existing user or creating new user:', error);
-                    return res.status(500).json({ message: 'An error occurred during user processing.' });
-                }
 
                 let emailSendingResults = [];
                 console.log('buyer email:', buyerEmail);
@@ -185,7 +148,11 @@ router.post('/product/:productId', async (req, res) => {
                         dynamicTemplateData: {
                             transaction_hash: transactionHash,
                         },
-                        cc: [{ email: 'manuel@gogh.shopping' }],
+                        cc: [
+                            {
+                                email: 'manuel@gogh.shopping',
+                            },
+                        ],
                     };
                     emailSendingResults.push(sgMail.send(msgBuyer));
                 }
@@ -203,7 +170,11 @@ router.post('/product/:productId', async (req, res) => {
                             buyer_profile_url: buyerProfileUrl,
 
                         },
-                        cc: [{ email: 'manuel@gogh.shopping' }],
+                        cc: [
+                            {
+                                email: 'manuel@gogh.shopping',
+                            },
+                        ],
                     };
                     emailSendingResults.push(sgMail.send(msgSeller));
                 }
@@ -219,8 +190,6 @@ router.post('/product/:productId', async (req, res) => {
             const buyerFid = fid;
             const sellerFid = user.fid;
             const newTransaction = new MarketplaceTransaction({
-                buyer: productBuyer,
-                seller: user,
                 buyerFid: buyerFid,
                 sellerFid: sellerFid,
                 transactionHash: transactionHash,
