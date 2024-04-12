@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { connectRedis, client } from './redis.js';
 import { processShopifyWebhook } from './processShopifyWebhook.js';
 import connectDB from './database.js';
