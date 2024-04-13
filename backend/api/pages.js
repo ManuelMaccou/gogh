@@ -84,6 +84,10 @@ router.get('/shopify/:storeId/:productId', async (req, res) => {
         <!DOCTYPE html>
         <html>
             <head>
+            <title>Gogh Marketplace</title>
+                <meta name="description" content="Sell your items locally with Gogh">
+                <meta property="og:url" content="https://">
+                <meta property="og:image" content="${product.frameImage}" />
                 <meta property="fc:frame" content="vNext">
                 <meta name="fc:frame:post_url" content="${process.env.BASE_URL}/api/shopify/singleProductFrame/${storeId}/${productId}?frameType=productFrame">
                 <meta property="fc:frame:image" content="${product.frameImage}">
@@ -99,6 +103,10 @@ router.get('/shopify/:storeId/:productId', async (req, res) => {
         <!DOCTYPE html>
         <html>
             <head>
+            <title>Gogh Marketplace</title>
+                <meta name="description" content="Sell your items locally with Gogh">
+                <meta property="og:url" content="https://">
+                <meta property="og:image" content="${product.frameImage}" />
                 <meta property="fc:frame" content="vNext">
                 <meta name="fc:frame:post_url" content="${process.env.BASE_URL}/api/shopify/singleProductFrame/${storeId}/${productId}?frameType=productFrame">
                 <meta property="fc:frame:image" content="${product.frameImage}">
@@ -110,7 +118,7 @@ router.get('/shopify/:storeId/:productId', async (req, res) => {
         `;
         }
         
-        res.send(pageHtml);
+        res.status(200).send(pageHtml);
     } catch (err) {
         console.error('Error in GET /:uniqueId', err);
         res.status(500).send('Server error');
