@@ -126,3 +126,4 @@ dist
 .yarn/install-state.gz
 .pnp.*
 backend/api/manuallyUploadImage.js
+backend/api/manuallyUploadImage.js
