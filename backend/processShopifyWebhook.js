@@ -93,6 +93,11 @@ export async function processShopifyWebhook(webhookData) {
         // Check if the product exists
         const productIndex = store.products.findIndex(product => product.shopifyProductId === id.toString());
 
+        if (store.products[productIndex] && !store.products[productIndex].sync) {
+            console.log(`Sync is disabled for product ${id}. Update aborted.`);
+            return;
+        }
+
         if (status === 'draft') {
             if (productIndex !== -1) {
                 const productToRemove = store.products[productIndex];

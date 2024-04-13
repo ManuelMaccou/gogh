@@ -13,6 +13,7 @@ const ShopifyVariantSchema = new Schema({
 // Define Product Schema
 const ShopifyProductSchema = new Schema({
     shopifyProductId: { type: String },
+    sync: {type: Boolean},
     title: { type: String },
     description: { type: String },
     originalDescription: { type: String },
