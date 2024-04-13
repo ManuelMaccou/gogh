@@ -25,7 +25,6 @@ interface Product {
     user: string;
     createdAt: string;
     updatedAt: string;
-    __v: number;
     transactions: null;
     id: string;
   }
@@ -54,7 +53,6 @@ interface Product {
     marketplaceProduct: string;
     createdAt: string;
     updatedAt: string;
-    __v: number;
     product: Product;
   }
 const PurchasesPage: React.FC = () => {
