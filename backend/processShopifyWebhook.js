@@ -93,8 +93,8 @@ export async function processShopifyWebhook(webhookData) {
         // Check if the product exists
         const productIndex = store.products.findIndex(product => product.shopifyProductId === id.toString());
 
-        if (productIndex !== -1 && store.products[productIndex].hasOwnProperty('sync') && store.products[productIndex].sync === false) {
-            console.log(`Sync is disabled for product ${id}. Update aborted.`);
+        if (productIndex !== -1 && store.products[productIndex].sync === 'false') {
+            console.log(`Sync is set to 'false' for product ${id}. Update aborted.`);
             return;
         }
 
