@@ -86,7 +86,7 @@ router.post('/:storeId/:productId', async (req, res) => {
                 const variantId = product.variants[variantIndex].shopifyVariantId;
     
                 if (cartUrlParams) {
-                    cartUrlParams += `${variantId}:${variantQuantity}`;
+                    cartUrlParams += `,${variantId}:${variantQuantity}`;
                 } else {
                     cartUrlParams = `${variantId}:${variantQuantity}`;
                 }
@@ -160,12 +160,7 @@ router.post('/:storeId/:productId', async (req, res) => {
         } else if (frameType === 'cartFrame') {
             const variantId = product.variants[variantIndex].shopifyVariantId;
             variant = product.variants[variantIndex];
-
-            if (cartUrlParams) {
-                cartUrlParams += `${variantId}:${variantQuantity}`;
-            } else {
-                cartUrlParams = `${variantId}:${variantQuantity}`;
-            }
+            totalVariants = product.variants.length;
 
 
             if (buttonIndex === 1) { // 'Keep shopping' button
