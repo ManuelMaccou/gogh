@@ -160,8 +160,6 @@ router.post('/:storeId/:productId', async (req, res) => {
         } else if (frameType === 'cartFrame') {
             const variantId = product.variants[variantIndex].shopifyVariantId;
             variant = product.variants[variantIndex];
-            totalVariants = product.variants.length;
-
 
             if (buttonIndex === 1) { // 'Keep shopping' button
                 frameType = "productFrame";
