@@ -145,18 +145,43 @@ interface Transaction {
 }
 
 // refactor later
-export const deleteEscrow = async (obj: {
+export const cancelEscrow = async (obj: {
+  transaction: Transaction;
+  signer: JsonRpcSigner;
   contract: ethers.Contract;
-  escrowId: string;
+  accessToken: string;
+  provider: Web3BaseProvider;
 }) => {
-  const releaseTx = await obj.contract.cancelEscrow(obj.escrowId);
-  await releaseTx.wait();
+  const releaseTx = await obj.contract.cancelEscrow(obj.transaction.metadata.escrowId);
 
-  let escrow = await obj.contract.getEscrowDetails(
-    ethers.getAddress(obj.escrowId)
-  );
-  let escrowData = toEscrow(escrow);
-  return escrowData;
+  return new Promise(async (resolve: Function, reject) => {
+    try {
+      obj.provider.once(releaseTx.hash, async () => {
+        try {
+          const { data: transaction } = await axios.put(
+            `${process.env.REACT_APP_BASE_URL}/api/transaction/${obj.transaction.transactionHash}`,
+            { metadata: { ...obj.transaction.metadata, canceled: true } },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${obj.accessToken}`,
+              },
+            }
+          );
+          resolve({
+            success: true,
+            canceledEscrow: true,
+            transaction,
+            hash: releaseTx.hash,
+          });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
 };
 
 interface Escrow {
