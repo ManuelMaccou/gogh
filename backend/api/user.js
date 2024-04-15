@@ -4,6 +4,7 @@ import auth_old from '../middleware/auth_old.js';
 import axios from 'axios';
 import User from '../models/user.js';
 import pkg from 'jsonwebtoken';
+import MarketplaceProduct from '../models/marketplace/product.js';
 
 const router = Router();
 const { sign: jwtSign } = pkg;
@@ -70,6 +71,51 @@ router.post('/lookup', auth, async (req, res) => {
     } catch (error) {
         console.error('Error fetching user details:', error.message);
         res.status(500).send('Server error');
+    }
+});
+
+router.get('/purchases', auth, async (req, res) => {
+    const userIdFromToken = req.user;
+
+    try {
+      const user = await User.findOne({ privyId: userIdFromToken }) 
+        .populate({
+            path: 'marketplaceProductPurchases',
+            populate: {
+                path: 'marketplaceProduct',
+                model: 'MarketplaceProduct',
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+      
+      res.json(user.marketplaceProductPurchases);
+    } catch (error) {
+      console.error("Failed to get transactions:", error);
+      res.status(500).send("Internal Server Error");
+    }
+});
+
+router.get('/listings', auth, async (req, res) => {
+    const userIdFromToken = req.user;
+
+    try {
+      const user = await User.findOne({ privyId: userIdFromToken }).exec();
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+      const marketplaceProductListings = await MarketplaceProduct.find({user : user.id}).populate({
+        path: 'transactions',
+        model: 'MarketplaceTransaction',
+      })
+    .exec();
+    
+      res.json(marketplaceProductListings);
+    } catch (error) {
+      console.error("Failed to get transactions:", error);
+      res.status(500).send("Internal Server Error");
     }
 });
 
