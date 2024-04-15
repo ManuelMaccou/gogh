@@ -152,8 +152,7 @@ const Listing = () => {
     });
 
     const { connectWallet } = useConnectWallet({
-        onSuccess: (wallet) => {
-        },
+        onSuccess: (wallet) => {},
         onError: (error) => {
             console.log(error);
             setIsPurchaseInitiated(false);
@@ -220,11 +219,19 @@ const Listing = () => {
             const provider = await wallet.getEthereumProvider();
 
             // Confirm or switch to Base
-            const chainId = wallet.chainId;
+            const privyChainId = wallet.chainId;
+            const chainIdNum = process.env.REACT_APP_CHAIN_ID ? Number(process.env.REACT_APP_CHAIN_ID) : null;
 
-            if (chainId !== "eip155:8453") {
+            if (chainIdNum === null || isNaN(chainIdNum)) {
+                console.error("Invalid chain ID in environment variables.");
+                // Handle the error appropriately.
+                setIsPurchaseInitiated(false);
+                return;
+            }
+
+            if (privyChainId !== `eip155:${chainIdNum}`) {
                 try {
-                    await wallet.switchChain(8453);
+                    await wallet.switchChain(chainIdNum);
                 } catch (error: unknown) {
                     console.error('Error switching chain:', error);
                 
