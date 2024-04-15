@@ -36,6 +36,8 @@ import marketplaceFrameSendTransactionRoutes from './api/marketplace/frame/sendT
 import crypto from './api/crypto.js';
 
 import marketplaceTransactionRoutes from './api/marketplace/transaction.js';
+import confirmEmailRoutes from './api/marketplace/confirmEmail.js';
+
 
 // This will soon be removed
 import imageRoutes from './api/image.js';
@@ -132,6 +134,7 @@ app.use('/marketplace/add/listing', addListingFrameRoute);
 app.use('/api/crypto', crypto);
 
 app.use('/api/transaction', marketplaceTransactionRoutes);
+app.use('/api/confirm-email', confirmEmailRoutes);
 
 
 app.get('*', (req, res) => {

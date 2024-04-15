@@ -299,6 +299,7 @@ router.post('/product/:productId', async (req, res) => {
                         dynamicTemplateData: {
                             transaction_hash: transactionHash,
                         },
+                        cc: [{ email: 'manuel@gogh.shopping' }],
                     };
                     emailSendingResults.push(sgMail.send(msgBuyer));
                 }
@@ -316,6 +317,7 @@ router.post('/product/:productId', async (req, res) => {
                             buyer_profile_url: buyerProfileUrl,
 
                         },
+                        cc: [{ email: 'manuel@gogh.shopping' }],
                     };
                     emailSendingResults.push(sgMail.send(msgSeller));
                 }

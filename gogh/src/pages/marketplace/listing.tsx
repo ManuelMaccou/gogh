@@ -42,6 +42,20 @@ interface TransactionDetails {
     source: string;
 }
 
+interface EmailDetails {
+    to: string;
+    from: string;
+    templateId: string;
+    dynamicTemplateData: {
+      product_name: string;
+      product_price: string;
+      transaction_hash: string;
+      buyer_username?: string;
+      buyer_profile_url?: string;
+    };
+    cc: Array<{ email: string }>;
+}
+
 const Listing = () => {
 
     const isProduction = process.env.NODE_ENV === 'production';
@@ -196,6 +210,29 @@ const Listing = () => {
         }
     };
 
+    const emailSendingResults: Promise<any>[] = [];
+    const sendEmail = async (emailDetails: EmailDetails) => {
+        try {
+          const accessToken = await getAccessToken();
+          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/confirm-email`, emailDetails, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          return response.data;
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            console.error('Error response from Axios:', error.response);
+            throw new Error(error.response?.data.error || 'Failed to send email');
+          } else {
+            // Handle non-Axios errors
+            console.error('Error sending email:', error);
+            throw new Error('An error occurred during email sending');
+          }
+        }
+      };
+
     async function getConvertedAmount(usdcAmount: string | undefined) {
         try {
             const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/crypto/convert-usdc-to-wei`, {
@@ -343,6 +380,23 @@ const Listing = () => {
                                 console.error("Failed to save transaction details:", error);
                                 alert( `An error occured. You can still view your transaction on basescan.org. Transaction hash: ${escrow.hash}.`);
                             }
+
+                            if (product?.email) {
+                                const emailDetails = {
+                                  to: product?.email,
+                                  from: 'admin@gogh.shopping',
+                                  templateId: 'd-48d7775469174e7092913745a9b7e307',
+                                  dynamicTemplateData: {
+                                    product_name: product?.title,
+                                    product_price: product?.price,
+                                    transaction_hash: escrow.hash,
+                                    buyer_username: user?.fc_username,
+                                    buyer_profile_url: user?.fc_url,
+                                  },
+                                  cc: [{ email: 'manuel@gogh.shopping' }],
+                                };
+                                emailSendingResults.push(sendEmail(emailDetails));
+                              }
                         }
                     }
                 });
