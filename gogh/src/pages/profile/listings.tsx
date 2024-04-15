@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useUser } from '../../contexts/userContext';
-import Header from '../header';
 import { cancelEscrow, getGoghContract, releaseEscrow } from '../../utils/goghContract';
+import Header from '../header';
+import Sidebar from './sidebar';
 
 interface MarketplaceProduct {
     _id: string;
@@ -101,6 +102,7 @@ const PurchasesPage: React.FC = () => {
         <>
         <Header />
         <div className='profile-page'>
+            <Sidebar />
             <div className="products-container">
                 <h2>Transactions</h2>
                 {marketplaceTransactions.map((listing) => (
