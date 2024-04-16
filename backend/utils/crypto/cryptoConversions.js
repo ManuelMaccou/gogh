@@ -48,3 +48,34 @@ export const usdcToWei = async (usdcAmount) => {
     throw error;
   }
 };
+
+export const usdcToWeiWithoutHex = async (usdcAmount) => {
+  try {
+    const amount = new BigNumber(usdcAmount);
+
+    if (amount.isLessThanOrEqualTo(new BigNumber(0))) {
+      throw new Error("Invalid USDC amount");
+    }
+
+    const ethPriceInUSDC = await fetchEthPriceInUSDC();
+    const ethPriceInUSDCBN = new BigNumber(ethPriceInUSDC);
+
+    if (ethPriceInUSDCBN.isLessThanOrEqualTo(new BigNumber(0))) {
+      throw new Error("Invalid ETH price fetched");
+    }
+
+    const weiConversionFactor = new BigNumber(1e18);
+    const rawWeiEquivalent = amount
+      .multipliedBy(weiConversionFactor)
+      .dividedBy(ethPriceInUSDCBN);
+
+    const roundedWeiEquivalent = rawWeiEquivalent
+      .integerValue(BigNumber.ROUND_DOWN)
+      .toString(10);
+
+    return roundedWeiEquivalent;
+  } catch (error) {
+    console.error("Error converting USDC to Wei:", error);
+    throw error;
+  }
+};

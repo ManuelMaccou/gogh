@@ -1,213 +1,148 @@
-import { JsonRpcSigner, ethers } from "ethers";
-import GOGH_ABI from "../../utils/goghAbi.json";
-import axios from "axios";
-import { Web3BaseProvider } from "web3";
+import React, { useCallback, useEffect, useState } from 'react';
+import axios from 'axios';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { useUser } from '../../contexts/userContext';
+import { cancelEscrow, getGoghContract, releaseEscrow } from '../../utils/goghContract';
+import Header from '../header';
+import Sidebar from './sidebar';
 
-export const GOGH_CONTRACT_ADDRESS =
-  "0x3c1A0A632B516cedFFEd053DFE18775D47d4B32c";
-
-export const getGoghContract = (signer: any) => {
-  const contract = new ethers.Contract(GOGH_CONTRACT_ADDRESS, GOGH_ABI, signer);
-  return contract;
-};
-
-export const createEscrow = async (obj: {
-  contract: ethers.Contract;
-  uid: string | number;
-  recipientAddress: string;
-  tokenAddress: string;
-  amount: number | string;
-}) => {
-  const createTx = await obj.contract.createEscrow(
-    obj.uid,
-    obj.recipientAddress,
-    obj.tokenAddress,
-    obj.amount,
-    {
-      value: obj.amount,
-    }
-  );
-
-  return createTx;
-};
-export const releaseEscrow = async (obj: {
-  transaction: Transaction;
-  signer: JsonRpcSigner;
-  contract: ethers.Contract;
-  accessToken: string;
-  provider: Web3BaseProvider;
-}) => {
-  let escrow = await obj.contract.getEscrowDetails(
-    obj?.transaction?.metadata?.escrowId
-  );
-  let escrowData = toEscrow(escrow);
-  if (escrowData.canceled || escrowData.released) {
-    throw new Error("Invalid action");
-  }
-  const address = await obj.signer.getAddress();
-  const messageSignerAddress = address.toLowerCase().trim();
-  const owner = escrowData.owner.toLowerCase().trim();
-  const recipient = escrowData.recipient.toLowerCase().trim();
-  if (![owner, recipient].includes(messageSignerAddress)) {
-    throw new Error("Unauthorized");
-  }
-  const coder = new ethers.AbiCoder();
-  const payload = coder.encode(
-    ["address", "address", "uint256", "address", "address"],
-    [
-      escrowData.escrowId,
-      escrowData.token,
-      escrowData.amount,
-      escrowData.recipient,
-      escrowData.owner,
-    ]
-  );
-  const escrowMessageHash = ethers.keccak256(payload);
-  const messageHashBinary = ethers.getBytes(escrowMessageHash);
-
-  let transactionObj: Partial<Transaction> = {};
-
-  const signedMessage = await obj.signer.signMessage(messageHashBinary);
-
-  if (owner === messageSignerAddress) {
-    transactionObj.ownerSignature = signedMessage;
-  }
-  if (recipient === messageSignerAddress) {
-    transactionObj.recipientSignature = signedMessage;
-  }
-  // upload to DB
-  const { data: transaction } = (await axios.put(
-    `${process.env.REACT_APP_BASE_URL}/api/transaction/${obj.transaction.transactionHash}`,
-    transactionObj,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${obj.accessToken}`,
-      },
-    }
-  )) as { data: Transaction };
-  if (
-    !transaction.ownerSignature ||
-    !transaction.recipientSignature ||
-    owner !== messageSignerAddress
-  ) {
-    return { success: true, completeEscrow: false, transaction };
-  }
-  const releaseTx = await obj.contract.releaseEscrow(
-    obj.transaction.metadata.escrowId,
-    transaction.ownerSignature,
-    transaction.recipientSignature
-  );
-  return new Promise(async (resolve: Function, reject) => {
-    try {
-      obj.provider.once(releaseTx.hash, async () => {
-        try {
-          const { data: transaction } = await axios.put(
-            `${process.env.REACT_APP_BASE_URL}/api/transaction/${obj.transaction.transactionHash}`,
-            { metadata: { ...obj.transaction.metadata, released: true } },
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${obj.accessToken}`,
-              },
-            }
-          );
-          resolve({
-            success: true,
-            completeEscrow: true,
-            transaction,
-            hash: releaseTx.hash,
-          });
-        } catch (error) {
-          reject(error);
-        }
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-interface Transaction {
-  metadata: Escrow ;
-  ownerSignature: string;
-  recipientSignature: string;
-  uid: string;
-  escrowId: string;
-  buyer: string;
-  seller: string;
-  buyerFid: string;
-  sellerFid: string;
-  sellerProfile: string;
-  sellerUsername: string;
-  transactionHash:string;
-  source:string;
-  marketplaceProduct: string;
+interface MarketplaceProduct {
+    _id: string;
+    title: string;
+    featuredImage: string;
 }
+interface Product {
+    _id: string;
+    location: string;
+    farcon: boolean;
+    title: string;
+    description: string;
+    productFrame: string;
+    featuredImage: string;
+    additionalImages: string[];
+    price: string;
+    walletAddress: string;
+    email: string;
+    user: string;
+    createdAt: string;
+    updatedAt: string;
+    transactions: null;
+    id: string;
+  }
+  
+  interface Metadata {
+    uid: string;
+    escrowId: string;
+    token: string;
+    amount: string;
+    timestamp: string;
+    recipient: string;
+    owner: string;
+    released: boolean;
+    canceled: boolean;
+  }
+  
+  interface ProductTransaction {
+    _id: string;
+    metadata?: Metadata;
+    uid: string;
+    escrowId: string;
+    buyer: string;
+    seller: string;
+    transactionHash: string;
+    source: string;
+    marketplaceProduct: string;
+    createdAt: string;
+    updatedAt: string;
+    product: Product;
+  }
+const PurchasesPage: React.FC = () => {
+    const [listings, setListings] = useState<MarketplaceProduct[]>([]);
+    const [marketplaceTransactions,setMarketplaceTransactions] = useState<ProductTransaction[]>([]);
+    const { user } = useUser();
+    const { ready, authenticated, getAccessToken, logout } = usePrivy();
+    const {wallets} = useWallets();
+    const wallet = wallets[0];
 
-// refactor later
-export const cancelEscrow = async (obj: {
-  transaction: Transaction;
-  signer: JsonRpcSigner;
-  contract: ethers.Contract;
-  accessToken: string;
-  provider: Web3BaseProvider;
-}) => {
-  const releaseTx = await obj.contract.cancelEscrow(obj.transaction.metadata.escrowId);
+    const {connectWallet} = usePrivy();
 
-  return new Promise(async (resolve: Function, reject) => {
-    try {
-      obj.provider.once(releaseTx.hash, async () => {
-        try {
-          const { data: transaction } = await axios.put(
-            `${process.env.REACT_APP_BASE_URL}/api/transaction/${obj.transaction.transactionHash}`,
-            { metadata: { ...obj.transaction.metadata, canceled: true } },
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${obj.accessToken}`,
-              },
-            }
-          );
-          resolve({
-            success: true,
-            canceledEscrow: true,
-            transaction,
-            hash: releaseTx.hash,
-          });
-        } catch (error) {
-          reject(error);
+    const warmUpEtherDetails = useCallback(async() => {
+        if (!wallet) {
+            connectWallet();
         }
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
+
+        const ethersProvider = await wallet.getEthersProvider();
+        const signer = ethersProvider.getSigner();
+        const goghContract = getGoghContract(signer);
+        const accessToken = await getAccessToken();
+        return {ethersProvider, signer, goghContract, accessToken }
+    },[wallet, getAccessToken])
+
+    useEffect(() => {
+        const fetchListings = async () => {
+            const accessToken = await getAccessToken();
+
+            try {
+                const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/user/listings`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                });
+                setListings(response.data);
+                setMarketplaceTransactions(response.data.flatMap((t:any) => t.transactions.map((a:any) => ({...a, product : {...t, transactions:null}}))))
+            } catch (error) {
+                console.error('Failed to fetch transactions:', error);
+            }
+        };
+
+        if (user) {
+            fetchListings();
+        }
+    }, [user]);
+
+    return (
+        <>
+        <Header />
+        <div className='profile-page'>
+            <Sidebar />
+            <div className="products-container">
+                <h2>Transactions</h2>
+                {marketplaceTransactions.map((listing) => (
+                    <div key={listing._id} className="product-row">
+                        <img src={listing.product.featuredImage} alt="Product" className="product-image" />
+                        <div>
+                            <h3>{listing.product.title}</h3>
+                            {/* Placeholder for the transaction status */}
+                            <p>Status: Pending</p>
+                        </div>
+                        <div>
+                            <button onClick={async()  => {
+                                try {
+                                    const {ethersProvider,signer,goghContract,accessToken} = await warmUpEtherDetails();
+                                    const res = await cancelEscrow({transaction : listing as any, signer : signer as any, contract : goghContract, accessToken : accessToken as string, provider : ethersProvider as any});
+                                    // successfully cancelled escrow
+                                    console.log(res)
+                                } catch (error) {
+                                    console.error('Unexpected error in cancel escrow:', error);
+                                    alert('An unexpected error occurred. Please try again.');
+                                }
+                            }} className="cancel-button">Cancel</button>
+                            <button onClick={async()  => {
+                                try {
+                                    const {ethersProvider,signer,goghContract,accessToken} = await warmUpEtherDetails();
+                                    const res = await releaseEscrow({transaction : listing as any, signer : signer as any, contract : goghContract, accessToken : accessToken as string, provider : ethersProvider as any});
+                                    // successfully signed escrow
+                                    console.log(res)
+                                } catch (error) {
+                                    console.error('Unexpected error in release escrow:', error);
+                                    alert('An unexpected error occurred. Please try again.');
+                                }
+                            }} className="confirm-button">Confirm</button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+        </>
+    );
 };
 
-interface Escrow {
-  uid: number;
-  escrowId: string;
-  token: string;
-  amount: number;
-  timestamp: number;
-  recipient: string;
-  owner: string;
-  released: boolean;
-  canceled: boolean;
-}
-
-export const toEscrow = (
-  escrow: Array<number | string | boolean> = []
-): Escrow => {
-  return {
-    uid: escrow[0] as number,
-    escrowId: escrow[1] as string,
-    token: escrow[2] as string,
-    amount: escrow[3] as number,
-    timestamp: escrow[4] as number,
-    recipient: escrow[5] as string,
-    owner: escrow[6] as string,
-    released: escrow[7] as boolean,
-    canceled: escrow[8] as boolean,
-  };
-};
+export default PurchasesPage;
