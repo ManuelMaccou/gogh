@@ -1,11 +1,12 @@
 import { useEffect, useState, Fragment } from 'react';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import { useParams } from 'react-router-dom';
 import { usePrivy, useWallets, useLogin, useConnectWallet } from '@privy-io/react-auth';
 import { useUser } from '../../contexts/userContext';
 import { useNavigate } from 'react-router-dom';
 import Web3 from 'web3';
 import Header from '../header';
+import { createEscrow, getGoghContract, toEscrow, } from "../../utils/goghContract";
 
 interface Product {
     _id: string;
@@ -28,6 +29,8 @@ interface User {
     fc_pfp?: string;
     fc_bio?: string;
     fc_url?: string;
+    facebookUser?: boolean;
+    fb_url?: string;
     email?: string;
     walletAddress?: string;
 }
@@ -194,13 +197,19 @@ const Listing = () => {
         }
     };
 
-    const saveTransaction = async (transactionDetails: TransactionDetails) => {
+    const saveTransaction = async (transactionDetails: TransactionDetails): Promise<AxiosResponse<any>> => {
         try {
-          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/transaction/save`, transactionDetails);
-          const data = response.data;
+            const accessToken = await getAccessToken();
+
+            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/transaction/save`, transactionDetails, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            return response;
         } catch (error) {
+            throw new Error('Failed to save transaction. Please try again.');
         }
       };
+
       const emailSendingResults: Promise<any>[] = [];
       const sendEmail = async (emailDetails: EmailDetails) => {
         try {
@@ -246,11 +255,37 @@ const Listing = () => {
         }
     }
 
+    async function getConvertedAmountWithoutHext(usdcAmount: string | undefined) {
+        try {
+          const response = await fetch(
+            `${process.env.REACT_APP_BASE_URL}/api/crypto/convert-usdc-to-wei-without-hex`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ usdcAmount }),
+            }
+          );
+    
+          if (!response.ok) {
+            throw new Error("Failed to convert USDC to Wei");
+          }
+    
+          const data = await response.json();
+          return data.weiAmount;
+        } catch (error) {
+          console.error("Error converting USDC to Wei:", error);
+          alert("Error converting currency. Please try again.");
+        }
+      }
+
     const buyProduct = async () => {
         const accessToken = await getAccessToken();
         try {
             const wallet = wallets[0];
             const address = wallet.address;
+
             const provider = await wallet.getEthereumProvider();
 
             // Confirm or switch to Base
@@ -285,98 +320,65 @@ const Listing = () => {
                 }
             };
             
-            // Sign the message
-            const message = 
-            `
-            Purchase confirmation. \n
-            Product: ${product?.title} \n
-            Price: ${product?.price} \n
-            Seller wallet address: ${product?.walletAddress} \n
-            Your wallet address: ${address}.
-            `;
-            
-            let signature;
-            try {
-                signature = await provider.request({
-                    method: 'personal_sign',
-                    params: [message, address],
-                });
-            } catch (signError) {
-                console.error('Error signing message:', signError);
-                alert('Transaction cancelled or failed during signing.');
-                setIsPurchaseInitiated(false);
-                return;
-            }
-    
-            // Verify signature
-            try {
-                const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/crypto/verify-signature`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({
-                        signature,
-                        message,
-                        address,
-                    }),
-                });
-
-                if (!response.ok) {
-                    setIsPurchaseInitiated(false);
-                    throw new Error('Network response was not ok');
-                }
-
-                const verificationResult = await response.json();
-
-
-                // Send transaction
-                if (verificationResult.verified) {
-
-                    try {
-                        const sanitizedAmount = product?.price.replace(/[^0-9.]/g, '');
-                        const convertedAmount = await getConvertedAmount(sanitizedAmount);
-
-                        
-                        if (!user?.fid || !product || !product.user || !product.walletAddress || !product?.user?.fid) {
-                            console.error('Error occured. User or product information is missing.');
-                            alert('There was an error when trying to gather product or user information.');
-                            return;
-                        }
-
+            const ethersProvider = await wallet.getEthersProvider();
+            const signer = ethersProvider.getSigner();
+            const goghContract = getGoghContract(signer);
+            const uid = parseInt(Math.random().toString().slice(-15));
+            const sanitizedAmount = product?.price.replace(/[^0-9.]/g, "");
+            const convertedAmount = await getConvertedAmountWithoutHext(
+                sanitizedAmount
+            );
                         if (!convertedAmount) {
-                            console.error('Error occured. Transaction amount is missing.');
-                            alert('There was an error calculating the transaction amount.');
+                console.error("Error occured. Transaction amount is missing.");
+                alert("There was an error calculating the transaction amount.");
                             return;
                         }
 
-                        const transactionHash = await provider.request({
-                            method: 'eth_sendTransaction',
-                            params: [
-                                {
-                                    from: address,
-                                    to: product.walletAddress,
-                                    value: convertedAmount,
-                                },
-                            ],
+            const escrow = await createEscrow({
+                contract: goghContract,
+                uid,
+                recipientAddress: product?.walletAddress || "",
+                tokenAddress: "0x0000000000000000000000000000000000000001",
+                amount: convertedAmount,
                         });
 
+            ethersProvider.once(escrow.hash, async (transactionReceipt) => {
+                transactionReceipt.logs.forEach(async (t: any, index: number) => {
+                    const logVals = goghContract.interface.parseLog(
+                    transactionReceipt.logs[index]
+                    )?.args;
+                    if (logVals) {
+                        const arryOfLog = Array.from(logVals);
+                        if (arryOfLog[0] == uid) {
+                            const escrowId = arryOfLog[1];
+                            let escrowTemp = await goghContract.getEscrowDetails(escrowId);
+                            let escrowData = toEscrow(escrowTemp);
+
                         const transactionDetails = {
-                            buyerFid: user.fid,
-                            sellerFid: product.user.fid,
-                            sellerProfile: product.user.fc_url,
-                            sellerUsername: product.user.fc_username,
-                            transactionHash: transactionHash,
-                            source: 'Website',
+                                marketplaceProductId: product?._id,
+                                sellerId: product?.user?._id,
+                                buyerFid: user?.fid,
+                                sellerFid: product?.user?.fid,
+                                sellerProfile: product?.user?.fc_url,
+                                sellerUsername: product?.user?.fc_username,
+                                transactionHash: escrow.hash,
+                                source: "Website",
+                                escrowId,
+                                uid: escrowData.uid.toString(),
+                                metadata: {
+                                    ...escrowData,
+                                    amount: escrowData.amount.toString(),
+                                    timestamp: escrowData.timestamp.toString(),
+                                    uid: escrowData.uid.toString(),
+                                },
                         };
 
                         try {
-                            await saveTransaction(transactionDetails);
-                            navigate(`/success/${transactionHash}`);
+                                await saveTransaction(transactionDetails as any);
+                                navigate(`/success/${escrow.hash}`);
                         } catch (error) {
-                            console.error('Failed to save transaction details:', error);
-                            alert(`An error occured. You can still view your transaction on basescan.org. Transaction hash: ${transactionHash}.`);
+                                console.error("Failed to save transaction details:", error);
+                                alert( `An error occured. You can still view your transaction on basescan.org. Transaction hash: ${escrow.hash}.`);
                         }
 
                         // send confirm email to seller
@@ -388,37 +390,18 @@ const Listing = () => {
                               dynamicTemplateData: {
                                 product_name: product?.title,
                                 product_price: product?.price,
-                                transaction_hash: transactionHash,
+                                transaction_hash: escrow.hash,
                                 buyer_username: user?.fc_username,
                                 buyer_profile_url: user?.fc_url,
                               },
                               cc: [{ email: 'manuel@gogh.shopping' }],
                             };
-                            try {
-                                const emailResponse = await sendEmail(emailDetails);
-                                console.log('Email sent successfully:', emailResponse);
-                            } catch (emailError) {
-                                console.error('Failed to send confirmation email:', emailError);
+                                emailSendingResults.push(sendEmail(emailDetails));
                             }
                         }
-
-                    } catch (transactionError) {
-                        console.error('Transaction failed:', transactionError);
-                        alert('Transaction failed. Please try again.');
-                        setIsPurchaseInitiated(false);
-                        return;
                     }
-
-                } else {
-                    alert('Signature verification failed.');
-                    setIsPurchaseInitiated(false);
-                }
-            } catch (verificationError) {
-                console.error('An error occurred during signature verification:', verificationError);
-                alert('An error occurred during the verification process. Please try again.');
-                setIsPurchaseInitiated(false);
-            }
-    
+                });
+            });
         } catch (error) {
             console.error('Unexpected error in buyProduct:', error);
             alert('An unexpected error occurred. Please try again.');
@@ -495,9 +478,11 @@ const Listing = () => {
                         <i className="fa-regular fa-share-from-square"></i>
                         </a>
                     </div>
-                    {product.user?.fid && (
+                    {(product.user?.fid || product.user?.facebookUser) && (
                     <div className='seller-section'>
                         <h2>Meet the seller</h2>
+                        {product.user?.fid && (
+                        <>
                         <div className='seller-profile'>
                             <img src={profilePicture} alt="User profile picture" className='seller-pfp' />
                             <div className='seller-info'>
@@ -510,6 +495,20 @@ const Listing = () => {
                                 Message {userName}
                             </a>
                         </div>
+                        </>
+                        )}
+                        {product.user?.facebookUser && !product.user?.fid && (
+                            <>
+                            <div className='seller-profile'>
+                                <p>This seller is a Facebook user</p>
+                            </div>
+                            <div className='message-seller'>
+                                <a href={product.user.fb_url} target="_blank" rel="noopener noreferrer" className='message-button'>
+                                    View profile
+                                </a>
+                            </div>
+                            </>
+                        )}
                     </div>
                     )}
                 </div>
