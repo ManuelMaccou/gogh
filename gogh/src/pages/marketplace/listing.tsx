@@ -6,6 +6,7 @@ import { useUser } from '../../contexts/userContext';
 import { useNavigate } from 'react-router-dom';
 import Web3 from 'web3';
 import Header from '../header';
+import SellerOnchainProfile from './listing/sellerOnchainProfile'
 
 interface Product {
     _id: string;
@@ -498,6 +499,7 @@ const Listing = () => {
                     {product.user?.fid && (
                     <div className='seller-section'>
                         <h2>Meet the seller</h2>
+                        <SellerOnchainProfile sellerIdentity={product.walletAddress} />
                         <div className='seller-profile'>
                             <img src={profilePicture} alt="User profile picture" className='seller-pfp' />
                             <div className='seller-info'>
