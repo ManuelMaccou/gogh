@@ -71,9 +71,14 @@ export const releaseEscrow = async (obj: {
 
   if (owner === messageSignerAddress) {
     transactionObj.ownerSignature = signedMessage;
+    transactionObj.dateOwnerSigned = new Date().toISOString()
   }
   if (recipient === messageSignerAddress) {
     transactionObj.recipientSignature = signedMessage;
+    transactionObj.dateRecipientSigned = new Date().toISOString()
+  }
+  if(transactionObj.dateOwnerSigned || transactionObj.dateRecipientSigned ){
+    transactionObj.status = "PENDING"
   }
   // upload to DB
   const { data: transaction } = (await axios.put(
@@ -104,7 +109,7 @@ export const releaseEscrow = async (obj: {
         try {
           const { data: transaction } = await axios.put(
             `${process.env.REACT_APP_BASE_URL}/api/transaction/${obj.transaction.transactionHash}`,
-            { metadata: { ...obj.transaction.metadata, released: true } },
+            { metadata: { ...obj.transaction.metadata, released: true, }, status : "COMPLETE" },
             {
               headers: {
                 "Content-Type": "application/json",
@@ -142,6 +147,9 @@ interface Transaction {
   transactionHash:string;
   source:string;
   marketplaceProduct: string;
+  dateRecipientSigned : string;
+  dateOwnerSigned : string;
+  status : string;
 }
 
 // refactor later
@@ -160,7 +168,7 @@ export const cancelEscrow = async (obj: {
         try {
           const { data: transaction } = await axios.put(
             `${process.env.REACT_APP_BASE_URL}/api/transaction/${obj.transaction.transactionHash}`,
-            { metadata: { ...obj.transaction.metadata, canceled: true } },
+            { metadata: { ...obj.transaction.metadata, canceled: true },status : "CANCELED" },
             {
               headers: {
                 "Content-Type": "application/json",

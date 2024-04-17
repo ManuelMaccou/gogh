@@ -364,6 +364,7 @@ const Listing = () => {
                                 transactionHash: escrow.hash,
                                 source: "Website",
                                 escrowId,
+                                status : "IN_ESCROW",
                                 uid: escrowData.uid.toString(),
                                 metadata: {
                                     ...escrowData,

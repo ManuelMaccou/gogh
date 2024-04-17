@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { usePrivy, useWallets,useConnectWallet } from '@privy-io/react-auth';
 import { useUser } from '../../contexts/userContext';
 import { cancelEscrow, getGoghContract, releaseEscrow } from '../../utils/goghContract';
 import Header from '../header';
 import Sidebar from './sidebar';
+import { sleep } from './purchases';
+import dayjs from 'dayjs';
+
+const store: any = {};
 
 interface MarketplaceProduct {
     _id: string;
@@ -55,6 +59,8 @@ interface Product {
     createdAt: string;
     updatedAt: string;
     product: Product;
+    hoursSinceOwnerSigned : number;
+    hoursSinceRecipientSigned : number;
   }
 const PurchasesPage: React.FC = () => {
     const [listings, setListings] = useState<MarketplaceProduct[]>([]);
@@ -64,19 +70,47 @@ const PurchasesPage: React.FC = () => {
     const {wallets} = useWallets();
     const wallet = wallets[0];
 
-    const {connectWallet} = usePrivy();
-
-    const warmUpEtherDetails = useCallback(async() => {
-        if (!wallet) {
-            connectWallet();
+    const setUpEtherDetails = useCallback(async (wallet: any) => {
+        try {
+          const ethersProvider = await wallet.getEthersProvider();
+          const signer = ethersProvider.getSigner();
+          const goghContract = getGoghContract(signer);
+          const accessToken = await getAccessToken();
+    
+          store.etherDetails = {
+            ethersProvider,
+            accessToken,
+            signer,
+            goghContract,
+          };
+        } catch (error) {
+          console.log(error);
         }
+      }, []);
+      useEffect(() => {
+        if (wallet) {
+          setUpEtherDetails(wallet);
+        }
+      }, [wallet]);
+      const { connectWallet } = useConnectWallet();
 
-        const ethersProvider = await wallet.getEthersProvider();
-        const signer = ethersProvider.getSigner();
-        const goghContract = getGoghContract(signer);
-        const accessToken = await getAccessToken();
-        return {ethersProvider, signer, goghContract, accessToken }
-    },[wallet, getAccessToken])
+      const warmUpEtherDetails = async () => {
+        const canReturn = store.etherDetails;
+        if (canReturn) {
+          return canReturn;
+        }
+    
+        connectWallet();
+        for (let index = 0; index < 120; index++) {
+          await sleep(1000);
+          const canReturn = store.etherDetails;
+          if (canReturn) {
+            return canReturn;
+          }
+        }
+        throw new Error("Wallet not connected");
+      };
+    
 
     useEffect(() => {
         const fetchListings = async () => {
@@ -87,7 +121,20 @@ const PurchasesPage: React.FC = () => {
                     headers: { Authorization: `Bearer ${accessToken}` },
                 });
                 setListings(response.data);
-                setMarketplaceTransactions(response.data.flatMap((t:any) => t.transactions.map((a:any) => ({...a, product : {...t, transactions:null}}))))
+                setMarketplaceTransactions(response.data.flatMap((t:any) => t.transactions.map((a:any) => {
+                    const date = dayjs(new Date());
+
+                   
+                    const transactionObj = {...a, product : {...t, transactions:null}}
+
+                    if(a.dateOwnerSigned){
+                        transactionObj.hoursSinceOwnerSigned = date.diff(new Date(a.dateOwnerSigned),"hour")
+                    }
+                    if(a.dateRecipientSigned){
+                        transactionObj.hoursSinceRecipientSigned = date.diff(new Date(a.dateRecipientSigned),"hour")
+                    }
+                    return transactionObj
+                })))
             } catch (error) {
                 console.error('Failed to fetch transactions:', error);
             }

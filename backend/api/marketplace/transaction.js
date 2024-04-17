@@ -13,7 +13,7 @@ router.post("/save", auth, async (req, res) => {
   let userUpdated = false;
 
     try {
-    const { marketplaceProductId, sellerId, buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, metadata, uid, escrowId, } = req.body;
+    const { marketplaceProductId, sellerId, buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, metadata, uid, escrowId,status } = req.body;
 
     buyer = await User.findOne({ privyId: req.user });
 
@@ -21,13 +21,17 @@ router.post("/save", auth, async (req, res) => {
       return res.status(404).send({ message: "Buyer not found." });
     }
 
-    // Create a new transaction record
-    newTransaction = new MarketplaceTransaction({
+    const transactionRecordObject = {
       marketplaceProduct: marketplaceProductId,
       buyer: buyer._id,
       seller: sellerId,
-      buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, metadata, uid, escrowId,
-        });
+      buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, metadata, uid, escrowId
+        }
+        if(status){
+          transactionRecordObject.status = status;
+        }
+    // Create a new transaction record
+    newTransaction = new MarketplaceTransaction(transactionRecordObject);
 
         await newTransaction.save();
 
@@ -64,7 +68,7 @@ router.get('/:transactionHash', async (req, res) => {
 });
 router.put("/:transactionHash", async (req, res) => {
   const { transactionHash } = req.params;
-  const {ownerSignature,recipientSignature,metadata} = req.body;
+  const {ownerSignature,recipientSignature,metadata,dateOwnerSigned,dateRecipientSigned,status} = req.body;
 
   try {
     const transaction = await MarketplaceTransaction.findOne({
@@ -73,6 +77,15 @@ router.put("/:transactionHash", async (req, res) => {
 
     if (!transaction) {
       return res.status(404).json({ message: "Transaction not found" });
+    }
+    if(dateOwnerSigned){
+      transaction.dateOwnerSigned = dateOwnerSigned
+    }
+    if(dateRecipientSigned){
+      transaction.dateRecipientSigned = dateRecipientSigned
+    }
+    if(status){
+      transaction.status = status
     }
     if(ownerSignature){
       transaction.ownerSignature = ownerSignature

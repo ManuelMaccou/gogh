@@ -24,7 +24,7 @@ interface Transaction {
   marketplaceProduct: MarketplaceProduct;
 }
 
-function sleep(ms: number): Promise<void> {
+export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -36,7 +36,7 @@ const PurchasesPage: React.FC = () => {
 
   const { wallets } = useWallets();
   const [wallet] = wallets;
-
+  
   const setUpEtherDetails = useCallback(async (wallet: any) => {
     try {
       const ethersProvider = await wallet.getEthersProvider();
