@@ -500,18 +500,6 @@ const Listing = () => {
                     <div className='seller-section'>
                         <h2>Meet the seller</h2>
                         <SellerOnchainProfile sellerIdentity={product.walletAddress} />
-                        <div className='seller-profile'>
-                            <img src={profilePicture} alt="User profile picture" className='seller-pfp' />
-                            <div className='seller-info'>
-                                <p className='seller-username'>{userName}</p>
-                                <p className='seller-bio'>{product.user?.fc_bio}</p>
-                            </div>
-                        </div>
-                        <div className='message-seller'>
-                            <a href={product.user.fc_url} target="_blank" rel="noopener noreferrer" className='message-button'>
-                                Message {userName}
-                            </a>
-                        </div>
                     </div>
                     )}
                 </div>

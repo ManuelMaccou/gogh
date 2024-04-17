@@ -234,9 +234,10 @@
 .main-image-container {
     display: flex;
     margin-left: 10px;
-    align-items: center;
+    align-items: start;
     text-align: center;
     margin-bottom: 20px;
+    margin-top: 70px;
 }
   
 .main-image {

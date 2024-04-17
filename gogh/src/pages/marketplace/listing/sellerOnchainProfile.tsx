@@ -24,12 +24,15 @@ interface TokenNft {
 interface Social {
     isDefault: boolean;
     blockchain: string;
+    profileBio: string;
     profileName: string;
+    profileDisplayName: string;
     profileHandle: string;
     profileImage?: string;
     followerCount: number;
     followingCount: number;
     profileTokenId?: string;
+    isFarcasterPowerUser?: boolean;
     profileTokenAddress?: string;
     profileImageContentValue?: {
         image: {
@@ -75,13 +78,16 @@ const GET_SOCIAL_QUERY = `
       farcasterSocials: socials(input: {filter: {dappName: {_eq: farcaster}}}) {
         isDefault
         blockchain
+        profileBio
         profileName
         profileHandle
+        profileDisplayName
         profileImage
         followerCount
         followingCount
         profileTokenId
         profileTokenAddress
+        isFarcasterPowerUser
         profileImageContentValue {
           image {
             small
@@ -109,6 +115,7 @@ const GET_SOCIAL_QUERY = `
       }
     }
   }`;
+  
 
   const SellerOnchainProfile = ({ sellerIdentity }: { sellerIdentity: string }) => {
     const { data, loading, error } = useQuery<Data>(GET_SOCIAL_QUERY, { identity: sellerIdentity }, { cache: true });
@@ -124,30 +131,51 @@ const GET_SOCIAL_QUERY = `
     const farcasterSocials = data.Wallet.farcasterSocials || [];
     const lensSocials = data.Wallet.lensSocials || [];
 
+    const primaryDomainName = data.Wallet.primaryDomain?.name || 'No ENS available';
+    
     return (
         <div>
             <div>
-                <h4>Domains:</h4>
-                {domains.length > 0 ? (
-                    domains.map((domain, index) => (
-                        <div key={index}>
-                            <p>{domain.name} (Primary: {domain.isPrimary ? 'Yes' : 'No'})</p>
-                        </div>
-                    ))
+                {domains ? (
+                  <p>
+                    <img 
+                        src="/images/ens_mark_primary.png" 
+                        alt="Domain Icon" 
+                        style={{ 
+                            marginRight: '8px', 
+                            verticalAlign: 'middle', 
+                            width: '24px',
+                            height: '24px'
+                        }} 
+                    />
+                    {primaryDomainName}
+                  </p>
                 ) : (
-                    <p>No domains available</p>
+                  <p>No ENS available</p>
                 )}
-                <h4>Farcaster Socials:</h4>
+                <h4>Farcaster:</h4>
                 {farcasterSocials.length > 0 ? (
                     farcasterSocials.map((social, index) => (
                         <div key={index}>
-                            <p>{social.profileName} - Followers: {social.followerCount}</p>
+                          <div className='seller-profile'>
+                            <img src={social.profileImage} alt="User profile picture" className='seller-pfp' />
+                            <div className='seller-info'>
+                                <p className='seller-username'>{social.profileDisplayName}</p>
+                                <p className='seller-bio'>{social.profileBio}</p>
+                                <p>Followers: {social.followerCount}</p>
+                            </div>
+                        </div>
+                        <div className='message-seller'>
+                            <a href={`https://warpcast.com/${social.profileHandle}`} target="_blank" rel="noopener noreferrer" className='message-button'>
+                                View profile
+                            </a>
+                        </div>
                         </div>
                     ))
                 ) : (
                     <p>No Farcaster socials available</p>
                 )}
-                <h4>Lens Socials:</h4>
+                <h4>Lens:</h4>
                 {lensSocials.length > 0 ? (
                     lensSocials.map((social, index) => (
                         <div key={index}>
