@@ -297,8 +297,8 @@ function generateFrameHtml(newListingFrameImgs, explainImage, inputErrorImage, v
             buttonsHtml = `
                 <meta property="fc:frame:image" content="${listingFrame}" />
                 <meta property="fc:frame:input:text" content="Enter your location" />
-                <meta property="fc:frame:button:1" content="Back" />
-                <meta property="fc:frame:button:2" content="Continue" />
+                <meta property="fc:frame:button:1" content="Continue" />
+                <meta property="fc:frame:button:2" content="FAQ" />
             `;
             break;
 
