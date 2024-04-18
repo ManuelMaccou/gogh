@@ -6,10 +6,12 @@ import { useUser } from '../../contexts/userContext';
 import { useNavigate } from 'react-router-dom';
 import Web3 from 'web3';
 import Header from '../header';
+import ShippingForm from './listing/shippingForm';
 
 interface Product {
     _id: string;
     location: string;
+    shipping: boolean;
     farcon: boolean;
     title: string;
     description: string;
@@ -37,6 +39,7 @@ interface TransactionDetails {
     sellerFid: string;
     transactionHash: string;
     source: string;
+    shippingDetails?: ShippingDetails | null;
 }
 
 interface EmailDetails {
@@ -53,6 +56,16 @@ interface EmailDetails {
     cc: Array<{ email: string }>;
 }
 
+interface ShippingDetails {
+    name: string;
+    street: string;
+    apartment: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+}
+
 const Listing = () => {
 
     const isProduction = process.env.NODE_ENV === 'production';
@@ -65,6 +78,10 @@ const Listing = () => {
     const [selectedImage, setSelectedImage] = useState('');
     const [isPurchaseInitiated, setIsPurchaseInitiated] = useState(false);
     const [loginAction, setLoginAction] = useState<null | string>(null);
+    const [showShippingOptions, setShowShippingOptions] = useState<boolean>(false);
+    const [shipProduct, setShipProduct] = useState<boolean | null>(null);
+    const [shippingDetailsComplete, setShippingDetailsComplete] = useState(false);
+    const [shippingDetails, setShippingDetails] = useState<ShippingDetails | null>(null);
     
     const {wallets} = useWallets();
     const walletAddress = wallets[0]?.address;
@@ -165,6 +182,21 @@ const Listing = () => {
         },
     });
 
+    const handleCheckoutClick = () => {
+        setShowShippingOptions(true);
+    };
+    
+    const handleShippingOption = (choice: boolean) => {
+        setShipProduct(choice);
+        setShippingDetailsComplete(false); // Reset the completion status when switching options
+      };
+
+      const saveShippingDetails = (details: ShippingDetails) => {
+        console.log('Shipping Details:', details);
+        setShippingDetails(details);
+        setShippingDetailsComplete(true);
+      };
+
     const { connectWallet } = useConnectWallet({
         onSuccess: (wallet) => {},
         onError: (error) => {
@@ -205,7 +237,7 @@ const Listing = () => {
       const sendEmail = async (emailDetails: EmailDetails) => {
         try {
           const accessToken = await getAccessToken();
-          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/confirm-email`, emailDetails, {
+          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/send-confirm-email`, emailDetails, {
             headers: {
               Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
@@ -369,6 +401,7 @@ const Listing = () => {
                             sellerUsername: product.user.fc_username,
                             transactionHash: transactionHash,
                             source: 'Website',
+                            shippingDetails: shipProduct ? shippingDetails : undefined,
                         };
 
                         try {
@@ -381,6 +414,14 @@ const Listing = () => {
 
                         // send confirm email to seller
                         if (product?.email) {
+                            const shippingInfo = shippingDetails ? 
+                            `Name: ${shippingDetails.name}<br>` +
+                            `Street: ${shippingDetails.street}<br>` +
+                            `Apartment: ${shippingDetails.apartment}<br>` +
+                            `City: ${shippingDetails.city}, ${shippingDetails.state} ${shippingDetails.zip}<br>` +
+                            `Country: ${shippingDetails.country}` : 
+                            "Not applicable";
+
                             const emailDetails = {
                               to: product?.email,
                               from: 'admin@gogh.shopping',
@@ -391,6 +432,7 @@ const Listing = () => {
                                 transaction_hash: transactionHash,
                                 buyer_username: user?.fc_username,
                                 buyer_profile_url: user?.fc_url,
+                                shipping_info: shippingInfo,
                               },
                               cc: [{ email: 'manuel@gogh.shopping' }],
                             };
@@ -471,6 +513,14 @@ const Listing = () => {
                         <p className='product-price'>{product.price ? `$${product.price}` : 'Free'}</p>
                         <h1>{product.title}</h1>
                         <p className='product-location'>Pickup/Dropoff in {product.location}</p>
+                        {product.shipping === true && (
+                            <>
+                            <div className='product-shipping'>
+                                <i className="fa-solid fa-truck-fast"></i>
+                                <p>Shipping offered by seller</p>
+                            </div>
+                            </>
+                        )}
                         <p className='product-description'>
                             {product.description.split('\n').map((line, index, array) => (
                                 <Fragment key={index}>
@@ -481,19 +531,33 @@ const Listing = () => {
                         </p>
                     </div>
                     <div className='share-buy-listing'>
-                        <button
-                        className='buy-button'
-                        onClick={() => {
-                            initiatePurchase();
-                        }}
-                        disabled={!ready}
-                        >
-                        Buy now
-                        </button>
                         <a href={shareUrl} target="_blank" rel="noopener noreferrer" className='share-button'>
                         <p>Share</p>
                         <i className="fa-regular fa-share-from-square"></i>
                         </a>
+                    {product?.shipping && (
+                        <>
+                            <button className={`checkout-button ${showShippingOptions && 'active'}`} onClick={handleCheckoutClick}>
+                            Check out
+                            </button>
+                            {showShippingOptions && (
+                                <>
+                                    <p>Select one</p>
+                                    <div className='choose-shipping'>
+                                        <button className={shipProduct === true ? 'active' : ''} onClick={() => handleShippingOption(true)}>Request shipping</button>
+                                        <button className={shipProduct === false ? 'active' : ''} onClick={() => handleShippingOption(false)}>Pick Up</button>
+                                    </div>
+                                </>
+                            )}
+                        </>
+                        )}
+                        {shipProduct === true && <ShippingForm onSaveShippingDetails={saveShippingDetails} />}
+
+                        {((!product?.shipping || shipProduct === false) || (shipProduct === true && shippingDetailsComplete)) && (
+                            <button className='buy-button' onClick={buyProduct} disabled={!shippingDetailsComplete && shipProduct === true}>
+                                Buy now
+                            </button>
+                        )}
                     </div>
                     {product.user?.fid && (
                     <div className='seller-section'>
