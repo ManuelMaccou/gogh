@@ -16,6 +16,7 @@ interface User {
 
 interface Product {
     _id: string;
+    shipping: boolean
     farcon: boolean;
     location: string;
     title: string;
@@ -41,6 +42,7 @@ interface CreateListingProps {
 }
   
 interface FormDataState {
+    shipping: boolean
     farcon: boolean;
     location: string;
     title: string;
@@ -69,6 +71,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
 }, ref) => {
     const { ready, authenticated } = usePrivy();
     const [formData, setFormData] = useState<FormDataState>({
+        shipping: false,
         farcon: false,
         location: '',
         title: '',
@@ -77,6 +80,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         walletAddress: '',
         email: '',
     });
+
     const [showForm, setShowForm] = useState<boolean>(propShowForm);
     const [featuredImage, setFeaturedImage] = useState<File | null>(null);
     const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
@@ -85,10 +89,10 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     const [featuredImagePreview, setFeaturedImagePreview] = useState<string | null>(null);
     const [additionalImagesPreview, setAdditionalImagesPreview] = useState<string[]>([]);
 
-    // Add this useEffect hook
     useEffect(() => {
         if (initialFormData) {
             setFormData({
+                shipping: initialFormData.shipping || false,
                 farcon: initialFormData.farcon || false,
                 location: initialFormData.location || '',
                 title: initialFormData.title || '',
@@ -124,13 +128,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = event.target;
-
-        if (name === 'price') {
-            const validPriceRegex = /^\d*\.?\d*$/;
-            if (!validPriceRegex.test(value)) {
-                return;
-            }
-        }
     
         if (event.target instanceof HTMLInputElement && event.target.type === 'file') {
             // Handling the featured image
@@ -186,12 +183,17 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData();
-        const priceRegex = /^\d+(\.\d+)?$/;
+        const priceRegex = /^\$?\d+(\.\d{1,2})?$/;
+
         Object.keys(formData).forEach((key) => {
             let value = formData[key as keyof FormDataState];
 
             if (typeof value === 'boolean') {
                 value = value.toString();
+            }
+
+            if (key === 'price' && typeof value === 'string') {
+                value = value.replace(/^\$/, '');
             }
 
             if (value !== undefined) {
@@ -209,7 +211,12 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         }
 
         if (!priceRegex.test(formData.price) && formData.price !== '') {
-            alert("Please use this format for the price: xxx.xx");
+            alert("Please use this format for the price: $xxx.xx or xxx.xx");
+            return;
+        }
+
+        if (!formData.walletAddress.startsWith('0x')) {
+            alert('Wallet address must start with "0x".');
             return;
         }
 
@@ -224,6 +231,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
             handleCloseModal();
             // Reset form and file states
             setFormData({
+                shipping: false,
                 farcon: false,
                 location: '',
                 title: '',
@@ -275,12 +283,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                     <h2>Add Product</h2>
                     <p>If your product is sold, you will receive an email with the buyer's information. Please coordinate with them for pickup, dropoff, shipping. </p>
                     <form onSubmit={handleSubmit}>
-                        <select name="location" value={formData.location} onChange={handleChange} required>
-                            <option value="">Select your city</option>
-                            {supportedCities.map((city, index) => (
-                                <option key={index} value={city}>{city}</option>
-                            ))}
-                        </select>
                         <label htmlFor="farcon" className='checkbox-container'>
                             <input
                                 name="farcon"
@@ -291,6 +293,27 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                             />
                             Pickup available at FarCon
                         </label>
+                        <label htmlFor="shipping" className='checkbox-container'>
+                            <input
+                                name="shipping"
+                                type="checkbox"
+                                id="shipping"
+                                checked={formData.shipping === true}
+                                onChange={handleChange}
+                            />
+                            Will offer shipping
+                        </label>
+                        <input 
+                            name="location" 
+                            type="text" 
+                            value={formData.location} 
+                            onChange={handleChange} 
+                            placeholder="Enter your city, state or city, country" 
+                            required 
+                        />
+                        <p className="helper-text">
+                            'City, State' or 'City, Country'
+                        </p>
                         <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
                         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
                         {/* Hidden file input */}
@@ -344,8 +367,8 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         )}
 
                         {/* Custom button that users see and interact with */}
-                        <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in USDC" />
-                        <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment. Not ENS." required />
+                        <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in $USD" />
+                        <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment." required />
                         <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email for purchase notifications" required />
                         <button className="submit-button" type="submit">Submit</button>
                         {formError && <p className="form-error">{formError}</p>}

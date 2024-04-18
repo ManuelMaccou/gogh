@@ -2,6 +2,11 @@
     width: auto;
 }
 
+.helper-text {
+    font-size: 12px;
+    font-style: italic;
+}
+
 .site-header {
     height: 30px;
     top: 0;
@@ -234,6 +239,7 @@
 .main-image-container {
     display: flex;
     margin-left: 10px;
+    margin-top: 70px;
     align-items: start;
     text-align: center;
     margin-bottom: 20px;
@@ -311,7 +317,15 @@
 }
 
 .product-location {
-    margin-top: 5px;
+    margin-top: 10px;
+    margin-bottom: 0px;
+    font-style: italic;
+}
+
+.product-shipping {
+    display: flex;
+    gap: 10px;
+    align-items: center;
     font-style: italic;
 }
 
@@ -320,10 +334,10 @@
 }
 
 .share-buy-listing {
+    margin-top: 40px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 20px;
 }
 
 .share-button {
@@ -337,7 +351,7 @@
     padding: 5px;
 }
 
-.buy-button {
+.buy-button, .checkout-button {
     height: 40px;
     min-width: 250px;
     align-items: center;
@@ -350,6 +364,19 @@
     border-radius: 5px;
     background-color: #007bff;
     cursor: pointer;
+}
+
+.choose-shipping {
+    display: flex;
+    gap: 20px
+}
+
+.choose-shipping button {
+    width: 150px;
+    font-size: 16px;
+    background: transparent;
+    border: 1px solid #ababab;
+    padding: 5px 10px;
 }
 
 .product-price {
@@ -682,6 +709,7 @@
     background-color: #007bff;
     color: white;
     cursor: pointer;
+    font-size: 16px;
 }
 
 .close-button {
