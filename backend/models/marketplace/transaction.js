@@ -2,6 +2,9 @@ import { Schema, model } from 'mongoose';
 
 const transactionSchema = new Schema(
   {
+    status : {type : String, enum : ["IN_ESCROW","EXPIRED_AFTER_24_HOURS","COMPLETE","CANCELED","PENDING","EXPIRED_AFTER_7_DAYS"]},
+    dateOwnerSigned : {type : Date},
+    dateRecipientSigned : {type : Date},
     metadata: { type: Object },
     ownerSignature: { type: String },
     recipientSignature: { type: String },
