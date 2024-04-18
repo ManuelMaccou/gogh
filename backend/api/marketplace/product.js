@@ -37,7 +37,7 @@ router.post('/add', auth, upload.fields([
     }
 
     try {
-        const { location, farcon, title, description, price, walletAddress, email } = req.body;
+        const { location, shipping, farcon, title, description, price, walletAddress, email } = req.body;
 
         const featuredImageFile = req.files['featuredImage'][0];
         const processedFeaturedImageBuffer = await sharp(featuredImageFile.buffer)
@@ -78,6 +78,7 @@ router.post('/add', auth, upload.fields([
         
         const product = new MarketplaceProduct({
             location,
+            shipping,
             farcon,
             title,
             description,

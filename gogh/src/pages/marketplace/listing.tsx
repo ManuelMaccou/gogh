@@ -6,11 +6,12 @@ import { useUser } from '../../contexts/userContext';
 import { useNavigate } from 'react-router-dom';
 import Web3 from 'web3';
 import Header from '../header';
-import { createEscrow, getGoghContract, toEscrow, } from "../../utils/goghContract";
+import ShippingForm from './listing/shippingForm';
 
 interface Product {
     _id: string;
     location: string;
+    shipping: boolean;
     farcon: boolean;
     title: string;
     description: string;
@@ -40,6 +41,7 @@ interface TransactionDetails {
     sellerFid: string;
     transactionHash: string;
     source: string;
+    shippingDetails?: ShippingDetails | null;
 }
 
 interface EmailDetails {
@@ -56,6 +58,16 @@ interface EmailDetails {
     cc: Array<{ email: string }>;
 }
 
+interface ShippingDetails {
+    name: string;
+    street: string;
+    apartment: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+}
+
 const Listing = () => {
 
     const isProduction = process.env.NODE_ENV === 'production';
@@ -68,6 +80,10 @@ const Listing = () => {
     const [selectedImage, setSelectedImage] = useState('');
     const [isPurchaseInitiated, setIsPurchaseInitiated] = useState(false);
     const [loginAction, setLoginAction] = useState<null | string>(null);
+    const [showShippingOptions, setShowShippingOptions] = useState<boolean>(false);
+    const [shipProduct, setShipProduct] = useState<boolean | null>(null);
+    const [shippingDetailsComplete, setShippingDetailsComplete] = useState(false);
+    const [shippingDetails, setShippingDetails] = useState<ShippingDetails | null>(null);
     
     const {wallets} = useWallets();
     const walletAddress = wallets[0]?.address;
@@ -168,6 +184,21 @@ const Listing = () => {
         },
     });
 
+    const handleCheckoutClick = () => {
+        setShowShippingOptions(true);
+    };
+    
+    const handleShippingOption = (choice: boolean) => {
+        setShipProduct(choice);
+        setShippingDetailsComplete(false); // Reset the completion status when switching options
+      };
+
+      const saveShippingDetails = (details: ShippingDetails) => {
+        console.log('Shipping Details:', details);
+        setShippingDetails(details);
+        setShippingDetailsComplete(true);
+      };
+
     const { connectWallet } = useConnectWallet({
         onSuccess: (wallet) => {},
         onError: (error) => {
@@ -214,7 +245,7 @@ const Listing = () => {
       const sendEmail = async (emailDetails: EmailDetails) => {
         try {
           const accessToken = await getAccessToken();
-          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/confirm-email`, emailDetails, {
+          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/send-confirm-email`, emailDetails, {
             headers: {
               Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
@@ -285,7 +316,6 @@ const Listing = () => {
         try {
             const wallet = wallets[0];
             const address = wallet.address;
-
             const provider = await wallet.getEthereumProvider();
 
             // Confirm or switch to Base
@@ -320,70 +350,111 @@ const Listing = () => {
                 }
             };
             
-            const ethersProvider = await wallet.getEthersProvider();
-            const signer = ethersProvider.getSigner();
-            const goghContract = getGoghContract(signer);
-            const uid = parseInt(Math.random().toString().slice(-15));
-            const sanitizedAmount = product?.price.replace(/[^0-9.]/g, "");
-            const convertedAmount = await getConvertedAmountWithoutHext(
-                sanitizedAmount
-            );
-                        if (!convertedAmount) {
-                console.error("Error occured. Transaction amount is missing.");
-                alert("There was an error calculating the transaction amount.");
+            // Sign the message
+            const message = 
+            `
+            Purchase confirmation. \n
+            Product: ${product?.title} \n
+            Price: ${product?.price} \n
+            Seller wallet address: ${product?.walletAddress} \n
+            Your wallet address: ${address}.
+            `;
+            
+            let signature;
+            try {
+                signature = await provider.request({
+                    method: 'personal_sign',
+                    params: [message, address],
+                });
+            } catch (signError) {
+                console.error('Error signing message:', signError);
+                alert('Transaction cancelled or failed during signing.');
+                setIsPurchaseInitiated(false);
+                return;
+            }
+    
+            // Verify signature
+            try {
+                const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/crypto/verify-signature`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        signature,
+                        message,
+                        address,
+                    }),
+                });
+
+                if (!response.ok) {
+                    setIsPurchaseInitiated(false);
+                    throw new Error('Network response was not ok');
+                }
+
+                const verificationResult = await response.json();
+
+
+                // Send transaction
+                if (verificationResult.verified) {
+
+                    try {
+                        const sanitizedAmount = product?.price.replace(/[^0-9.]/g, '');
+                        const convertedAmount = await getConvertedAmount(sanitizedAmount);
+
+                        
+                        if (!user?.fid || !product || !product.user || !product.walletAddress || !product?.user?.fid) {
+                            console.error('Error occured. User or product information is missing.');
+                            alert('There was an error when trying to gather product or user information.');
                             return;
                         }
 
-            const escrow = await createEscrow({
-                contract: goghContract,
-                uid,
-                recipientAddress: product?.walletAddress || "",
-                tokenAddress: "0x0000000000000000000000000000000000000001",
-                amount: convertedAmount,
+                        if (!convertedAmount) {
+                            console.error('Error occured. Transaction amount is missing.');
+                            alert('There was an error calculating the transaction amount.');
+                            return;
+                        }
+
+                        const transactionHash = await provider.request({
+                            method: 'eth_sendTransaction',
+                            params: [
+                                {
+                                    from: address,
+                                    to: product.walletAddress,
+                                    value: convertedAmount,
+                                },
+                            ],
                         });
 
-            ethersProvider.once(escrow.hash, async (transactionReceipt) => {
-                transactionReceipt.logs.forEach(async (t: any, index: number) => {
-                    const logVals = goghContract.interface.parseLog(
-                    transactionReceipt.logs[index]
-                    )?.args;
-                    if (logVals) {
-                        const arryOfLog = Array.from(logVals);
-                        if (arryOfLog[0] == uid) {
-                            const escrowId = arryOfLog[1];
-                            let escrowTemp = await goghContract.getEscrowDetails(escrowId);
-                            let escrowData = toEscrow(escrowTemp);
-
                         const transactionDetails = {
-                                marketplaceProductId: product?._id,
-                                sellerId: product?.user?._id,
-                                buyerFid: user?.fid,
-                                sellerFid: product?.user?.fid,
-                                sellerProfile: product?.user?.fc_url,
-                                sellerUsername: product?.user?.fc_username,
-                                transactionHash: escrow.hash,
-                                source: "Website",
-                                escrowId,
-                                status : "IN_ESCROW",
-                                uid: escrowData.uid.toString(),
-                                metadata: {
-                                    ...escrowData,
-                                    amount: escrowData.amount.toString(),
-                                    timestamp: escrowData.timestamp.toString(),
-                                    uid: escrowData.uid.toString(),
-                                },
+                            buyerFid: user.fid,
+                            sellerFid: product.user.fid,
+                            sellerProfile: product.user.fc_url,
+                            sellerUsername: product.user.fc_username,
+                            transactionHash: transactionHash,
+                            source: 'Website',
+                            shippingDetails: shipProduct ? shippingDetails : undefined,
                         };
 
                         try {
-                                await saveTransaction(transactionDetails as any);
-                                navigate(`/success/${escrow.hash}`);
+                            await saveTransaction(transactionDetails);
+                            navigate(`/success/${transactionHash}`);
                         } catch (error) {
-                                console.error("Failed to save transaction details:", error);
-                                alert( `An error occured. You can still view your transaction on basescan.org. Transaction hash: ${escrow.hash}.`);
+                            console.error('Failed to save transaction details:', error);
+                            alert(`An error occured. You can still view your transaction on basescan.org. Transaction hash: ${transactionHash}.`);
                         }
 
                         // send confirm email to seller
                         if (product?.email) {
+                            const shippingInfo = shippingDetails ? 
+                            `Name: ${shippingDetails.name}<br>` +
+                            `Street: ${shippingDetails.street}<br>` +
+                            `Apartment: ${shippingDetails.apartment}<br>` +
+                            `City: ${shippingDetails.city}, ${shippingDetails.state} ${shippingDetails.zip}<br>` +
+                            `Country: ${shippingDetails.country}` : 
+                            "Not applicable";
+
                             const emailDetails = {
                               to: product?.email,
                               from: 'admin@gogh.shopping',
@@ -391,18 +462,38 @@ const Listing = () => {
                               dynamicTemplateData: {
                                 product_name: product?.title,
                                 product_price: product?.price,
-                                transaction_hash: escrow.hash,
+                                transaction_hash: transactionHash,
                                 buyer_username: user?.fc_username,
                                 buyer_profile_url: user?.fc_url,
+                                shipping_info: shippingInfo,
                               },
                               cc: [{ email: 'manuel@gogh.shopping' }],
                             };
-                                emailSendingResults.push(sendEmail(emailDetails));
+                            try {
+                                const emailResponse = await sendEmail(emailDetails);
+                                console.log('Email sent successfully:', emailResponse);
+                            } catch (emailError) {
+                                console.error('Failed to send confirmation email:', emailError);
                             }
                         }
+
+                    } catch (transactionError) {
+                        console.error('Transaction failed:', transactionError);
+                        alert('Transaction failed. Please try again.');
+                        setIsPurchaseInitiated(false);
+                        return;
                     }
-                });
-            });
+
+                } else {
+                    alert('Signature verification failed.');
+                    setIsPurchaseInitiated(false);
+                }
+            } catch (verificationError) {
+                console.error('An error occurred during signature verification:', verificationError);
+                alert('An error occurred during the verification process. Please try again.');
+                setIsPurchaseInitiated(false);
+            }
+    
         } catch (error) {
             console.error('Unexpected error in buyProduct:', error);
             alert('An unexpected error occurred. Please try again.');
@@ -455,6 +546,14 @@ const Listing = () => {
                         <p className='product-price'>{product.price ? `$${product.price}` : 'Free'}</p>
                         <h1>{product.title}</h1>
                         <p className='product-location'>Pickup/Dropoff in {product.location}</p>
+                        {product.shipping === true && (
+                            <>
+                            <div className='product-shipping'>
+                                <i className="fa-solid fa-truck-fast"></i>
+                                <p>Shipping offered by seller</p>
+                            </div>
+                            </>
+                        )}
                         <p className='product-description'>
                             {product.description.split('\n').map((line, index, array) => (
                                 <Fragment key={index}>
@@ -465,25 +564,37 @@ const Listing = () => {
                         </p>
                     </div>
                     <div className='share-buy-listing'>
-                        <button
-                        className='buy-button'
-                        onClick={() => {
-                            initiatePurchase();
-                        }}
-                        disabled={!ready}
-                        >
-                        Buy now
-                        </button>
                         <a href={shareUrl} target="_blank" rel="noopener noreferrer" className='share-button'>
                         <p>Share</p>
                         <i className="fa-regular fa-share-from-square"></i>
                         </a>
+                    {product?.shipping && (
+                        <>
+                            <button className={`checkout-button ${showShippingOptions && 'active'}`} onClick={handleCheckoutClick}>
+                            Check out
+                            </button>
+                            {showShippingOptions && (
+                                <>
+                                    <p>Select one</p>
+                                    <div className='choose-shipping'>
+                                        <button className={shipProduct === true ? 'active' : ''} onClick={() => handleShippingOption(true)}>Request shipping</button>
+                                        <button className={shipProduct === false ? 'active' : ''} onClick={() => handleShippingOption(false)}>Pick Up</button>
+                                    </div>
+                                </>
+                            )}
+                        </>
+                        )}
+                        {shipProduct === true && <ShippingForm onSaveShippingDetails={saveShippingDetails} />}
+
+                        {((!product?.shipping || shipProduct === false) || (shipProduct === true && shippingDetailsComplete)) && (
+                            <button className='buy-button' onClick={buyProduct} disabled={!shippingDetailsComplete && shipProduct === true}>
+                                Buy now
+                            </button>
+                        )}
                     </div>
-                    {(product.user?.fid || product.user?.facebookUser) && (
+                    {product.user?.fid && (
                     <div className='seller-section'>
                         <h2>Meet the seller</h2>
-                        {product.user?.fid && (
-                        <>
                         <div className='seller-profile'>
                             <img src={profilePicture} alt="User profile picture" className='seller-pfp' />
                             <div className='seller-info'>
@@ -496,20 +607,6 @@ const Listing = () => {
                                 Message {userName}
                             </a>
                         </div>
-                        </>
-                        )}
-                        {product.user?.facebookUser && !product.user?.fid && (
-                            <>
-                            <div className='seller-profile'>
-                                <p>This seller is a Facebook user</p>
-                            </div>
-                            <div className='message-seller'>
-                                <a href={product.user.fb_url} target="_blank" rel="noopener noreferrer" className='message-button'>
-                                    View profile
-                                </a>
-                            </div>
-                            </>
-                        )}
                     </div>
                     )}
                 </div>

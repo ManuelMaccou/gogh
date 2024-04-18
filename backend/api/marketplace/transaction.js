@@ -12,7 +12,7 @@ router.post("/save", auth, async (req, res) => {
   let newTransaction;
   let userUpdated = false;
 
-    try {
+  try {
     const { marketplaceProductId, sellerId, buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, metadata, uid, escrowId,status } = req.body;
 
     buyer = await User.findOne({ privyId: req.user });
@@ -25,22 +25,21 @@ router.post("/save", auth, async (req, res) => {
       marketplaceProduct: marketplaceProductId,
       buyer: buyer._id,
       seller: sellerId,
-      buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, metadata, uid, escrowId
+      buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, shippingDetails, metadata, uid, escrowId
         }
         if(status){
           transactionRecordObject.status = status;
         }
     // Create a new transaction record
     newTransaction = new MarketplaceTransaction(transactionRecordObject);
-
-        await newTransaction.save();
+    await newTransaction.save();
 
     buyer.marketplaceProductPurchases.push(newTransaction._id);
     await buyer.save();
     userUpdated = true; // Update was successful
-    } catch (error) {
+  } catch (error) {
     console.error("Failed to save transaction or update user:", error);
-    }
+  }
 
   // Send a single response indicating the outcome
   res.status(201).send({ 
