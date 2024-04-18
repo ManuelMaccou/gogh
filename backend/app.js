@@ -129,7 +129,7 @@ app.use('/api/marketplace/product', marketplaceProductRoutes);
 app.use('/api/marketplace/frame/send_transaction', marketplaceFrameSendTransactionRoutes);
 app.use('/marketplace/frame/share', marketplaceFrameShareRoutes);
 app.use('/marketplace/add/book', bookListingFrameRoute);
-app.use('/marketplace/add/listing', addListingFrameRoute);
+app.use('/marketplace/add-listing', addListingFrameRoute);
 app.use('/api/crypto', crypto);
 
 app.use('/api/transaction', marketplaceTransactionRoutes);

@@ -20,7 +20,6 @@ async function createProductFrame(product) {
         const rightPadding = 40;
 
         // Load the product image
-        console.log('Attempt to load product image:', product.image)
         if (product.image && product.image.trim() !== '') {
             const productImage = await loadImage(product.image).catch(err => { throw new Error('Failed to load image'); });
 

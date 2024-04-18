@@ -19,7 +19,6 @@ async function createProductFrame(location, title, description, price, imageUrl)
         const rightPadding = 40;
 
         // Load the product image
-        console.log('Attempt to load product image:', imageUrl);
         if (imageUrl && imageUrl.trim() !== '') {
             const productImage = await loadImage(imageUrl).catch(err => { throw new Error('Failed to load image'); });
 
@@ -84,7 +83,7 @@ async function createProductFrame(location, title, description, price, imageUrl)
             const priceBottomMargin = 30;
             const priceX = canvas.width - priceRightMargin;
             const priceY = canvas.height - priceBottomMargin;
-            const fullprice = `${price} USDC`;
+            const fullprice = `$${price}`;
             ctx.fillText(fullprice, priceX, priceY);
         }
 

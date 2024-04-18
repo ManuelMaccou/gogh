@@ -2,6 +2,11 @@
     width: auto;
 }
 
+.helper-text {
+    font-size: 12px;
+    font-style: italic;
+}
+
 .site-header {
     height: 30px;
     top: 0;
