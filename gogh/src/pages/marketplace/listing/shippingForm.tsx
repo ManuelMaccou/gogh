@@ -67,7 +67,7 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSaveShippingDetails }) =>
                 <label htmlFor="country">Country</label>
                 <input type="text" id="country" name="country" value={formData.country} onChange={handleChange} required />
             </div>
-            <button type="submit" className="submit-button">Submit Shipping Details</button>
+            <button type="submit" className="submit-button">Confirm Shipping Details</button>
         </form>
     );
 };

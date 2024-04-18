@@ -282,7 +282,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                     <button className="close-button" onClick={handleCloseModal}>&times;</button>
                     <h2>Add Product</h2>
                     <p>If your product is sold, you will receive an email with the buyer's information. Please coordinate with them for pickup, dropoff, shipping. </p>
-                    <form onSubmit={handleSubmit}>
+                    <form className='createListing-form' onSubmit={handleSubmit}>
                         <label htmlFor="farcon" className='checkbox-container'>
                             <input
                                 name="farcon"

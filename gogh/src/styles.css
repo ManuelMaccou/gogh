@@ -339,6 +339,10 @@
     justify-content: space-between;
 }
 
+.share-buy-listing p {
+    font-weight: bold;
+}
+
 .share-button {
     display: inline-flex;
     gap: 10px;
@@ -351,6 +355,8 @@
 }
 
 .buy-button, .checkout-button {
+    margin-top: 30px;
+    padding: 5px;
     height: 40px;
     min-width: 250px;
     align-items: center;
@@ -359,10 +365,21 @@
     color: #ffffff;
     font-weight: bold;
     font-size: 20px;
-    padding: 5px;
     border-radius: 5px;
+    border: none;
     background-color: #007bff;
     cursor: pointer;
+}
+
+.shipping-form .submit-button {
+    width: fit-content;
+    padding: 10px 40px;
+    border: none;
+    border-radius: 5px;
+    background-color: #222222;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
 }
 
 .choose-shipping {
@@ -699,10 +716,10 @@
     cursor: pointer;
 }
 
-.submit-button {
+.createListing-form .submit-button {
     width: fit-content;
     padding: 10px 40px;
-    margin-top: 30px;
+    margin-top: 10px;
     border: none;
     border-radius: 5px;
     background-color: #007bff;
