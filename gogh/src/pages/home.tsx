@@ -22,6 +22,7 @@ interface User {
 
 interface Product {
     _id: string;
+    shipping: boolean
     farcon: boolean;
     location: string;
     title: string;
@@ -164,7 +165,8 @@ const HomePage = () => {
 
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
-        const city = searchParams.get('city');
+        const city = searchParams.get('location');
+        const shipping = searchParams.get('shipping') === 'true';
         const title = searchParams.get('title');
         const description = searchParams.get('description');
         const price = searchParams.get('price');
@@ -174,12 +176,12 @@ const HomePage = () => {
         if (ready) {
             if (title && authenticated && createListingRef.current) {
                 createListingRef.current.openCreateListingModal();
-                setInitialFormData({ location:city, title, description, price, walletAddress, email });
+                setInitialFormData({ location:city, shipping, title, description, price, walletAddress, email });
                 setShowCreateListingModal(true);
 
             } else if (title && !authenticated && createListingRef.current) {
                 createListingRef.current.openCreateListingModal();
-                setInitialFormData({ location:city, title, description, price,walletAddress, email });
+                setInitialFormData({ location:city, shipping, title, description, price,walletAddress, email });
                 setShowCreateListingModal(true);
                 login();
             }

@@ -5,7 +5,7 @@ const router = Router();
 
 router.post('/save', async (req, res) => {
     try {
-        const { buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source } = req.body;
+        const { buyerFid, sellerFid, sellerProfile, sellerUsername, transactionHash, source, shippingDetails } = req.body;
 
         // Create a new transaction instance
         const newTransaction = new MarketplaceTransaction({
@@ -15,6 +15,7 @@ router.post('/save', async (req, res) => {
             sellerUsername,
             transactionHash,
             source,
+            shippingDetails,
         });
 
         // Save the transaction to the database
