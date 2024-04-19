@@ -1,58 +1,59 @@
 import { useQuery } from "@airstack/airstack-react";
 
 interface Wallet {
-    addresses: string[];
-    primaryDomain?: Domain | null;
-    domains?: Domain[] | null;
-    farcasterSocials?: Social[] | null;
-    lensSocials?: Social[] | null;
-    xmtp?: XMTP | null;
+  addresses: string[];
+  primaryDomain?: Domain | null;
+  domains?: Domain[] | null;
+  farcasterSocials?: Social[] | null;
+  lensSocials?: Social[] | null;
 }
   
 interface Domain {
-    isPrimary: boolean;
-    name: string;
-    tokenNft?: TokenNft | null;
+  isPrimary: boolean;
+  name: string;
+  tokenNft?: TokenNft | null;
+  createdAtBlockTimestamp?: string;
 }
   
 interface TokenNft {
-    tokenId: string;
-    address: string;
-    blockchain: string;
+  tokenId: string;
+  address: string;
+  blockchain: string;
 }
   
 interface Social {
-    isDefault: boolean;
-    blockchain: string;
-    profileBio: string;
-    profileName: string;
-    profileDisplayName: string;
-    profileHandle: string;
-    profileImage?: string;
-    followerCount: number;
-    followingCount: number;
-    profileTokenId?: string;
-    isFarcasterPowerUser?: boolean;
-    profileTokenAddress?: string;
-    profileImageContentValue?: {
-        image: {
-        small: string;
+  isDefault: boolean;
+  blockchain: string;
+  profileBio: string;
+  profileName: string;
+  profileDisplayName: string;
+  profileHandle: string;
+  profileImage?: string;
+  followerCount: number;
+  followingCount: number;
+  profileTokenId?: string;
+  isFarcasterPowerUser?: boolean;
+  profileTokenAddress?: string;
+  profileCreatedAtBlockTimestamp?: string;
+  profileImageContentValue?: {
+    image: {
+      small: string;
     } | null;
-} | null;
+  } | null;
 }
   
-interface XMTP {
-    isXMTPEnabled: boolean;
-}
+// interface XMTP {
+  // isXMTPEnabled: boolean;
+// }
   
 interface Data {
-    Wallet: Wallet;
+  Wallet: Wallet;
 }
   
 interface QueryResponse {
-    data: Data | null;
-    loading: boolean;
-    error: Error | null;
+  data: Data | null;
+  loading: boolean;
+  error: Error | null;
 }
   
 interface Error {
@@ -69,6 +70,7 @@ const GET_SOCIAL_QUERY = `
       domains {
         isPrimary
         name
+        createdAtBlockTimestamp
         tokenNft {
           tokenId
           address
@@ -82,6 +84,7 @@ const GET_SOCIAL_QUERY = `
         profileName
         profileHandle
         profileDisplayName
+        profileCreatedAtBlockTimestamp
         profileImage
         followerCount
         followingCount
@@ -104,14 +107,12 @@ const GET_SOCIAL_QUERY = `
         followingCount
         profileTokenId
         profileTokenAddress
+        profileCreatedAtBlockTimestamp
         profileImageContentValue {
           image {
             small
           }
         }
-      }
-      xmtp {
-        isXMTPEnabled
       }
     }
   }`;
@@ -130,63 +131,86 @@ const GET_SOCIAL_QUERY = `
     const domains = data.Wallet.domains || [];
     const farcasterSocials = data.Wallet.farcasterSocials || [];
     const lensSocials = data.Wallet.lensSocials || [];
-
     const primaryDomainName = data.Wallet.primaryDomain?.name || 'No ENS available';
+
+    function formatDate(isoDateString?: string): string {
+      if (!isoDateString) {
+        return "Date not available";
+      }
+      return new Date(isoDateString).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      });
+    }
     
     return (
-        <div>
-            <div>
-                {domains ? (
-                  <p>
-                    <img 
-                        src="/images/ens_mark_primary.png" 
-                        alt="Domain Icon" 
-                        style={{ 
-                            marginRight: '8px', 
-                            verticalAlign: 'middle', 
-                            width: '24px',
-                            height: '24px'
-                        }} 
-                    />
-                    {primaryDomainName}
-                  </p>
-                ) : (
-                  <p>No ENS available</p>
-                )}
-                <h4>Farcaster:</h4>
-                {farcasterSocials.length > 0 ? (
-                    farcasterSocials.map((social, index) => (
-                        <div key={index}>
-                          <div className='seller-profile'>
-                            <img src={social.profileImage} alt="User profile picture" className='seller-pfp' />
-                            <div className='seller-info'>
-                                <p className='seller-username'>{social.profileDisplayName}</p>
-                                <p className='seller-bio'>{social.profileBio}</p>
-                                <p>Followers: {social.followerCount}</p>
-                            </div>
-                        </div>
-                        <div className='message-seller'>
-                            <a href={`https://warpcast.com/${social.profileHandle}`} target="_blank" rel="noopener noreferrer" className='message-button'>
-                                View profile
-                            </a>
-                        </div>
-                        </div>
-                    ))
-                ) : (
-                    <p>No Farcaster socials available</p>
-                )}
-                <h4>Lens:</h4>
-                {lensSocials.length > 0 ? (
-                    lensSocials.map((social, index) => (
-                        <div key={index}>
-                            <p>{social.profileName} - Followers: {social.followerCount}</p>
-                        </div>
-                    ))
-                ) : (
-                    <p>No Lens socials available</p>
-                )}
+          <div className="onchain-profile">
+            <div className="social-card">
+              <h4>ENS:</h4>
+              {data.Wallet.primaryDomain ? (
+                <div>
+                <img 
+                  src="/images/ens_mark_primary.png" 
+                  alt="Domain Icon" 
+                  style={{ 
+                    marginRight: '8px', 
+                    verticalAlign: 'middle', 
+                    width: '24px',
+                    height: '24px'
+                  }} 
+                />
+                  {data.Wallet.primaryDomain.name}
+                  <p>Created Date: {formatDate(domains[0]?.createdAtBlockTimestamp)}</p>
+                </div>
+              ) : (
+                <p>No ENS available</p>
+              )}
             </div>
-        </div>
+            <div className="social-card">
+              <h4>Farcaster:</h4>
+              {farcasterSocials.length > 0 ? (
+                  farcasterSocials.map((social, index) => (
+                      <div key={index}>
+                        <div className='seller-profile'>
+                          <img src={social.profileImage} alt="User profile picture" className='seller-pfp' />
+                          <div className='seller-info'>
+                              <p className='seller-username'>{social.profileDisplayName}</p>
+                              <p className='seller-bio'>{social.profileBio}</p>
+                              <p>Followers: {social.followerCount}</p>
+                              <p>Created: {formatDate(social?.profileCreatedAtBlockTimestamp)}</p>
+                          </div>
+                      </div>
+                      <div className='message-seller'>
+                          <a href={`https://warpcast.com/${social.profileHandle}`} target="_blank" rel="noopener noreferrer" className='message-button'>
+                              View profile
+                          </a>
+                      </div>
+                    </div>
+                  ))
+              ) : (
+                  <p>No Farcaster socials available</p>
+              )}
+            </div>
+            <div className="social-card">
+              <h4>Lens:</h4>
+              {lensSocials.length > 0 ? (
+                  lensSocials.map((social, index) => (
+                    <div key={index}>
+                    <div className='seller-profile'>
+                      <img src={social.profileImage} alt="User profile picture" className='seller-pfp' />
+                      <div className='seller-info'>
+                          <p className='seller-username'>{social.profileDisplayName}</p>
+                          <p className='seller-bio'>{social.profileBio}</p>
+                          <p>Followers: {social.followerCount}</p>
+                          <p>Created: {formatDate(social?.profileCreatedAtBlockTimestamp)}</p>
+                      </div>
+                  </div>
+                </div>
+                  ))
+              ) : (
+                  <p>No Lens socials available</p>
+              )}
+            </div>
+          </div>
     );
 };
 

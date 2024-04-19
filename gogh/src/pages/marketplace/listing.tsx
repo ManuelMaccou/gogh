@@ -484,7 +484,8 @@ const Listing = () => {
                 </div>
             )}
             <Header />
-            <div className='listing-body'>
+            <div className='listing-container'>
+            <div className='listing-section'>
                 <div className='image-gallery'>
                     <div className="main-image-container">
                         {selectedImage && <img src={selectedImage} alt={product?.title} className="main-image" />}
@@ -560,13 +561,14 @@ const Listing = () => {
                             </button>
                         )}
                     </div>
-                    {product.user?.fid && (
-                    <div className='seller-section'>
-                        <h2>Meet the seller</h2>
-                        <SellerOnchainProfile sellerIdentity={product.walletAddress} />
-                    </div>
-                    )}
                 </div>
+            </div>
+            {product.user?.fid && (
+                <div className='seller-section'>
+                    <h2>Meet the seller</h2>
+                    <SellerOnchainProfile sellerIdentity={product.walletAddress} />
+                </div>
+            )}
             </div>
         </>
     );
