@@ -53,7 +53,7 @@ router.post('/add', auth, upload.fields([
         const featuredImage = `${process.env.BASE_URL}/images/${processedFeaturedImage}.jpg`;
 
         // Create sharable frame with the featured image
-        const generatedProductFrameBuffer = await createMarketplaceProductFrame(location, title, description, price, featuredImage);
+        const generatedProductFrameBuffer = await createMarketplaceProductFrame(location, shipping, title, description, price, featuredImage);
         const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
         const productFrame = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
 

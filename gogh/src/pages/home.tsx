@@ -22,7 +22,7 @@ interface User {
 
 interface Product {
     _id: string;
-    shipping: boolean
+    shipping: boolean;
     farcon: boolean;
     location: string;
     title: string;
