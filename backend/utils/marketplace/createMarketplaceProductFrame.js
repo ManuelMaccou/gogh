@@ -1,7 +1,7 @@
 import { createCanvas, loadImage } from 'canvas';
 import Jimp from 'jimp';
 
-async function createProductFrame(location, title, description, price, imageUrl) {
+async function createProductFrame(location, shipping, title, description, price, imageUrl) {
     console.log('Starting product frame generation.');
     try {
         const canvasWidth = 1450;
@@ -58,20 +58,41 @@ async function createProductFrame(location, title, description, price, imageUrl)
         ctx.fillText(fullLocation, textSectionStart, currentY);
         currentY += 60; // Adjust space before the description
 
+        // Draw "shipping available" if shipping is true
+        console.log('shipping:', shipping, 'Type of shipping:', typeof shipping);
+        if (shipping === true || shipping === 'true') {
+            ctx.font = 'bold italic 30px Arial'; // You can change the font size and style as needed
+            ctx.textAlign = 'left'; // Align text to the left
+            const shippingTextX = textSectionStart; // Starting X position for the shipping text
+            const shippingTextY = currentY - 20; // Position Y below the last drawn text, adjust as needed
+            ctx.fillText("Shipping available", shippingTextX, shippingTextY);
+            currentY += 40; // Update currentY if more items are to be added below
+        }
+
         // Reset font to non-italics for description
         ctx.font = textConfig.description.font;
 
         // Draw product description if available
         if (description && description.trim() !== '') {
-            const maxDescriptionLength = 60; // Maximum number of words for the description
-            let words = description.split(' ');
-            let shouldShowViewMore = words.length > maxDescriptionLength;
-            let trimmedDescription = shouldShowViewMore ? words.slice(0, maxDescriptionLength).join(' ') + "...\n\nView product online for full description." : description;
+            const maxVerticalSpace = 650; // Set maximum vertical space available for description
+            const words = description.split(' ');
+            let currentText = '';
+            let testHeight = 0;
         
-            // Use the corrected variable for drawing
+            for (let word of words) {
+                let newText = currentText + (currentText ? ' ' : '') + word;
+                // Measure the potential new text height
+                let potentialHeight = wrapText(ctx, newText, textSectionStart, currentY, textMaxWidth, textConfig.description.lineHeight, true);
+                if (currentY + potentialHeight > maxVerticalSpace) {
+                    break; // Stop adding words if adding another exceeds max height
+                }
+                currentText = newText; // Accept the new text
+                testHeight = potentialHeight; // Update tested height to accepted new height
+            }
+        
+            let shouldShowViewMore = description.length > currentText.length;
+            let trimmedDescription = shouldShowViewMore ? currentText + "...\n\nView product online for full description." : currentText;
             currentY += wrapText(ctx, trimmedDescription, textSectionStart, currentY, textMaxWidth, textConfig.description.lineHeight);
-
-            // No need for additional "view more" text handling here; it's incorporated into trimmedDescription
         }
 
         // Draw price
@@ -96,13 +117,11 @@ async function createProductFrame(location, title, description, price, imageUrl)
     }
 }
 
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-    // Split the text into lines based on explicit new line characters
+function wrapText(ctx, text, x, y, maxWidth, lineHeight, dryRun = false) {
     const lines = text.split('\n');
     let lastY = y;
 
     lines.forEach((originalLine) => {
-        // Trim leading spaces to prevent unintended indenting
         const line = originalLine.trimStart();
         const words = line.split(' ');
         let currentLine = '';
@@ -112,19 +131,18 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
             let metrics = ctx.measureText(testLine);
             let testWidth = metrics.width;
             if (testWidth > maxWidth && n > 0) {
-                ctx.fillText(currentLine, x, lastY);
+                if (!dryRun) ctx.fillText(currentLine, x, lastY);
                 currentLine = words[n] + ' ';
                 lastY += lineHeight;
             } else {
                 currentLine = testLine;
             }
         }
-        // Draw the current line because the loop is finished
-        ctx.fillText(currentLine.trim(), x, lastY);
+        if (!dryRun) ctx.fillText(currentLine.trim(), x, lastY);
         lastY += lineHeight; // Move to the next line
     });
 
-    return lastY - y; // Return the height used by the text
+    return lastY - y; // Return the height used by the text, useful for calculating potential overflow
 }
 
 const textConfig = {
