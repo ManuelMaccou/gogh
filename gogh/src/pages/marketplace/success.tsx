@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import Header from '../header'
 
 interface TransactionDetails {
     buyerFid: string;
@@ -42,24 +43,31 @@ function SuccessPage() {
   const txUrl = `https://basescan.org/tx/${transactionDetails.transactionHash}`;
 
   return (
+    <>
+    <Header />
     <div className='success-container'>
-        <div>
-            <img className='logo' src="/logo512.png" alt="Logo" />
-        </div>
-        <h1>Transaction complete!</h1>
-        <p>You can view the status of the transaction below.</p>
-        <p>Contact the seller to coorinate a time to pick up your item.</p>
-        <div className='message-seller'>
-            <a href={sellerProfile} target="_blank" rel="noopener noreferrer" className='message-button'>
-                Message {userName}
-            </a>
-        </div>
-        <div className='transaction-link'>
-            <a href={txUrl} target="_blank" rel="noopener noreferrer">
-                View transaction
-            </a>
-        </div>
+      <div>
+        <img className='logo' src="/logo512.png" alt="Logo" />
+      </div>
+      <h1>Transaction complete!</h1>
+      <p>
+        {'You can view the status of the transaction below.'}
+        <br />
+        {'Bookmark this page to reference it later.'}
+      </p>
+      <p>Contact the seller to coorinate a time to pick up your item.</p>
+      <div className='message-seller'>
+        <a href={sellerProfile} target="_blank" rel="noopener noreferrer" className='message-button'>
+          Message {userName}
+        </a>
+      </div>
+      <div className='transaction-link'>
+        <a href={txUrl} target="_blank" rel="noopener noreferrer">
+          View transaction
+        </a>
+      </div>
     </div>
+    </>
   );
 
 };
