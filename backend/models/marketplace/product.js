@@ -1,6 +1,7 @@
 import { Schema, model } from 'mongoose';
 
 const marketplaceProductSchema = new Schema({
+    status: { type: String, required: true },
     location: { type: String, required: true },
     shipping: {type: Boolean, required: true },
     farcon: {type: Boolean, required: true },

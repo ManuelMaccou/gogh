@@ -544,7 +544,7 @@ const Listing = () => {
                             </button>
                             {showShippingOptions && (
                                 <>
-                                    <p>Select one</p>
+                                    <p>Select one:</p>
                                     <div className='choose-shipping'>
                                         <button className={shipProduct === true ? 'active' : ''} onClick={() => handleShippingOption(true)}>Request shipping</button>
                                         <button className={shipProduct === false ? 'active' : ''} onClick={() => handleShippingOption(false)}>Pick Up</button>

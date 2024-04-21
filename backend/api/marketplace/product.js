@@ -53,7 +53,7 @@ router.post('/add', auth, upload.fields([
         const featuredImage = `${process.env.BASE_URL}/images/${processedFeaturedImage}.jpg`;
 
         // Create sharable frame with the featured image
-        const generatedProductFrameBuffer = await createMarketplaceProductFrame(location, title, description, price, featuredImage);
+        const generatedProductFrameBuffer = await createMarketplaceProductFrame(location, shipping, title, description, price, featuredImage);
         const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
         const productFrame = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
 
@@ -78,6 +78,7 @@ router.post('/add', auth, upload.fields([
         
         const product = new MarketplaceProduct({
             location,
+            status: 'pending_approval',
             shipping,
             farcon,
             title,
@@ -103,7 +104,16 @@ router.post('/add', auth, upload.fields([
 
 router.get('/', async (req, res) => {
     try {
-        const products = await MarketplaceProduct.find({})
+        const { status } = req.query;
+        const query = {};
+
+        if (status && ['approved', 'pending_approval', 'rejected'].includes(status)) {
+            query.status = status;
+        } else {
+            query.status = 'approved';
+        }
+
+        const products = await MarketplaceProduct.find(query)
             .sort({_id: -1}) 
             .populate('user', 'fc_username fc_pfp fc_url fc_bio walletAddress')
             .exec();

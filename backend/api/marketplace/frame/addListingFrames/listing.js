@@ -13,7 +13,7 @@ const router = Router();
 const categoryImages = {
     art: {
         images: [
-            'https://www.gogh.shopping/images/66205704c618727026fff30f.jpg',
+            'https://www.gogh.shopping/images/66227d21ff6a2532fb8ed6ee.jpg',
             'https://www.gogh.shopping/images/66204b858aab7609d2dc525d.jpg',
             'https://www.gogh.shopping/images/66204f276835f247c9646d81.jpg',
             'https://www.gogh.shopping/images/66204e66cdcd338a3eaff898.jpg',
@@ -66,7 +66,7 @@ router.get('/:category', async (req, res) => {
             <meta property="fc:frame:post_url" content="${postUrl}" />
             <meta property="fc:frame:image" content="${images[0]}">
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-            <meta property="fc:frame:input:text" content="Enter your location" />
+            <meta property="fc:frame:input:text" content="City and state/country" />
             <meta property="fc:frame:button:1" content="Continue" />
             <meta property="fc:frame:button:2" content="FAQ" />
         </head>
