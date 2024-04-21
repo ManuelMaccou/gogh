@@ -22,6 +22,7 @@ interface User {
 
 interface Product {
     _id: string;
+    status: string;
     shipping: boolean;
     farcon: boolean;
     location: string;
@@ -191,7 +192,7 @@ const HomePage = () => {
 
     const fetchProducts = async () => {
         try {
-            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/`);
+            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/?status=approved`);
             setProducts(response.data);
         } catch (error) {
             console.error('Failed to fetch products:', error);
