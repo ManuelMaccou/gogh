@@ -258,7 +258,7 @@ function generateFrameHtml(store, product, variant, storeId, productIndex, varia
 function constructMetadata(store, frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants, cartImageUrl) {
 
     const baseUrl = process.env.BASE_URL;
-    const checkoutUrl = `${store.shopifyStoreUrl}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
+    const checkoutUrl = `https://${store.shopifyStoreUrl}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
 
     let metadata = {
         "og:url": "https://www.gogh.shopping",
