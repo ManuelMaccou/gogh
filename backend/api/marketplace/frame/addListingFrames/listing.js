@@ -84,8 +84,8 @@ router.get('/:category', async (req, res) => {
             <meta property="fc:frame:image" content="${images[0]}">
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
             <meta property="fc:frame:input:text" content="City and state/country" />
-            <meta property="fc:frame:button:1" content="Continue" />
-            <meta property="fc:frame:button:2" content="FAQ" />
+            <meta property="fc:frame:button:1" content="FAQ" />
+            <meta property="fc:frame:button:2" content="Continue" />
         </head>
     </html>
     `;
@@ -146,14 +146,14 @@ router.post('/:category', async (req, res) => {
         if (inputError !== "true" && explain !== "true") {
 
             if (step === '1') {
-                if (buttonIndex === 1 && inputText) { // continue
+                if (buttonIndex === 2 && inputText) { // continue
                     redisData.location = inputText;
                     step = '2';
 
-                } else if (!inputText && buttonIndex === 1) {
+                } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
 
-                } else if (buttonIndex === 2) {
+                } else if (buttonIndex === 1) {
                     explain = "true";
                 }
 
@@ -314,8 +314,8 @@ function generateFrameHtml(newListingFrameImgs, explainImage, inputErrorImage, v
             buttonsHtml = `
                 <meta property="fc:frame:image" content="${listingFrame}" />
                 <meta property="fc:frame:input:text" content="Enter your location" />
-                <meta property="fc:frame:button:1" content="Continue" />
-                <meta property="fc:frame:button:2" content="FAQ" />
+                <meta property="fc:frame:button:1" content="FAQ" />
+                <meta property="fc:frame:button:2" content="Continue" />
             `;
             break;
 
