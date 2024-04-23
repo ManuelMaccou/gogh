@@ -453,7 +453,7 @@
 }
 
 @media (max-width: 768px) {
-    .listing-section {
+    .listing-body {
         flex-direction: column;
         align-items: start;
     }
