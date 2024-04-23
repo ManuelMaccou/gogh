@@ -486,8 +486,7 @@ const Listing = () => {
                 </div>
             )}
             <Header />
-            <div className='listing-container'>
-            <div className='listing-section'>
+            <div className='listing-body'>
                 <div className='image-gallery'>
                     <div className="main-image-container">
                         {selectedImage && <img src={selectedImage} alt={product?.title} className="main-image" />}
@@ -571,7 +570,6 @@ const Listing = () => {
                     )}
                 </div>
             </div>
-        </div>
         </>
     );
 };
