@@ -122,7 +122,7 @@ const GET_SOCIAL_QUERY = `
   
 
   const SellerOnchainProfile = ({ sellerIdentity }: { sellerIdentity: string }) => {
-    const { data, loading, error } = useQuery<Data>(GET_SOCIAL_QUERY, { identity: sellerIdentity }, { cache: true });
+    const { data, loading, error } = useQuery<Data>(GET_SOCIAL_QUERY, { identity: `fc_fname:${sellerIdentity}` }, { cache: true });
 
     const [currentView, setCurrentView] = useState('Farcaster');
 
