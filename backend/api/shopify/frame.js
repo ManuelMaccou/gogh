@@ -8,48 +8,8 @@ import Image from '../../models/image.js';
 import { validateMessage } from '../../utils/validateFrameMessage.js'
 
 const router = Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const DATA_DIR = join(__dirname, '..', 'data');
 
 const getImageUrl = (imageId) => `${process.env.BASE_URL}/images/${imageId}.jpg`;
-
-const ensureDirectoryExists = (dirPath) => {
-    if (!existsSync(dirPath)) {
-        mkdirSync(dirPath, { recursive: true });
-    }
-};
-
-const appendToCSV = async (filename, data) => {
-    ensureDirectoryExists(DATA_DIR);
-    const csvPath = join(DATA_DIR, `${filename}.csv`);
-    
-    try {
-        await new Promise((resolve, reject) => {
-            appendFile(csvPath, `${data}\n`, (err) => {
-                if (err) {
-                    console.error('Error appending to CSV:', err);
-                    reject(err); // Reject the promise on error
-                } else {
-                    console.log('Data appended to CSV:', csvPath);
-                    console.log('Data:', data);
-                    resolve(); // Resolve the promise on success
-                }
-            });
-        });
-    } catch (error) {
-        console.error("Error appending to CSV:", error);
-    }
-};
-
-const logActionToCSV = async (fid, storeName, storeId, productName, page) => {
-    const now = new Date().toISOString();
-    const storeNameCsv = storeName.replace(/,/g, '');
-    const productNameCsv = productName.replace(/,/g, '');
-    const data = `${now},${storeNameCsv},${productNameCsv},${page},${fid}`;
-
-    appendToCSV(storeId, data);
-};
 
 
 async function storeImage(imageBuffer, contentType) {
@@ -122,12 +82,6 @@ router.post('/:storeId', async (req, res) => {
         if (initial) {
 
             frameType = 'productFrame';
-
-            try {
-                await logActionToCSV(fid, store.storeName, store._id, product.title, "Opened store");
-            } catch (error) {
-                console.error("Failed to log initial view to CSV:", error);
-            }
             
         } else {
             
@@ -155,11 +109,6 @@ router.post('/:storeId', async (req, res) => {
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
 
-                    try {
-                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Viewed product");
-                    } catch (error) {
-                        console.error("Failed to log 'viewed product' to CSV:", error);
-                    }
 
                 } else if (buttonIndex === 3 && totalVariants === 1) { // If only one variant, let user add to cart
                     frameType = 'addToCartFrame';
@@ -174,12 +123,6 @@ router.post('/:storeId', async (req, res) => {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
                     } else {
                         cartUrlParams = `${variantId}:${variantQuantity}`;
-                    }
-
-                    try {
-                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Added product to cart");
-                    } catch (error) {
-                        console.error("Failed to log 'Added product to cart' to CSV:", error);
                     }
 
                 } else if (buttonIndex === 4) { // 'View cart' button
@@ -227,12 +170,6 @@ router.post('/:storeId', async (req, res) => {
 
                     const variantId = product.variants[variantIndex].shopifyVariantId;
 
-                    try {
-                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Added product to cart");
-                    } catch (error) {
-                        console.error("Failed to log 'Added product to cart' to CSV:", error);
-                    }
-
                     // Constructing cartUrlParams
                     if (cartUrlParams) {
                         cartUrlParams += `,${variantId}:${variantQuantity}`;
@@ -263,14 +200,6 @@ router.post('/:storeId', async (req, res) => {
                     variant = product.variants[variantIndex];
                     totalProducts = store.products.length;
                     totalVariants = product.variants.length;
-                
-                } else if (buttonIndex === 2) { // 'check out' button
-
-                    try {
-                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Went to Shopify checkout page");
-                    } catch (error) {
-                        console.error("Failed to log 'Went to Shopify checkout page' to CSV:", error);
-                    }
                 }
             } else if (frameType === 'cartFrame') {
                 const variantId = product.variants[variantIndex].shopifyVariantId;
@@ -287,12 +216,6 @@ router.post('/:storeId', async (req, res) => {
                     frameType = "productFrame";
                     variantIndex = 0;
                     cartUrlParams = '';
-                } else if (buttonIndex === 3) { 
-                    try {
-                        await logActionToCSV(fid, store.storeName, store._id, product.title, "Emptied cart");
-                    } catch (error) {
-                        console.error("Failed to log 'Emptied cart' to CSV:", error);
-                    }
                 }
             }
         }
@@ -335,7 +258,7 @@ function generateFrameHtml(store, product, variant, storeId, productIndex, varia
 function constructMetadata(store, frameType, product, variant, storeId, productIndex, variantIndex, cartUrlParams, totalProducts, totalVariants, cartImageUrl) {
 
     const baseUrl = process.env.BASE_URL;
-    const checkoutUrl = `${store.shopifyStoreUrl}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
+    const checkoutUrl = `https://${store.shopifyStoreUrl}/cart/${cartUrlParams}?utm_source=gogh&utm_medium=farcaster`;
 
     let metadata = {
         "og:url": "https://www.gogh.shopping",
