@@ -103,6 +103,8 @@ const GET_SOCIAL_QUERY = `
         blockchain
         profileName
         profileHandle
+        profileDisplayName
+        profileBio
         profileImage
         followerCount
         followingCount
