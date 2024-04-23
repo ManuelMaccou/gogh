@@ -61,12 +61,13 @@ router.post('/add', auth, upload.fields([
         if (req.files['images']) {
             for (const file of req.files['images']) {
                 const processedImageBuffer = await sharp(file.buffer)
-                    .resize(800, 800, {
-                        fit: sharp.fit.inside,
-                        withoutEnlargement: true
-                    })
-                    .jpeg()
-                    .toBuffer();
+                .rotate()
+                .resize(800, 800, {
+                    fit: sharp.fit.inside,
+                    withoutEnlargement: true
+                })
+                .jpeg()
+                .toBuffer();
                 
                 const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
                 const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;

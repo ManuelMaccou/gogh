@@ -224,9 +224,9 @@
     cursor: pointer;
 }
 
-.listing-body {
+.listing-section {
     margin: auto;
-    margin-bottom: 100px;
+    margin-bottom: 50px;
     width: 80%;
     max-width: 1500px;
     display: flex;
@@ -243,6 +243,7 @@
     align-items: start;
     text-align: center;
     margin-bottom: 20px;
+    margin-top: 70px;
 }
   
 .main-image {
@@ -252,6 +253,8 @@
 }
 
 .image-gallery {
+    min-width: 250px;
+    justify-content: center;
     display: flex;
     flex-direction: row-reverse;
 }
@@ -291,7 +294,7 @@
 }
 
 .product-details {
-    max-width: 35%;
+    width: 40%;
     min-width: 250px;
     display: flex;
     flex-direction: column;
@@ -402,6 +405,24 @@
     margin-bottom: 5px;
 }
 
+.social-icons {
+    display: flex;
+    gap: 30px;
+}
+
+.social-icon {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    filter: grayscale(100%);
+    transition: filter 0.3s;
+}
+  
+.social-icon:hover,
+.social-icon.active {
+    filter: none;
+}
+
 .seller-profile {
     margin-bottom: 10px;
     display: flex;
@@ -435,7 +456,7 @@
 }
 
 @media (max-width: 768px) {
-    .listing-body {
+    .listing-section {
         flex-direction: column;
         align-items: start;
     }
@@ -490,7 +511,19 @@
 }
 
 .seller-section {
-    margin-top: 40px;
+    margin-top: 50px;
+    margin-right: auto;
+    margin-left: auto;
+    margin-bottom: 100px;
+    width: 80%;
+    max-width: 1500px;
+}
+
+.onchain-profile {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 20px;
 }
 
 .seller-pfp {
@@ -500,7 +533,6 @@
     object-fit: cover;
     margin-right: 10px;
 }
-
 
 .profile-card p {
     margin: 0;
