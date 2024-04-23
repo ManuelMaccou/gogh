@@ -26,6 +26,7 @@ router.post('/create', auth, async (req, res) => {
                     privyId: userData.privyId,
                     fid: userData.fid,
                     fc_username: userData.fc_username,
+                    fc_fname: userData. fc_fname,
                     fc_pfp: userData.fc_pfp,
                     fc_url: userData.fc_url,
                     fc_bio: userData.fc_bio,
@@ -49,7 +50,7 @@ router.post('/create', auth, async (req, res) => {
 });
 
 router.post('/lookup', auth, async (req, res) => {
-    const { privyId, fc_username, fc_bio } = req.body;
+    const { privyId, fc_username, fc_fname, fc_bio } = req.body;
     const userIdFromToken = req.user;
 
     try {
@@ -64,7 +65,7 @@ router.post('/lookup', auth, async (req, res) => {
             return res.status(403).json({ message: 'Unauthorized to update this user' });
         }
 
-        const updatedUser = await User.findByIdAndUpdate(user._id, { fc_username, fc_bio }, { new: true });
+        const updatedUser = await User.findByIdAndUpdate(user._id, { fc_username, fc_fname, fc_bio }, { new: true });
 
         res.json(updatedUser);
     } catch (error) {

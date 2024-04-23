@@ -76,6 +76,7 @@ const HomePage = () => {
                 ...(user.farcaster && {
                     fid: user.farcaster?.fid,
                     fc_username: user.farcaster?.displayName,
+                    fc_fname: user.farcaster?.username,
                     fc_pfp: user.farcaster?.pfp,
                     fc_bio: user.farcaster?.bio,
                     fc_url: `https://warpcast.com/${user.farcaster?.username}`,

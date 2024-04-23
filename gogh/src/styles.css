@@ -405,6 +405,24 @@
     margin-bottom: 5px;
 }
 
+.social-icons {
+    display: flex;
+    gap: 30px;
+}
+
+.social-icon {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    filter: grayscale(100%);
+    transition: filter 0.3s;
+}
+  
+.social-icon:hover,
+.social-icon.active {
+    filter: none;
+}
+
 .seller-profile {
     margin-bottom: 10px;
     display: flex;
@@ -493,22 +511,19 @@
 }
 
 .seller-section {
+    margin-top: 50px;
     margin-right: auto;
     margin-left: auto;
-    margin-bottom: 100%;
+    margin-bottom: 100px;
     width: 80%;
     max-width: 1500px;
 }
 
-.seller-section h2 {
-    text-align: center;
-}
-
 .onchain-profile {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-around;
-    gap: 50px;
+    gap: 20px;
 }
 
 .seller-pfp {

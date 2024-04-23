@@ -28,6 +28,7 @@ interface User {
     _id: string;
     fid?: string;
     fc_username?: string;
+    fc_fname?: string;
     fc_pfp?: string;
     fc_bio?: string;
     fc_url?: string;
@@ -119,6 +120,7 @@ const Listing = () => {
                 ...(user.farcaster && {
                     fid: user.farcaster?.fid,
                     fc_username: user.farcaster?.displayName,
+                    fc_fname: user.farcaster?.username,
                     fc_pfp: user.farcaster?.pfp,
                     fc_bio: user.farcaster?.bio,
                     fc_url: `https://warpcast.com/${user.farcaster?.username}`,
@@ -561,15 +563,15 @@ const Listing = () => {
                             </button>
                         )}
                     </div>
+                    {product.user?.fid && product.user.fc_fname && (
+                        <div className='seller-section'>
+                            <h2>Meet the seller</h2>
+                            <SellerOnchainProfile sellerIdentity={product.user?.fc_fname} />
+                        </div>
+                    )}
                 </div>
             </div>
-            {product.user?.fid && (
-                <div className='seller-section'>
-                    <h2>Meet the seller</h2>
-                    <SellerOnchainProfile sellerIdentity={product.walletAddress} />
-                </div>
-            )}
-            </div>
+        </div>
         </>
     );
 };

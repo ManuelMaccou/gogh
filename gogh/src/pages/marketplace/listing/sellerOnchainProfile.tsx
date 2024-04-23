@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from "@airstack/airstack-react";
 
 interface Wallet {
@@ -120,7 +121,8 @@ const GET_SOCIAL_QUERY = `
 
   const SellerOnchainProfile = ({ sellerIdentity }: { sellerIdentity: string }) => {
     const { data, loading, error } = useQuery<Data>(GET_SOCIAL_QUERY, { identity: sellerIdentity }, { cache: true });
-    console.log(data);
+
+    const [currentView, setCurrentView] = useState('Farcaster');
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error.message}</div>;
@@ -141,77 +143,108 @@ const GET_SOCIAL_QUERY = `
         year: 'numeric', month: 'long', day: 'numeric'
       });
     }
+
+    // Handler to change the current social view
+  const handleIconClick = (viewType: string) => {
+    setCurrentView(viewType);
+  };
     
-    return (
-          <div className="onchain-profile">
-            <div className="social-card">
-              <h4>ENS:</h4>
-              {data.Wallet.primaryDomain ? (
-                <div>
-                <img 
-                  src="/images/ens_mark_primary.png" 
-                  alt="Domain Icon" 
-                  style={{ 
-                    marginRight: '8px', 
-                    verticalAlign: 'middle', 
-                    width: '24px',
-                    height: '24px'
-                  }} 
-                />
-                  {data.Wallet.primaryDomain.name}
-                  <p>Created Date: {formatDate(domains[0]?.createdAtBlockTimestamp)}</p>
-                </div>
-              ) : (
-                <p>No ENS available</p>
-              )}
+  // Render different content based on the state
+  const renderContent = () => {
+    switch(currentView) {
+      case 'ENS':
+          return (
+            <div className='seller-profile'>
+              <img src="/images/ens_icon.png" alt="Domain Icon" className='seller-pfp' />
+              <div className='seller-info'>
+                <p className='seller-username'>{primaryDomainName}</p>
+                <p>Created Date: {formatDate(domains[0]?.createdAtBlockTimestamp)}</p>
+                <div className='message-seller'>
+                <a href={`https://app.ens.domains/${primaryDomainName}`} target="_blank" rel="noopener noreferrer" className='message-button'>
+                    View profile
+                </a>
+              </div>
+              </div>
             </div>
-            <div className="social-card">
-              <h4>Farcaster:</h4>
-              {farcasterSocials.length > 0 ? (
-                  farcasterSocials.map((social, index) => (
-                      <div key={index}>
-                        <div className='seller-profile'>
-                          <img src={social.profileImage} alt="User profile picture" className='seller-pfp' />
-                          <div className='seller-info'>
-                              <p className='seller-username'>{social.profileDisplayName}</p>
-                              <p className='seller-bio'>{social.profileBio}</p>
-                              <p>Followers: {social.followerCount}</p>
-                              <p>Created: {formatDate(social?.profileCreatedAtBlockTimestamp)}</p>
-                          </div>
-                      </div>
-                      <div className='message-seller'>
-                          <a href={`https://warpcast.com/${social.profileHandle}`} target="_blank" rel="noopener noreferrer" className='message-button'>
-                              View profile
-                          </a>
-                      </div>
-                    </div>
-                  ))
-              ) : (
-                  <p>No Farcaster socials available</p>
-              )}
-            </div>
-            <div className="social-card">
-              <h4>Lens:</h4>
-              {lensSocials.length > 0 ? (
-                  lensSocials.map((social, index) => (
-                    <div key={index}>
-                    <div className='seller-profile'>
-                      <img src={social.profileImage} alt="User profile picture" className='seller-pfp' />
-                      <div className='seller-info'>
-                          <p className='seller-username'>{social.profileDisplayName}</p>
-                          <p className='seller-bio'>{social.profileBio}</p>
-                          <p>Followers: {social.followerCount}</p>
-                          <p>Created: {formatDate(social?.profileCreatedAtBlockTimestamp)}</p>
-                      </div>
-                  </div>
-                </div>
-                  ))
-              ) : (
-                  <p>No Lens socials available</p>
-              )}
+          );
+      case 'Farcaster':
+        return farcasterSocials.map((social, index) => (
+          <div key={index} className='seller-profile'>
+            <img src={social.profileImage} alt="User profile picture" className='seller-pfp' />
+            <div className='seller-info'>
+              <p className='seller-username'>{social.profileDisplayName}</p>
+              <p className='seller-bio'>{social.profileBio}</p>
+              <p>Followers: {social.followerCount}</p>
+              <p>Created: {formatDate(social.profileCreatedAtBlockTimestamp)}</p>
+              <div className='message-seller'>
+                <a href={`https://warpcast.com/${social.profileHandle}`} target="_blank" rel="noopener noreferrer" className='message-button'>
+                    View profile
+                </a>
+              </div>
             </div>
           </div>
-    );
+        ));
+      case 'Lens':
+        return lensSocials.map((social, index) => (
+          <div key={index} className='seller-profile'>
+            <img src={social.profileImage} alt="User profile picture" className='seller-pfp' />
+            <div className='seller-info'>
+              <p className='seller-username'>{social.profileDisplayName}</p>
+              <p className='seller-bio'>{social.profileBio}</p>
+              <p>Followers: {social.followerCount}</p>
+              <p>Created: {formatDate(social.profileCreatedAtBlockTimestamp)}</p>
+              <div className='message-seller'>
+                <a href={`https://hey.xyz/u/${social.profileHandle}`} target="_blank" rel="noopener noreferrer" className='message-button'>
+                    View profile
+                </a>
+              </div>
+            </div>
+          </div>
+        ));
+      default:
+        return <div>Select a profile</div>;
+    }
+  };
+
+  return (
+    <div className="onchain-profile">
+      <div className="social-icons">
+        {farcasterSocials.length > 0 && (
+          <img 
+            src="/images/farcaster_icon.png"
+            alt="Farcaster Profile"
+            className={`social-icon ${currentView === 'Farcaster' ? 'active' : ''}`}
+            onClick={() => handleIconClick('Farcaster')}
+            role="button"
+            aria-pressed={currentView === 'Farcaster'}
+          />
+        )}
+        {lensSocials.length > 0 && (
+          <img 
+            src="/images/lens_icon.png"
+            alt="Lens Profile"
+            className={`social-icon ${currentView === 'Lens' ? 'active' : ''}`}
+            onClick={() => handleIconClick('Lens')}
+            role="button"
+            aria-pressed={currentView === 'Lens'}
+          />
+        )}
+        {primaryDomainName && (
+          <img 
+            src="/images/ens_icon.png"
+            alt="ENS Profile"
+            className={`social-icon ${currentView === 'ENS' ? 'active' : ''}`}
+            onClick={() => handleIconClick('ENS')}
+            role="button"
+            aria-pressed={currentView === 'ENS'}
+          />
+        )}
+      </div>
+      <div className="social-card">
+        {renderContent()}
+      </div>
+    </div>
+  );
 };
 
 export default SellerOnchainProfile;

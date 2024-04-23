@@ -7,6 +7,7 @@ const userSchema = new Schema({
     fc_pfp: { type: String },
     fc_bio: { type: String },
     fc_username: { type: String },
+    fc_fname: {type: String },
     fc_url: { type: String },
     email: { type: String },
     walletAddress: { type: String },
