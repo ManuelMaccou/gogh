@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { connectRedis } from './redis.js';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import express, { json, static as expressStatic } from 'express';
 import { join, dirname } from 'path';
@@ -134,6 +135,11 @@ app.use('/api/crypto', crypto);
 
 app.use('/api/transaction', marketplaceTransactionRoutes);
 app.use('/api/send-confirm-email', confirmEmailRoutes);
+
+app.use('/api/fname', createProxyMiddleware({
+    target: 'https://app.icebreaker.xyz/api/v1/fname',
+    changeOrigin: true
+}));
 
 
 app.get('*', (req, res) => {
