@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from "@airstack/airstack-react";
 
 interface Wallet {
@@ -59,6 +59,28 @@ interface QueryResponse {
   
 interface Error {
     message: string;
+}
+
+interface IcebreakerData {
+  profiles: Profile[];
+}
+
+interface Profile {
+  profileID: string;
+  walletAddress: string;
+  avatarUrl: string;
+  displayName: string;
+  bio: string;
+  location: string;
+  channels: Channel[];
+}
+
+interface Channel {
+  type: string;
+  isVerified: boolean;
+  isLocked: boolean;
+  value: string;
+  url: string;
 }
 
 const GET_SOCIAL_QUERY = `
@@ -122,13 +144,65 @@ const GET_SOCIAL_QUERY = `
   
 
   const SellerOnchainProfile = ({ sellerIdentity }: { sellerIdentity: string }) => {
-    const { data, loading, error } = useQuery<Data>(GET_SOCIAL_QUERY, { identity: sellerIdentity }, { cache: true });
-
+    const { data, loading, error } = useQuery<Data>(GET_SOCIAL_QUERY, { identity: `fc_fname:${sellerIdentity}` }, { cache: true });
     const [currentView, setCurrentView] = useState('Farcaster');
+    const [icebreakerData, setIcebreakerData] = useState<IcebreakerData | null>(null);
+
+    useEffect(() => {
+      const fetchSocialData = async () => {
+        if (!sellerIdentity) {
+          console.log("No seller identity provided");
+          return;
+        }
+        
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/fname/${sellerIdentity}`);
+          if (!response.ok) throw new Error('Bad network repsonse.');
+          const jsonData = await response.json();
+          console.log("API Data:", jsonData);
+
+          setIcebreakerData(jsonData);          
+        } catch (error) {
+          console.error('Failed to fetch Icebreaker data:', error);
+        }
+      };
+      fetchSocialData();
+    }, [sellerIdentity]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error.message}</div>;
     if (!data || !data.Wallet) return <div>No data available.</div>;
+
+    const socialTypes = ['linkedin', 'github', 'twitter', 'medium', 'paragraph'];
+
+    const renderSocialProfile = (type: string, displayName: string) => {
+      if (!icebreakerData || !icebreakerData.profiles || icebreakerData.profiles.length === 0) {
+        console.log(`No profiles available for type: ${type}`);
+        return null;
+      }
+
+      const profile = icebreakerData?.profiles?.[0]?.channels.find(channel => channel.type === type && !channel.isLocked);
+      if (!profile) {
+        console.log(`No profile found or it is locked for type: ${type}`);
+        return null;
+      }
+
+      console.log(`Rendering profile for ${type}:`, profile);
+      
+      return (
+        <div className='seller-profile'>
+          <img src={`/images/${type}_icon.png`} alt={`${displayName} Profile`} className='seller-pfp' />
+          <div className='seller-info'>
+            <p className='seller-username'>{profile.value}</p>
+            <div className='message-seller'>
+              <a href={profile.url} target="_blank" rel="noopener noreferrer" className='message-button'>
+                View profile
+              </a>
+            </div>
+          </div>
+        </div>
+      );
+    };
 
     // Ensure addresses and all array fields handle nulls gracefully
     const addresses = data.Wallet.addresses?.join(', ') || 'No addresses available';
@@ -148,11 +222,14 @@ const GET_SOCIAL_QUERY = `
 
     // Handler to change the current social view
   const handleIconClick = (viewType: string) => {
+    console.log("Setting view type to:", viewType);
+
     setCurrentView(viewType);
   };
     
   // Render different content based on the state
   const renderContent = () => {
+    console.log(`Current view is: ${currentView}`);
     switch(currentView) {
       case 'ENS':
           return (
@@ -203,8 +280,18 @@ const GET_SOCIAL_QUERY = `
             </div>
           </div>
         ));
+      case 'linkedin':
+        return renderSocialProfile('linkedin', 'LinkedIn');
+      case 'github':
+        return renderSocialProfile('github', 'GitHub');
+      case 'twitter':
+        return renderSocialProfile('twitter', 'Twitter');
+      case 'medium':
+        return renderSocialProfile('medium', 'Medium');
+      case 'paragraph':
+        return renderSocialProfile('paragraph', 'Paragraph');
       default:
-        return <div>Select a profile</div>;
+        return <p>Select a profile to view details.</p>;
     }
   };
 
@@ -241,6 +328,17 @@ const GET_SOCIAL_QUERY = `
             aria-pressed={currentView === 'ENS'}
           />
         )}
+        {socialTypes.map(type => icebreakerData?.profiles?.[0]?.channels.some((channel: Channel) => channel.type === type && !channel.isLocked) && (
+          <img
+            key={type}
+            src={`/images/${type}_icon.png`}
+            alt={`${type} Profile`}
+            className={`social-icon ${currentView === type ? 'active' : ''}`}
+            onClick={() => handleIconClick(type)}
+            role="button"
+            aria-pressed={currentView === type}
+          />
+        ))}
       </div>
       <div className="social-card">
         {renderContent()}

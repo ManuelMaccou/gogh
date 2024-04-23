@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { connectRedis } from './redis.js';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import express, { json, static as expressStatic } from 'express';
 import { join, dirname } from 'path';
@@ -75,7 +76,7 @@ app.use(
             scriptSrc: ["'self'", "'wasm-eval'", "https://auth.privy.io/apps", "https://challenges.cloudflare.com", "https://kit.fontawesome.com", "https://neynarxyz.github.io"],
             childSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org"],
             frameSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org", "https://challenges.cloudflare.com"],
-            connectSrc: ["'self'", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://ka-f.fontawesome.com",],
+            connectSrc: ["'self'", "https://api.airstack.xyz/gql", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://ka-f.fontawesome.com",],
             reportUri: ["/csp-report"],
         },
         reportOnly: true,
@@ -134,6 +135,11 @@ app.use('/api/crypto', crypto);
 
 app.use('/api/transaction', marketplaceTransactionRoutes);
 app.use('/api/send-confirm-email', confirmEmailRoutes);
+
+app.use('/api/fname', createProxyMiddleware({
+    target: 'https://app.icebreaker.xyz/api/v1/fname',
+    changeOrigin: true
+}));
 
 
 app.get('*', (req, res) => {
