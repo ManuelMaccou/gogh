@@ -6,6 +6,7 @@ import { useUser } from '../../contexts/userContext';
 import { useNavigate } from 'react-router-dom';
 import Web3 from 'web3';
 import Header from '../header';
+import SellerOnchainProfile from './listing/sellerOnchainProfile'
 import ShippingForm from './listing/shippingForm';
 
 interface Product {
@@ -27,6 +28,7 @@ interface User {
     _id: string;
     fid?: string;
     fc_username?: string;
+    fc_fname?: string;
     fc_pfp?: string;
     fc_bio?: string;
     fc_url?: string;
@@ -118,6 +120,7 @@ const Listing = () => {
                 ...(user.farcaster && {
                     fid: user.farcaster?.fid,
                     fc_username: user.farcaster?.displayName,
+                    fc_fname: user.farcaster?.username,
                     fc_pfp: user.farcaster?.pfp,
                     fc_bio: user.farcaster?.bio,
                     fc_url: `https://warpcast.com/${user.farcaster?.username}`,
@@ -559,22 +562,11 @@ const Listing = () => {
                             </button>
                         )}
                     </div>
-                    {product.user?.fid && (
-                    <div className='seller-section'>
-                        <h2>Meet the seller</h2>
-                        <div className='seller-profile'>
-                            <img src={profilePicture} alt="User profile picture" className='seller-pfp' />
-                            <div className='seller-info'>
-                                <p className='seller-username'>{userName}</p>
-                                <p className='seller-bio'>{product.user?.fc_bio}</p>
-                            </div>
+                    {product.user?.fid && product.user.fc_fname && (
+                        <div className='seller-section'>
+                            <h2>Meet the seller</h2>
+                            <SellerOnchainProfile sellerIdentity={product.user?.fc_fname} />
                         </div>
-                        <div className='message-seller'>
-                            <a href={product.user.fc_url} target="_blank" rel="noopener noreferrer" className='message-button'>
-                                Message {userName}
-                            </a>
-                        </div>
-                    </div>
                     )}
                 </div>
             </div>
