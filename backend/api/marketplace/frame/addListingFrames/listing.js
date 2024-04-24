@@ -1,5 +1,6 @@
 // https://www.gogh.shopping/marketplace/add-listing/art
 // https://www.gogh.shopping/marketplace/add-listing/sneakers
+// https://www.gogh.shopping/marketplace/add-listing/kids
 
 
 import { Router } from 'express';
@@ -42,6 +43,22 @@ const categoryImages = {
         inputErrorImage: 'https://www.gogh.shopping/images/66267662d22e8e3fb0241b7c.jpg',
     },
 
+    kids: {
+        images: [
+            'https://www.gogh.shopping/images/662917347c3f98aefaf28aa4.jpg',
+            'https://www.gogh.shopping/images/6629176c1de3a026caed2d1b.jpg',
+            'https://www.gogh.shopping/images/6629179fc3f1e5e24f666982.jpg',
+            'https://www.gogh.shopping/images/6629182b1e1e9dd2a128373b.jpg',
+            'https://www.gogh.shopping/images/6629188b40f4bc729e191849.jpg',
+            'https://www.gogh.shopping/images/662918c947acbe5188010513.jpg',
+            'https://www.gogh.shopping/images/662918f59c5791792194328f.jpg',
+            'https://www.gogh.shopping/images/66291937a712364b1fde0ef6.jpg',
+
+        ],
+        explainImage: 'https://www.gogh.shopping/images/66291b4a0b2fdfc573c1beb5.jpg',
+        inputErrorImage: 'https://www.gogh.shopping/images/66291a4c1c89a70ee94350ec.jpg',
+    },
+
     default: {
         images: [
             'https://www.gogh.shopping/images/66095d9bc857af0c21f8f7d8.jpg',
@@ -61,6 +78,7 @@ const categoryImages = {
 const categoryMeta = {
     art: `${process.env.BASE_URL}/marketplace/add-listing/art?step=1`,
     sneakers: `${process.env.BASE_URL}/marketplace/add-listing/sneakers?step=1`,
+    kids: `${process.env.BASE_URL}/marketplace/add-listing/kids?step=1`,
     default: `${process.env.BASE_URL}/marketplace/add-listing/default?step=1`
 };
 
