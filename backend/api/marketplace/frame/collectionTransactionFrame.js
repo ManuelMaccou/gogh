@@ -1,4 +1,4 @@
-// https://www.gogh.shopping/marketplace/frame/share/product/662541a7637fa440e574e9d5
+// https://www.gogh.shopping/marketplace/frame/share/collection/art
 
 import { Router } from 'express';
 import sgMail from '@sendgrid/mail';
@@ -19,13 +19,19 @@ const faqFrames = [
     'https://www.gogh.shopping/images/6605dc3c156ec6557c812e40.jpg',
 ];
 
-router.get('/:productId', async (req, res) => {
-    const { productId } = req.params;
+router.get('/:collectionName', async (req, res) => {
+    const { collectionName } = req.params;
 
     try {
-        const product = await MarketplaceProduct.findOne({ _id: productId });
-        if (!product) {
-            return res.status(404).send('Product not found during transactionFrame route');
+        const collection = await MarketplaceProduct.find({ 
+            collection: collectionName, 
+            status: 'approved' 
+        }).sort({ createdAt: -1 });
+        
+
+        const firstProduct = collection[0]
+        if (!firstProduct) {
+            return res.status(404).send('firstProduct not found during transactionFrame route');
         }
 
         const htmlResponse = `
@@ -35,10 +41,10 @@ router.get('/:productId', async (req, res) => {
         <title>Gogh Marketplace</title>
             <meta name="description" content="Sell your items locally with Gogh">
             <meta property="og:url" content="https://">
-            <meta property="og:image" content="${product.productFrame}" />
+            <meta property="og:image" content="${firstProduct.productFrame}" />
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/product/${product._id}?frameType=initial" />
-            <meta property="fc:frame:image" content="${product.productFrame}">
+            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/collection/${collectionName}?collectionIndex=0&frameType=initial" />
+            <meta property="fc:frame:image" content="${firstProduct.productFrame}">
             <meta property="fc:frame:image:aspect_ratio" content="" />
             <meta property="fc:frame:input:text" content="Enter email for receipt" />
             <meta property="fc:frame:button:1" content="View online" />
@@ -46,11 +52,9 @@ router.get('/:productId', async (req, res) => {
             <meta property="fc:frame:button:1:target" content="https://www.gogh.shopping" />
             <meta property="fc:frame:button:2" content="Buy now" />
             <meta property="fc:frame:button:2:action" content="tx" />
-            <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${product._id}" />
-            <meta property="fc:frame:button:3" content="Create listing" />
-            <meta property="fc:frame:button:3:action" content="link" />
-            <meta property="fc:frame:button:3:target" content="https://www.gogh.shopping" />
-            <meta property="fc:frame:button:4" content="FAQ" />
+            <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${firstProduct._id}" />
+            <meta property="fc:frame:button:3" content="FAQ" />
+            <meta property="fc:frame:button:4" content="Next >>" />
         </head>
     </html>
     `;
@@ -58,15 +62,19 @@ router.get('/:productId', async (req, res) => {
         res.status(200).send(htmlResponse);
 
     } catch (error) {
-        console.error('Failed to share product:', error.response || error);
-        res.status(500).json({ message: 'Failed to share product' });
+        console.error('Failed to share firstProduct:', error.response || error);
+        res.status(500).json({ message: 'Failed to share firstProduct' });
     }
 });
 
 
-router.post('/:productId', async (req, res) => {
-    const { productId } = req.params;
-    let buyerEmail; 
+router.post('/:collectionName', async (req, res) => {
+    const { collectionName } = req.params;
+    let collectionIndex = parseInt(req.query.collectionIndex) || 0;
+
+    if (isNaN(collectionIndex) || collectionIndex < 0) {
+        return res.status(400).send('Invalid collection index.');
+    }
 
     const isProduction = process.env.NODE_ENV === 'production';
     const totalFaqs = faqFrames.length;
@@ -76,6 +84,7 @@ router.post('/:productId', async (req, res) => {
     let faqIndex = parseInt(req.query.index) || 0;
     let buttonIndex, fid;
     let transactionHash;
+    let buyerEmail;
 
     if (isProduction) {
         
@@ -97,7 +106,6 @@ router.post('/:productId', async (req, res) => {
         fid = req.body.untrustedData.fid;
         buyerEmail = req.body.untrustedData.inputText;
     }
-
     const shouldValidateEmail = req.body.transactionHash && req.query.frameType === 'buy' && req.query.status === 'success';
     if (shouldValidateEmail && buyerEmail) {
 
@@ -110,10 +118,25 @@ router.post('/:productId', async (req, res) => {
     }
 
     try {
-        const product = await MarketplaceProduct.findOne({ _id: productId });
-        const user = await User.findOne({ _id: product.user});
+        const collectionProducts = await MarketplaceProduct.find({ 
+            collection: collectionName, 
+            status: 'approved' 
+        }).sort({ createdAt: -1 });
+
+
+        if (collectionIndex >= collectionProducts.length) {
+            return res.status(404).send('Product index out of range.');
+        }
+
+        let totalProducts = collectionProducts.length;
+        let product = collectionProducts[collectionIndex];
         if (!product) {
-            return res.status(404).send('Product not found during transactionFrame route');
+            return res.status(404).send('Product not found at the provided index.');
+        }
+
+        const user = await User.findOne({ _id: product.user});
+        if (!user) {
+            return res.status(404).send('User not found during transactionFrame route');
         }
 
         // Send emails and save transaction
@@ -126,6 +149,7 @@ router.post('/:productId', async (req, res) => {
 
                 const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, options);
                 const data = await response.json();
+
                 const username = data.users[0].username;
                 const displayName = data.users[0].display_name;
                 const buyerProfileUrl = `https://warpcast.com/${username}`
@@ -140,11 +164,7 @@ router.post('/:productId', async (req, res) => {
                         dynamicTemplateData: {
                             transaction_hash: transactionHash,
                         },
-                        cc: [
-                            {
-                                email: 'manuel@gogh.shopping',
-                            },
-                        ],
+                        cc: [{ email: 'manuel@gogh.shopping' }],
                     };
                     emailSendingResults.push(sgMail.send(msgBuyer));
                 }
@@ -162,11 +182,7 @@ router.post('/:productId', async (req, res) => {
                             buyer_profile_url: buyerProfileUrl,
 
                         },
-                        cc: [
-                            {
-                                email: 'manuel@gogh.shopping',
-                            },
-                        ],
+                        cc: [{ email: 'manuel@gogh.shopping' }],
                     };
                     emailSendingResults.push(sgMail.send(msgSeller));
                 }
@@ -196,9 +212,12 @@ router.post('/:productId', async (req, res) => {
         }
     }
 
-        if (frameType === 'initial') {
-            if (buttonIndex === 4) { // faq
+        if (frameType !== 'buy' && frameType !== 'faq') {
+            if (buttonIndex === 3) { // faq
                 frameType = "faq";
+            } else if (buttonIndex === 4) { // next product
+                collectionIndex = (collectionIndex + 1) % totalProducts;    
+                product = collectionProducts[collectionIndex];
             }
 
         } else if (frameType === "faq") {
@@ -284,7 +303,7 @@ router.post('/:productId', async (req, res) => {
             }
         }
 
-        res.status(200).send(generateFrameHtml(product, frameType, faqIndex, status));
+        res.status(200).send(generateFrameHtml(product, collectionIndex, collectionName, frameType, faqIndex, status));
 
     } catch (error) {
         console.error('Failed to share product:', error.response || error);
@@ -292,7 +311,8 @@ router.post('/:productId', async (req, res) => {
     }
 });
 
-function generateFrameHtml(product, frameType, faqIndex, status) {
+function generateFrameHtml(product, collectionIndex, collectionName, frameType, faqIndex, status) {
+
     const faqFrame = faqFrames[faqIndex % faqFrames.length];
     let buttonsHtml;
 
@@ -331,10 +351,8 @@ function generateFrameHtml(product, frameType, faqIndex, status) {
             <meta property="fc:frame:button:2" content="Buy now" />
             <meta property="fc:frame:button:2:action" content="tx" />
             <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${product._id}?frameType=buy" />
-            <meta property="fc:frame:button:3" content="Create listing" />
-            <meta property="fc:frame:button:3:action" content="link" />
-            <meta property="fc:frame:button:3:target" content="https://www.gogh.shopping" />
-            <meta property="fc:frame:button:4" content="FAQ" />
+            <meta property="fc:frame:button:3" content="FAQ" />
+            <meta property="fc:frame:button:4" content="Next >>" />
         `;
     }
 
@@ -346,7 +364,7 @@ function generateFrameHtml(product, frameType, faqIndex, status) {
             <meta name="description" content="Sell your items locally with Gogh" />
             <meta property="og:url" content="https://www.gogh.shopping" />
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/product/${product._id}?frameType=${frameType}&index=${faqIndex}&status=${status}" />
+            <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/collection/${collectionName}?frameType=${frameType}&collectionIndex=${collectionIndex}&status=${status}" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
             ${buttonsHtml}
         </head>

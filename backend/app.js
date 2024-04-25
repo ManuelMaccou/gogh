@@ -32,7 +32,8 @@ import shopifySingleProductFrameRoutes from './api/shopify/singleProductFrame.js
 import shopifyProductWebhooks from './webhooks/shopify/product.js';
 
 import marketplaceProductRoutes from './api/marketplace/product.js';
-import marketplaceFrameShareRoutes from './api/marketplace/frame/transactionFrame.js';
+import marketplaceProductFrameShareRoutes from './api/marketplace/frame/transactionFrame.js';
+import marketplaceCollectionFrameShareRoutes from './api/marketplace/frame/collectionTransactionFrame.js';
 import marketplaceFrameSendTransactionRoutes from './api/marketplace/frame/sendTransaction.js';
 import crypto from './api/crypto.js';
 
@@ -128,7 +129,8 @@ app.use('/images', imagesRoutes);
 
 app.use('/api/marketplace/product', marketplaceProductRoutes);
 app.use('/api/marketplace/frame/send_transaction', marketplaceFrameSendTransactionRoutes);
-app.use('/marketplace/frame/share', marketplaceFrameShareRoutes);
+app.use('/marketplace/frame/share/product', marketplaceProductFrameShareRoutes);
+app.use('/marketplace/frame/share/collection', marketplaceCollectionFrameShareRoutes);
 app.use('/marketplace/add/book', bookListingFrameRoute);
 app.use('/marketplace/add-listing', addListingFrameRoute);
 app.use('/api/crypto', crypto);
