@@ -2,6 +2,7 @@ import { Schema, model } from 'mongoose';
 
 const marketplaceProductSchema = new Schema({
     status: { type: String, required: true },
+    category: { type: String, required: true },
     location: { type: String, required: true },
     shipping: {type: Boolean, required: true },
     farcon: {type: Boolean, required: true },
@@ -15,6 +16,8 @@ const marketplaceProductSchema = new Schema({
     email: { type: String, required: true },
     user: { type: Schema.Types.ObjectId, required: true, ref: 'User' }
 }, { timestamps: true });
+
+marketplaceProductSchema.index({ status: 1, createdAt: -1 });
 
 const MarketplaceProduct = model('MarketplaceProduct', marketplaceProductSchema);
 
