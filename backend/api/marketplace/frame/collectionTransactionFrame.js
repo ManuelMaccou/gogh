@@ -21,12 +21,15 @@ const faqFrames = [
 
 router.get('/:collectionName', async (req, res) => {
     const { collectionName } = req.params;
+    console.log("collectionName:", collectionName);
 
     try {
         const collection = await MarketplaceProduct.find({ 
             collection: collectionName, 
             status: 'approved' 
         }).sort({ createdAt: -1 });
+
+        console.log("collection:", collection);
         
 
         const firstProduct = collection[0]
