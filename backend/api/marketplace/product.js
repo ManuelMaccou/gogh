@@ -98,7 +98,6 @@ router.post('/add', auth, upload.fields([
     } catch (error) {
             const errorMessage = error.response ? (error.response.data.message || "Failed to create product.") : error.message;
             console.error('Failed to create product:', errorMessage);
-            setFormError(errorMessage);
             throw error;
     }
 });
