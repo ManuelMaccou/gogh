@@ -1,6 +1,10 @@
-import { useState, useEffect, ChangeEvent, FormEvent, forwardRef, useImperativeHandle, useRef } from 'react';
-import Modal from 'react-modal';
+import { useState, useEffect, ChangeEvent, FormEvent, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
+import { useUser } from '../../../contexts/userContext';
+import axios from 'axios';
+import Header from '../../header';
+import Sidebar from './sidebar';
+import { useHistory } from 'react-router-dom';
 
 interface User {
     privyId: string;
@@ -17,7 +21,6 @@ interface User {
 interface Product {
     _id: string;
     shipping: boolean;
-    farcon: boolean;
     location: string;
     title: string;
     description: string;
@@ -28,22 +31,9 @@ interface Product {
     email: string;
     user: User;
 }
-
-interface CreateListingProps {
-    onFormSubmit: (formData: FormData, file: File | null) => Promise<Product>;
-    formError: string;
-    setFormError: (message: string) => void;
-    clearFormError: () => void;
-    supportedCities: string[];
-    initialFormData?: Partial<FormDataState>;
-    showForm: boolean;
-    onCloseModal: () => void;
-    login: () => void;
-}
   
 interface FormDataState {
     shipping: boolean;
-    farcon: boolean;
     location: string;
     title: string;
     description: string;
@@ -56,23 +46,10 @@ interface CreateListingHandles {
     openCreateListingModal: () => void;
 }
 
-Modal.setAppElement('#root'); 
-
-const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
-    onFormSubmit,
-    formError,
-    setFormError,
-    clearFormError,
-    supportedCities,
-    initialFormData,
-    showForm: propShowForm,
-    onCloseModal,
-    login,
-}, ref) => {
-    const { ready, authenticated } = usePrivy();
+const CreateListing = () => {
+    const { ready, authenticated, getAccessToken} = usePrivy();
     const [formData, setFormData] = useState<FormDataState>({
         shipping: false,
-        farcon: false,
         location: '',
         title: '',
         description: '',
@@ -81,7 +58,9 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         email: '',
     });
 
-    const [showForm, setShowForm] = useState<boolean>(propShowForm);
+    const { user } = useUser();
+    const [formError, setFormError] = useState<string>('');
+    const [initialFormData, setInitialFormData] = useState({});
     const [featuredImage, setFeaturedImage] = useState<File | null>(null);
     const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
     const featuredImageInputRef = useRef<HTMLInputElement>(null);
@@ -94,7 +73,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         if (initialFormData) {
             setFormData({
                 shipping: initialFormData.shipping || false,
-                farcon: initialFormData.farcon || false,
                 location: initialFormData.location || '',
                 title: initialFormData.title || '',
                 description: initialFormData.description || '',
@@ -105,27 +83,27 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         }
     }, [initialFormData]);
 
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const city = searchParams.get('location');
+        const shipping = searchParams.get('shipping') === 'true';
+        const title = searchParams.get('title');
+        const description = searchParams.get('description');
+        const price = searchParams.get('price');
+        const walletAddress = searchParams.get('walletAddress');
+        const email = searchParams.get('email');
 
-    useImperativeHandle(ref, () => ({
-        openCreateListingModal: () => {
-            handleButtonClick();
-        },
-    }));
+        if (ready) {
+            if (title && authenticated) {
+                setInitialFormData({ location:city, shipping, title, description, price, walletAddress, email });
 
-    const handleButtonClick = () => {
-        if (!authenticated) {
-          login();
-          return;
+            } else if (title && !authenticated) {
+                setInitialFormData({ location:city, shipping, title, description, price,walletAddress, email });
+            }
         }
-        clearFormError();
-        setShowForm(true);
-    };
 
-    const handleCloseModal = () => {
-        setShowForm(false);
-        onCloseModal();
-        clearFormError();
-    };
+    }, [location, authenticated, ready]);
+
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = event.target;
@@ -182,6 +160,8 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     };
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        const accessToken = await getAccessToken();
+
         event.preventDefault();
         const data = new FormData();
         const priceRegex = /^\$?\d+(\.\d{1,2})?$/;
@@ -229,12 +209,25 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
 
         try {
             setIsSubmitting(true);
-            const product = await onFormSubmit(data, featuredImage);
-            handleCloseModal();
+
+
+            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, data, featuredImage, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+              });
+    
+              if (response.status === 201) {
+                const product = response.data
+                openListingPage(product);
+                return response.data;
+            } else {
+                throw new Error('Product creation failed');
+            }
+            
             // Reset form and file states
             setFormData({
                 shipping: false,
-                farcon: false,
                 location: '',
                 title: '',
                 description: '',
@@ -259,50 +252,24 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
 
     return (
         <div>
+            <Header />
+            <Sidebar />
             <div className="create-listing-container">
-                {!authenticated ? (
-                <>
-                    <button
-                    disabled={!ready}
-                    className="login-button"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        login();
-                    }}
-                >
-                    <p>Log in to add listing</p>
-                </button>
-                </>
-            ) : (
-                <>
-                    <div className="create-listing">
-                        <button className="create-listing-button" onClick={handleButtonClick}>Create Listing</button>
+                <button className='back-button'>
+                    {/*Placeholder for arrow and navigation back to last page*/}
+                    Back</button>
+
+                    <form className='create-listing-form' onSubmit={handleSubmit}>
+
+                    <div className="create-listing-section">
+                        <div className="create-listing-subsection-row">
+                            <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
+                            <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in $USD" />
+                        </div>
+                        <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
                     </div>
-                    <button className="close-button" onClick={handleCloseModal}>&times;</button>
-                    <h2>Add Product</h2>
-                    <p>If your product is sold, you will receive an email with the buyer's information. Please coordinate with them for pickup, dropoff, shipping. </p>
-                    <form className='createListing-form' onSubmit={handleSubmit}>
-                        <label htmlFor="farcon" className='checkbox-container'>
-                            <input
-                                name="farcon"
-                                type="checkbox"
-                                id="farcon"
-                                checked={formData.farcon === true}
-                                onChange={handleChange}
-                            />
-                            Pickup available at FarCon
-                        </label>
-                        <label htmlFor="shipping" className='checkbox-container'>
-                            <input
-                                name="shipping"
-                                type="checkbox"
-                                id="shipping"
-                                checked={formData.shipping === true}
-                                onChange={handleChange}
-                            />
-                            Will offer shipping
-                        </label>
-                        <input 
+                    <div className="create-listing-subsection-row">
+                    <input 
                             name="location" 
                             type="text" 
                             value={formData.location} 
@@ -313,8 +280,18 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         <p className="helper-text">
                             'City, State' or 'City, Country'
                         </p>
-                        <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
-                        <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
+                        <label htmlFor="shipping" className='checkbox-container'>
+                            <input
+                                name="shipping"
+                                type="checkbox"
+                                id="shipping"
+                                checked={formData.shipping === true}
+                                onChange={handleChange}
+                            />
+                            Will offer shipping
+                        </label>
+                    </div>
+                    <div className="create-listing-section">
                         {/* Hidden file input */}
                         <input
                             name="featuredImage"
@@ -366,21 +343,20 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         )}
 
                         {/* Custom button that users see and interact with */}
-                        <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in $USD" />
+                    </div>
+                    <div className="create-listing-section">
                         <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment." required />
-                        <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email for purchase notifications" required />
-                        <button className="submit-button" type="submit" disabled={isSubmitting}>
+                    </div>
+                    <button className="submit-button" type="submit" disabled={isSubmitting}>
                             {isSubmitting ? (
                                 <>
                                     <span className="spinner"></span> {/* Assuming you have CSS for this spinner */}
                                     Submitting...
                                 </>
                             ) : "Submit"}
-                        </button>
-                        {formError && <p className="form-error">{formError}</p>}
-                    </form>
-                </>
-            )}
+                    </button>
+                    {formError && <p className="form-error">{formError}</p>}
+                </form>           
             </div>
         </div>
     );

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 import { useLocation } from 'react-router-dom';
-import CreateListing from './marketplace/createListing';
+import CreateListing from './marketplace/account/createListing';
 import { usePrivy, useLogin } from '@privy-io/react-auth';
 import { useUser } from '../contexts/userContext';
 import Header from './header';
@@ -64,6 +64,14 @@ const HomePage = () => {
     const createListingRef = useRef<{ openCreateListingModal: () => void }>(null);
     
     const { ready, authenticated, getAccessToken, logout } = usePrivy();
+
+    const handleButtonClick = () => {
+        if (!authenticated) {
+          login();
+          return;
+        }
+        navigate('/account/createListing');
+    };
 
     const { login } = useLogin({
         onComplete: async (user, isNewUser) => {
@@ -234,18 +242,29 @@ const HomePage = () => {
             <Header />
             <section className="hero-section">
                 <h1 className="title">Buy and sell products on Farcaster</h1>
-                <CreateListing 
-                    ref={createListingRef}
-                    onFormSubmit={onFormSubmit} 
-                    formError={formError} 
-                    setFormError={setFormError}
-                    clearFormError={() => setFormError('')} 
-                    supportedCities={supportedCities}
-                    initialFormData={initialFormData}
-                    showForm={showCreateListingModal}
-                    onCloseModal={() => setShowCreateListingModal(false)}
-                    login={login}
-                />
+                <div className="create-listing-container">
+                    {!authenticated ? (
+                    <>
+                        <button
+                            disabled={!ready}
+                            className="login-button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                login();
+                            }}
+                            >
+                            <p>Log in to add listing</p>
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <div className="create-listing">
+                            <button className="create-listing-button" onClick={handleButtonClick}>Create Listing</button>
+                        </div>
+                    </>
+
+                )};
+                </div>
             </section>
             <section className="submitted-products">
                 <div className="marketplace-products-grid">

@@ -197,8 +197,16 @@
     border-radius: 8px;
 }
   
-.create-listing {
+.create-listing-section {
+    display: flex;
+    margin-top: 20px;
     margin-bottom: 20px;
+    background-color: #FFFFFF;
+}
+
+.create-listing-subsection-row {
+    display: flex;
+    flex-direction: row;
 }
 
 .submitted-products {
@@ -743,7 +751,7 @@
     cursor: pointer;
 }
 
-.createListing-form .submit-button {
+.create-listing-form .submit-button {
     width: fit-content;
     padding: 10px 40px;
     margin-top: 10px;
