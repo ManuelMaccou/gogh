@@ -16,7 +16,7 @@ interface User {
 
 interface Product {
     _id: string;
-    shipping: boolean
+    shipping: boolean;
     farcon: boolean;
     location: string;
     title: string;
@@ -42,7 +42,7 @@ interface CreateListingProps {
 }
   
 interface FormDataState {
-    shipping: boolean
+    shipping: boolean;
     farcon: boolean;
     location: string;
     title: string;
@@ -88,6 +88,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
     const additionalImagesInputRef = useRef<HTMLInputElement>(null);
     const [featuredImagePreview, setFeaturedImagePreview] = useState<string | null>(null);
     const [additionalImagesPreview, setAdditionalImagesPreview] = useState<string[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
     useEffect(() => {
         if (initialFormData) {
@@ -227,6 +228,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
         }
 
         try {
+            setIsSubmitting(true);
             const product = await onFormSubmit(data, featuredImage);
             handleCloseModal();
             // Reset form and file states
@@ -247,6 +249,9 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
             clearFormError();
             return product;
         } catch (error) {
+            setFormError('An error occurred while submitting the form.');
+        } finally {
+            setIsSubmitting(false);
         }
 
     };
@@ -282,7 +287,7 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                     <button className="close-button" onClick={handleCloseModal}>&times;</button>
                     <h2>Add Product</h2>
                     <p>If your product is sold, you will receive an email with the buyer's information. Please coordinate with them for pickup, dropoff, shipping. </p>
-                    <form onSubmit={handleSubmit}>
+                    <form className='createListing-form' onSubmit={handleSubmit}>
                         <label htmlFor="farcon" className='checkbox-container'>
                             <input
                                 name="farcon"
@@ -370,7 +375,14 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in $USD" />
                         <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment." required />
                         <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email for purchase notifications" required />
-                        <button className="submit-button" type="submit">Submit</button>
+                        <button className="submit-button" type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? (
+                                <>
+                                    <span className="spinner"></span> {/* Assuming you have CSS for this spinner */}
+                                    Submitting...
+                                </>
+                            ) : "Submit"}
+                        </button>
                         {formError && <p className="form-error">{formError}</p>}
                     </form>
                 </Modal>

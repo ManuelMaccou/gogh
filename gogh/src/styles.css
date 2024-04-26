@@ -226,7 +226,7 @@
 
 .listing-body {
     margin: auto;
-    margin-bottom: 100px;
+    margin-bottom: 50px;
     width: 80%;
     max-width: 1500px;
     display: flex;
@@ -240,9 +240,9 @@
     display: flex;
     margin-left: 10px;
     margin-top: 70px;
+    margin-bottom: 20px;
     align-items: start;
     text-align: center;
-    margin-bottom: 20px;
 }
   
 .main-image {
@@ -263,10 +263,11 @@
 }
   
 .thumbnail-container {
+    margin-top: 70px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     gap: 10px;
 }
 
@@ -290,11 +291,11 @@
 }
 
 .product-details {
-    max-width: 35%;
-    min-width: 250px;
     display: flex;
     flex-direction: column;
     justify-content: start;
+    max-width: 35%;
+    min-width: 250px;
 }
 
 .product-images {
@@ -339,6 +340,10 @@
     justify-content: space-between;
 }
 
+.share-buy-listing p {
+    font-weight: bold;
+}
+
 .share-button {
     display: inline-flex;
     gap: 10px;
@@ -351,6 +356,8 @@
 }
 
 .buy-button, .checkout-button {
+    margin-top: 30px;
+    padding: 5px;
     height: 40px;
     min-width: 250px;
     align-items: center;
@@ -359,10 +366,21 @@
     color: #ffffff;
     font-weight: bold;
     font-size: 20px;
-    padding: 5px;
     border-radius: 5px;
+    border: none;
     background-color: #007bff;
     cursor: pointer;
+}
+
+.shipping-form .submit-button {
+    width: fit-content;
+    padding: 10px 40px;
+    border: none;
+    border-radius: 5px;
+    background-color: #222222;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
 }
 
 .choose-shipping {
@@ -382,6 +400,24 @@
     font-weight: bold;
     font-size: 24px;
     margin-bottom: 5px;
+}
+
+.social-icons {
+    display: flex;
+    gap: 30px;
+}
+
+.social-icon {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    filter: grayscale(100%);
+    transition: filter 0.3s;
+}
+  
+.social-icon:hover,
+.social-icon.active {
+    filter: none;
 }
 
 .seller-profile {
@@ -472,7 +508,16 @@
 }
 
 .seller-section {
-    margin-top: 40px;
+    margin-top: 50px;
+    margin-bottom: 100px;
+    max-width: 1500px;
+}
+
+.onchain-profile {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 20px;
 }
 
 .seller-pfp {
@@ -482,7 +527,6 @@
     object-fit: cover;
     margin-right: 10px;
 }
-
 
 .profile-card p {
     margin: 0;
@@ -590,7 +634,7 @@
 
 .add-product-modal {
     width: 30%;
-    max-height: 95vh;
+    max-height: 85vh;
     padding: 20px;
     margin: auto;
     background-color: white;
@@ -699,16 +743,21 @@
     cursor: pointer;
 }
 
-.submit-button {
+.createListing-form .submit-button {
     width: fit-content;
     padding: 10px 40px;
-    margin-top: 30px;
+    margin-top: 10px;
     border: none;
     border-radius: 5px;
     background-color: #007bff;
     color: white;
     cursor: pointer;
     font-size: 16px;
+}
+
+.submit-button[disabled] {
+    background-color: rgb(90, 90, 90);
+    cursor: not-allowed;
 }
 
 .close-button {

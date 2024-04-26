@@ -1,6 +1,8 @@
 import { Schema, model } from 'mongoose';
 
 const marketplaceProductSchema = new Schema({
+    status: { type: String, required: true },
+    category: { type: String, required: true },
     location: { type: String, required: true },
     shipping: {type: Boolean, required: true },
     farcon: {type: Boolean, required: true },
@@ -24,6 +26,8 @@ marketplaceProductSchema.virtual('transactions', {
   localField: '_id',
   foreignField: 'marketplaceProduct',
 });
+
+marketplaceProductSchema.index({ status: 1, createdAt: -1 });
 
 const MarketplaceProduct = model('MarketplaceProduct', marketplaceProductSchema);
 

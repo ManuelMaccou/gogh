@@ -22,7 +22,8 @@ interface User {
 
 interface Product {
     _id: string;
-    shipping: boolean
+    status: string;
+    shipping: boolean;
     farcon: boolean;
     location: string;
     title: string;
@@ -75,6 +76,7 @@ const HomePage = () => {
                 ...(user.farcaster && {
                     fid: user.farcaster?.fid,
                     fc_username: user.farcaster?.displayName,
+                    fc_fname: user.farcaster?.username,
                     fc_pfp: user.farcaster?.pfp,
                     fc_bio: user.farcaster?.bio,
                     fc_url: `https://warpcast.com/${user.farcaster?.username}`,
@@ -191,7 +193,7 @@ const HomePage = () => {
 
     const fetchProducts = async () => {
         try {
-            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/`);
+            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/?status=approved`);
             setProducts(response.data);
         } catch (error) {
             console.error('Failed to fetch products:', error);

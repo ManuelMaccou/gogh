@@ -1,6 +1,7 @@
-// https://www.gogh.shopping/marketplace/add/listing
+// https://www.gogh.shopping/marketplace/add-listing/art
+// https://www.gogh.shopping/marketplace/add-listing/sneakers
+// https://www.gogh.shopping/marketplace/add-listing/kids
 
-// NEW https://www.gogh.shopping/marketplace/add-listing/art
 
 import { Router } from 'express';
 import { validationResult } from 'express-validator';
@@ -13,7 +14,7 @@ const router = Router();
 const categoryImages = {
     art: {
         images: [
-            'https://www.gogh.shopping/images/66205704c618727026fff30f.jpg',
+            'https://www.gogh.shopping/images/66227d21ff6a2532fb8ed6ee.jpg',
             'https://www.gogh.shopping/images/66204b858aab7609d2dc525d.jpg',
             'https://www.gogh.shopping/images/66204f276835f247c9646d81.jpg',
             'https://www.gogh.shopping/images/66204e66cdcd338a3eaff898.jpg',
@@ -24,6 +25,38 @@ const categoryImages = {
         ],
         explainImage: 'https://www.gogh.shopping/images/66095f362cd09738f3c3e73c.jpg',
         inputErrorImage: 'https://www.gogh.shopping/images/66095ef9392e8d62c5bb1c2d.jpg',
+    },
+
+    sneakers: {
+        images: [
+            'https://www.gogh.shopping/images/6626626162ece000ae4eb0e8.jpg',
+            'https://www.gogh.shopping/images/6626648f4c5e1e4f631bb2de.jpg',
+            'https://www.gogh.shopping/images/66266a7844a54624134b3dfd.jpg',
+            'https://www.gogh.shopping/images/66266f716feea1af81a45d8a.jpg',
+            'https://www.gogh.shopping/images/662670752c92800f178fa609.jpg',
+            'https://www.gogh.shopping/images/662672fa8b36d6737e2bd81e.jpg',
+            'https://www.gogh.shopping/images/662673fd89c25f69748fdaee.jpg',
+            'https://www.gogh.shopping/images/66267529a0c4057e4ed4399d.jpg',
+
+        ],
+        explainImage: 'https://www.gogh.shopping/images/66267723d37816156ece2661.jpg',
+        inputErrorImage: 'https://www.gogh.shopping/images/66267662d22e8e3fb0241b7c.jpg',
+    },
+
+    kids: {
+        images: [
+            'https://www.gogh.shopping/images/662917347c3f98aefaf28aa4.jpg',
+            'https://www.gogh.shopping/images/6629176c1de3a026caed2d1b.jpg',
+            'https://www.gogh.shopping/images/6629179fc3f1e5e24f666982.jpg',
+            'https://www.gogh.shopping/images/6629182b1e1e9dd2a128373b.jpg',
+            'https://www.gogh.shopping/images/6629188b40f4bc729e191849.jpg',
+            'https://www.gogh.shopping/images/662918c947acbe5188010513.jpg',
+            'https://www.gogh.shopping/images/662918f59c5791792194328f.jpg',
+            'https://www.gogh.shopping/images/66291937a712364b1fde0ef6.jpg',
+
+        ],
+        explainImage: 'https://www.gogh.shopping/images/66291b4a0b2fdfc573c1beb5.jpg',
+        inputErrorImage: 'https://www.gogh.shopping/images/66291a4c1c89a70ee94350ec.jpg',
     },
 
     default: {
@@ -44,6 +77,8 @@ const categoryImages = {
   
 const categoryMeta = {
     art: `${process.env.BASE_URL}/marketplace/add-listing/art?step=1`,
+    sneakers: `${process.env.BASE_URL}/marketplace/add-listing/sneakers?step=1`,
+    kids: `${process.env.BASE_URL}/marketplace/add-listing/kids?step=1`,
     default: `${process.env.BASE_URL}/marketplace/add-listing/default?step=1`
 };
 
@@ -66,9 +101,9 @@ router.get('/:category', async (req, res) => {
             <meta property="fc:frame:post_url" content="${postUrl}" />
             <meta property="fc:frame:image" content="${images[0]}">
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-            <meta property="fc:frame:input:text" content="Enter your location" />
-            <meta property="fc:frame:button:1" content="Continue" />
-            <meta property="fc:frame:button:2" content="FAQ" />
+            <meta property="fc:frame:input:text" content="City and state/country" />
+            <meta property="fc:frame:button:1" content="FAQ" />
+            <meta property="fc:frame:button:2" content="Continue" />
         </head>
     </html>
     `;
@@ -129,14 +164,14 @@ router.post('/:category', async (req, res) => {
         if (inputError !== "true" && explain !== "true") {
 
             if (step === '1') {
-                if (buttonIndex === 1 && inputText) { // continue
+                if (buttonIndex === 2 && inputText) { // continue
                     redisData.location = inputText;
                     step = '2';
 
-                } else if (!inputText && buttonIndex === 1) {
+                } else if (!inputText && buttonIndex === 2) {
                     inputError = "true";
 
-                } else if (buttonIndex === 2) {
+                } else if (buttonIndex === 1) {
                     explain = "true";
                 }
 
@@ -297,8 +332,8 @@ function generateFrameHtml(newListingFrameImgs, explainImage, inputErrorImage, v
             buttonsHtml = `
                 <meta property="fc:frame:image" content="${listingFrame}" />
                 <meta property="fc:frame:input:text" content="Enter your location" />
-                <meta property="fc:frame:button:1" content="Continue" />
-                <meta property="fc:frame:button:2" content="FAQ" />
+                <meta property="fc:frame:button:1" content="FAQ" />
+                <meta property="fc:frame:button:2" content="Continue" />
             `;
             break;
 

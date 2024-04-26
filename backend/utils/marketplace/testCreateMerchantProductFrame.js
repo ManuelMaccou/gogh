@@ -1,18 +1,21 @@
+// node utils/marketplace/testCreateMerchantProductFrame.js 
+
 import { writeFileSync } from 'fs';
 import createMarketplaceProductFrame from './createMarketplaceProductFrame.js';
 
 async function testMerchantProuctFrame() {
     // Sample product data
-    const title = "Burrow Nomad Modular Sectional with Ottoman and Chaise";
-    const description = "Well-maintained Burrow Nomad King Sectional with sloped arms + ottoman and chaise! 40% the MSRP of $3100+ from Burrow. Just got it professionally cleaned a few weeks ago including Scotchgard which makes it even more stain resistant. Completely modular so pieces can be added, removed, or rearranged as necessary. Comfortably fits 4 people but can squeeze in a couple more for movie nights. The back cushions can also be flipped for a non-tufted look. Also comes with an extra seat cushion if you want to remove the chaise (or if one gets damaged). Pickup in elevator building in SoHo preferred (easy to move since it’s modular) but delivery can be arranged for a fee.";
+    const title = "This will be a title that takes up three lines on the canvas";
+    const description = "Here is a long test description about an art product. It is a physical print by an artist who lives in Paris, France.They were motivated by the rap song, From Paris with Love by Jay-Z. NOICE. Here is a long test description about an art product. It is a physical print by an artist who lives in Paris, France.They were motivated by the rap song, From Paris with Love by Jay-Z. NOICE. Here is a long test description about an art product. It is a physical print by an artist who lives in Paris, France.They were motivated by the rap song, From Paris with Love by Jay-Z. NOICE.";
     const location = "NYC";
-    const price = "$100";
+    const price = "100";
     const imageUrl = "https://www.gogh.shopping/images/65ea94634055968e1a66ca2a.jpg";
+    const shipping = true;
 
 
 
     try {
-        const imageDataUrl = await createMarketplaceProductFrame(location, title, description, price, imageUrl);
+        const imageDataUrl = await createMarketplaceProductFrame(location, shipping, title, description, price, imageUrl);
         const base64Data = imageDataUrl.replace(/^data:image\/jpeg;base64,/, '');
 
         // Save the image as a file

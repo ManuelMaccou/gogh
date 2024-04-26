@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { connectRedis } from './redis.js';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import express, { json, static as expressStatic } from 'express';
 import { join, dirname } from 'path';
@@ -31,7 +32,8 @@ import shopifySingleProductFrameRoutes from './api/shopify/singleProductFrame.js
 import shopifyProductWebhooks from './webhooks/shopify/product.js';
 
 import marketplaceProductRoutes from './api/marketplace/product.js';
-import marketplaceFrameShareRoutes from './api/marketplace/frame/transactionFrame.js';
+import marketplaceProductFrameShareRoutes from './api/marketplace/frame/transactionFrame.js';
+import marketplaceCollectionFrameShareRoutes from './api/marketplace/frame/collectionTransactionFrame.js';
 import marketplaceFrameSendTransactionRoutes from './api/marketplace/frame/sendTransaction.js';
 import crypto from './api/crypto.js';
 
@@ -75,7 +77,7 @@ app.use(
             scriptSrc: ["'self'", "'wasm-eval'", "https://auth.privy.io/apps", "https://challenges.cloudflare.com", "https://kit.fontawesome.com", "https://neynarxyz.github.io"],
             childSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org"],
             frameSrc: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org", "https://challenges.cloudflare.com"],
-            connectSrc: ["'self'", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://ka-f.fontawesome.com",],
+            connectSrc: ["'self'", "https://api.airstack.xyz/gql", "https://auth.privy.io", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "wss://www.walletlink.org", "https://*.infura.io", "https://*.blastapi.io", "https://ka-f.fontawesome.com",],
             reportUri: ["/csp-report"],
         },
         reportOnly: true,
@@ -127,13 +129,19 @@ app.use('/images', imagesRoutes);
 
 app.use('/api/marketplace/product', marketplaceProductRoutes);
 app.use('/api/marketplace/frame/send_transaction', marketplaceFrameSendTransactionRoutes);
-app.use('/marketplace/frame/share', marketplaceFrameShareRoutes);
+app.use('/marketplace/frame/share/product', marketplaceProductFrameShareRoutes);
+app.use('/marketplace/frame/share/collection', marketplaceCollectionFrameShareRoutes);
 app.use('/marketplace/add/book', bookListingFrameRoute);
 app.use('/marketplace/add-listing', addListingFrameRoute);
 app.use('/api/crypto', crypto);
 
 app.use('/api/transaction', marketplaceTransactionRoutes);
 app.use('/api/send-confirm-email', confirmEmailRoutes);
+
+app.use('/api/fname', createProxyMiddleware({
+    target: 'https://app.icebreaker.xyz/api/v1/fname',
+    changeOrigin: true
+}));
 
 
 app.get('*', (req, res) => {
