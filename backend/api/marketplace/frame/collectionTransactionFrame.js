@@ -43,21 +43,16 @@ router.get('/:collectionName', async (req, res) => {
         <head>
         <title>Gogh Marketplace</title>
             <meta name="description" content="Sell your items locally with Gogh">
-            <meta property="og:url" content="https://">
-            <meta property="og:image" content="${firstProduct.productFrame}" />
+            <meta property="og:url" content="https://www.gogh.shopping">
+            <meta property="og:image" content="https://www.gogh.shopping/images/662ba2bdf0f79a2f68771d06.jpg" />
             <meta property="fc:frame" content="vNext" />
             <meta property="fc:frame:post_url" content="${process.env.BASE_URL}/marketplace/frame/share/collection/${collectionName}?collectionIndex=0&frameType=initial" />
-            <meta property="fc:frame:image" content="${firstProduct.productFrame}">
+            <meta property="fc:frame:image" content="https://www.gogh.shopping/images/662ba2bdf0f79a2f68771d06.jpg">
             <meta property="fc:frame:image:aspect_ratio" content="" />
-            <meta property="fc:frame:input:text" content="Enter email for receipt" />
-            <meta property="fc:frame:button:1" content="View online" />
+            <meta property="fc:frame:button:1" content="Sell art" />
             <meta property="fc:frame:button:1:action" content="link" />
             <meta property="fc:frame:button:1:target" content="https://www.gogh.shopping" />
-            <meta property="fc:frame:button:2" content="Buy now" />
-            <meta property="fc:frame:button:2:action" content="tx" />
-            <meta property="fc:frame:button:2:target" content="${process.env.BASE_URL}/api/marketplace/frame/send_transaction/${firstProduct._id}" />
-            <meta property="fc:frame:button:3" content="FAQ" />
-            <meta property="fc:frame:button:4" content="Next >>" />
+            <meta property="fc:frame:button:2" content="Browse" />
         </head>
     </html>
     `;
@@ -214,8 +209,13 @@ router.post('/:collectionName', async (req, res) => {
             res.status(500).json({ message: 'An error occurred while the transaction.' });
         }
     }
+        if (frameType === 'initial') {
+            if (buttonIndex === 2) { // Browse button
+                frameType = "";   
+                product = collectionProducts[collectionIndex];
+            }
 
-        if (frameType !== 'buy' && frameType !== 'faq') {
+        } else if (frameType !== 'buy' && frameType !== 'faq' && frameType !== 'initial') {
             if (buttonIndex === 3) { // faq
                 frameType = "faq";
             } else if (buttonIndex === 4) { // next product
@@ -230,7 +230,7 @@ router.post('/:collectionName', async (req, res) => {
             } else if (buttonIndex === 2) { // next
                 faqIndex = (faqIndex + 1) % totalFaqs;
             } else if (buttonIndex === 3) { // back to listing
-                frameType = "initial";
+                frameType = "";
                 faqIndex = 0;
             }
 
