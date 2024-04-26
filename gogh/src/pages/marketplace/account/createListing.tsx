@@ -1,10 +1,10 @@
 import { useState, useEffect, ChangeEvent, FormEvent, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { useUser } from '../../../contexts/userContext';
 import axios from 'axios';
 import Header from '../../header';
 import Sidebar from './sidebar';
-import { useHistory } from 'react-router-dom';
 
 interface User {
     privyId: string;
@@ -47,8 +47,10 @@ interface CreateListingHandles {
 }
 
 const CreateListing = () => {
+    const navigate = useNavigate();
     const { ready, authenticated, getAccessToken} = usePrivy();
-    const [formData, setFormData] = useState<FormDataState>({
+    const { user } = useUser();
+    const [formData, setFormData] = useState({
         shipping: false,
         location: '',
         title: '',
@@ -58,7 +60,6 @@ const CreateListing = () => {
         email: '',
     });
 
-    const { user } = useUser();
     const [formError, setFormError] = useState<string>('');
     const [initialFormData, setInitialFormData] = useState({});
     const [featuredImage, setFeaturedImage] = useState<File | null>(null);
@@ -69,87 +70,68 @@ const CreateListing = () => {
     const [additionalImagesPreview, setAdditionalImagesPreview] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    useEffect(() => {
-        if (initialFormData) {
-            setFormData({
-                shipping: initialFormData.shipping || false,
-                location: initialFormData.location || '',
-                title: initialFormData.title || '',
-                description: initialFormData.description || '',
-                price: initialFormData.price || '',
-                walletAddress: initialFormData.walletAddress || '',
-                email: initialFormData.email || '',
-            });
-        }
-    }, [initialFormData]);
+    const openListingPage = (product: Product) => {
+        const productId = product._id;
+        navigate(`/listing/${productId}`);
+    };
 
     useEffect(() => {
-        const searchParams = new URLSearchParams(location.search);
-        const city = searchParams.get('location');
-        const shipping = searchParams.get('shipping') === 'true';
-        const title = searchParams.get('title');
-        const description = searchParams.get('description');
-        const price = searchParams.get('price');
-        const walletAddress = searchParams.get('walletAddress');
-        const email = searchParams.get('email');
-
+        const params = new URLSearchParams(window.location.search);
         if (ready) {
-            if (title && authenticated) {
-                setInitialFormData({ location:city, shipping, title, description, price, walletAddress, email });
-
-            } else if (title && !authenticated) {
-                setInitialFormData({ location:city, shipping, title, description, price,walletAddress, email });
-            }
+            const initialData = {
+                location: params.get('location') || '',
+                shipping: params.get('shipping') === 'true',
+                title: params.get('title') || '',
+                description: params.get('description') || '',
+                price: params.get('price') || '',
+                walletAddress: params.get('walletAddress') || '',
+                email: params.get('email') || '',
+            };
+            setFormData(initialData);
         }
-
-    }, [location, authenticated, ready]);
+    }, [ready, window.location.search]);
 
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value, type } = event.target;
+        const target = event.target as HTMLInputElement;
+        const { name, value, type, files } = target;
     
-        if (event.target instanceof HTMLInputElement && event.target.type === 'file') {
-            // Handling the featured image
-            if (name === 'featuredImage') {
-                const file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
-                if (file) {
-                    setFeaturedImage(file);
-                    setFeaturedImagePreview(URL.createObjectURL(file));
-                } else {
-                    // Resetting states if no file is selected
-                    setFeaturedImage(null);
-                    setFeaturedImagePreview(null);
-                }
-            }
-            // Handling additional images
-            else if (name === 'additionalImages' && event.target.files) {
-                const newFiles = Array.from(event.target.files);
+        if (type === 'file' && files) {
+            if (name === 'featuredImage' && files && files.length > 0) {
+                const file = files[0] as File;
+                setFeaturedImage(file);
+                setFeaturedImagePreview(URL.createObjectURL(file));
+            } else if (name === 'additionalImages' && files) {
+                const newFiles = Array.from(files as FileList);
                 const spaceAvailable = 3 - additionalFiles.length;
                 const filesToAdd = newFiles.slice(0, spaceAvailable);
-            
-                if (filesToAdd.length > 0) {
+    
+                if (filesToAdd.length) {
                     const updatedFiles = [...additionalFiles, ...filesToAdd];
                     setAdditionalFiles(updatedFiles);
-            
+    
                     const updatedPreviews = updatedFiles.map(file => URL.createObjectURL(file));
                     setAdditionalImagesPreview(updatedPreviews);
                 }
-            
+    
                 if (newFiles.length > spaceAvailable) {
-                    alert(`Only 3 photos can be added.`);
+                    setFormError(`Only 3 photos can be added. You tried to add ${newFiles.length}`);
                 }
             }
-
         } else if (type === 'checkbox') {
-            const isChecked = (event.target as HTMLInputElement).checked;
-            setFormData(prevState => ({ ...prevState, [name]: isChecked }));
-
+            setFormData(prev => ({ ...prev, [name]: (event.target as HTMLInputElement).checked }));
         } else {
-            setFormData(prevState => ({ ...prevState, [name]: value }));
+            setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
 
     const handleRemoveImage = (index: number) => {
+        // Get the URL of the image that is about to be removed
+        const urlToRemove = additionalImagesPreview[index];
+
+        // Revoke the object URL to free up resources
+        URL.revokeObjectURL(urlToRemove);
+
         // Remove the file at the given index
         const newFiles = [...additionalFiles.slice(0, index), ...additionalFiles.slice(index + 1)];
         setAdditionalFiles(newFiles);
@@ -160,94 +142,114 @@ const CreateListing = () => {
     };
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        const accessToken = await getAccessToken();
-
         event.preventDefault();
-        const data = new FormData();
-        const priceRegex = /^\$?\d+(\.\d{1,2})?$/;
 
-        Object.keys(formData).forEach((key) => {
-            let value = formData[key as keyof FormDataState];
-
-            if (typeof value === 'boolean') {
-                value = value.toString();
-            }
-
-            if (key === 'price' && typeof value === 'string') {
-                value = value.replace(/^\$/, '');
-            }
-
-            if (value !== undefined) {
-            data.append(key, value);
-            }
-        });
-
-        if (featuredImage) {
-            data.append('featuredImage', featuredImage);
-        }
-
-        if (!featuredImage) {
-            alert("Please upload a featured image.");
+        const accessToken = await getAccessToken();
+        if (!accessToken) {
+            setFormError('Authentication failed. Please log in again.');
             return;
         }
 
-        if (!priceRegex.test(formData.price) && formData.price !== '') {
-            alert("Please use this format for the price: $xxx.xx or xxx.xx");
-            return;
-        }
+        if (!validateFormData()) return;
 
-        if (!formData.walletAddress.startsWith('0x')) {
-            alert('Wallet address must start with "0x".');
-            return;
-        }
-
-        if (additionalFiles) {
-            additionalFiles.forEach((file) => {
-                data.append('images', file);
-            });
-        }
+        const data = buildFormData();
 
         try {
             setIsSubmitting(true);
-
-
-            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, data, featuredImage, {
+            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, data, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
               });
     
-              if (response.status === 201) {
-                const product = response.data
-                openListingPage(product);
-                return response.data;
+            if (response.status === 201) {
+                // Assuming openListingPage redirects or updates the UI to the new product page
+                openListingPage(response.data);
+                resetForm(); // Reset form on successful submission
             } else {
                 throw new Error('Product creation failed');
             }
-            
-            // Reset form and file states
-            setFormData({
-                shipping: false,
-                location: '',
-                title: '',
-                description: '',
-                price: '',
-                walletAddress: '',
-                email: '',
-            });
-            setFeaturedImage(null);
-            setAdditionalFiles([]);
-            setFeaturedImagePreview(null);
-            setAdditionalImagesPreview([]);
-            clearFormError();
-            return product;
-        } catch (error) {
-            setFormError('An error occurred while submitting the form.');
+        } catch (error: any) {
+            const message = error instanceof Error ? error.message : "An unknown error occurred";
+            setFormError(message);
         } finally {
             setIsSubmitting(false);
         }
-
     };
+
+    function validateFormData() {
+        const { price, walletAddress } = formData;
+        const priceRegex = /^\$?\d+(\.\d{1,2})?$/;
+    
+        if (!featuredImage) {
+            setFormError("Please upload a featured image.");
+            return false;
+        }
+    
+        if (!priceRegex.test(price) && price !== '') {
+            setFormError("Please use this format for the price: $xxx.xx or xxx.xx");
+            return false;
+        }
+    
+        if (!walletAddress.startsWith('0x')) {
+            setFormError('Wallet address must start with "0x".');
+            return false;
+        }
+    
+        return true; // All validations passed
+    }
+
+    function buildFormData() {
+        const data = new FormData();
+        Object.keys(formData).forEach(key => {
+            const value = formData[key as keyof typeof formData];
+            if (typeof value === 'string' || typeof value === 'boolean') {
+                data.append(key, value.toString());
+            }
+        });
+    
+        if (featuredImage) {
+            data.append('featuredImage', featuredImage);
+        }
+    
+        additionalFiles.forEach(file => {
+            data.append('images', file);
+        });
+    
+        return data;
+    }
+
+    function resetForm() {
+        // Revoke all object URLs
+        if (featuredImagePreview) {
+            URL.revokeObjectURL(featuredImagePreview);
+        }
+        additionalImagesPreview.forEach(url => URL.revokeObjectURL(url));
+
+        setFormData({
+            shipping: false,
+            location: '',
+            title: '',
+            description: '',
+            price: '',
+            walletAddress: '',
+            email: '',
+        });
+        setFeaturedImage(null);
+        setAdditionalFiles([]);
+        setFeaturedImagePreview(null);
+        setAdditionalImagesPreview([]);
+    };
+
+    // Cleanup on component unmount
+    useEffect(() => {
+        return () => {
+            if (featuredImagePreview) {
+                URL.revokeObjectURL(featuredImagePreview);
+            }
+            additionalImagesPreview.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, []); // Empty dependency array to run only on unmount
 
 
     return (
@@ -360,6 +362,6 @@ const CreateListing = () => {
             </div>
         </div>
     );
-});
+};
 
 export default CreateListing;

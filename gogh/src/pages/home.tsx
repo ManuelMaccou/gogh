@@ -34,33 +34,13 @@ interface Product {
     walletAddress: string;
     email: string;
     user: User;
-  }
-
-const featuredStoreImages = [
-    {src: 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1709498497078x837410041897568300/nouns_esports_img.jpg', link: "https://warpcast.com/esports/0xc9e47998"},
-    {src: 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1709500013450x264616000700178980/swagcaster_feat_img.jpg', link: "https://warpcast.com/j4ck.eth/0xe3f60406"},
-    {src: 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1709500231001x485695485453701900/chippi_feat_img.png', link: "https://warpcast.com/manuelmaccou.eth/0x14faed20"},
-    {src: 'https://aef8cbb778975f3e4df2041ad0bae1ca.cdn.bubble.io/f1709500585473x287938630848797440/shop_degen_feat_img.jpg', link: "https://warpcast.com/lluis/0x1b3847f0"},
-  ];
-
-const supportedCities = [
-    "NYC",
-    "LA",
-    "San Francisco",
-]
-
+}
 
 const HomePage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-
-    const [initialFormData, setInitialFormData] = useState({});
-    const [errorMessage, setErrorMessage] = useState<string>('');
-    const [formError, setFormError] = useState<string>('');
     const [products, setProducts] = useState<Product[]>([]);
     const { setUser } = useUser();
-    const [showCreateListingModal, setShowCreateListingModal] = useState(false);
-
     const createListingRef = useRef<{ openCreateListingModal: () => void }>(null);
     
     const { ready, authenticated, getAccessToken, logout } = usePrivy();
@@ -70,7 +50,7 @@ const HomePage = () => {
           login();
           return;
         }
-        navigate('/account/createListing');
+        navigate('/account/create-listing');
     };
 
     const { login } = useLogin({
@@ -173,32 +153,6 @@ const HomePage = () => {
         navigate(`/listing/${productId}`);
     };
 
-    useEffect(() => {
-        const searchParams = new URLSearchParams(location.search);
-        const city = searchParams.get('location');
-        const shipping = searchParams.get('shipping') === 'true';
-        const title = searchParams.get('title');
-        const description = searchParams.get('description');
-        const price = searchParams.get('price');
-        const walletAddress = searchParams.get('walletAddress');
-        const email = searchParams.get('email');
-
-        if (ready) {
-            if (title && authenticated && createListingRef.current) {
-                createListingRef.current.openCreateListingModal();
-                setInitialFormData({ location:city, shipping, title, description, price, walletAddress, email });
-                setShowCreateListingModal(true);
-
-            } else if (title && !authenticated && createListingRef.current) {
-                createListingRef.current.openCreateListingModal();
-                setInitialFormData({ location:city, shipping, title, description, price,walletAddress, email });
-                setShowCreateListingModal(true);
-                login();
-            }
-        }
-
-    }, [location, authenticated, ready]);
-
     const fetchProducts = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/?status=approved`);
@@ -211,31 +165,6 @@ const HomePage = () => {
     useEffect(() => {
         fetchProducts();
     }, []);
-
-    const onFormSubmit = async (formData: FormData, file: File | null): Promise<Product> => {
-        const accessToken = await getAccessToken();
-        
-        try {
-          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, formData, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-          });
-
-          if (response.status === 201) {
-            const product = response.data
-            openListingPage(product);
-            return response.data;
-        } else {
-            throw new Error('Product creation failed');
-        }
-
-        } catch (error: any) {
-            console.error('Failed to create product:', error.response || error);
-            setFormError('Failed to create product. Please try again.');
-            throw error;
-        }
-    };
 
     return (
         <div className='main-container'>
@@ -304,18 +233,6 @@ const HomePage = () => {
                         </div>
                     </div>
                     ))}
-                </div>
-            </section>
-            <section className="featured-stores-section">
-                <div className="featured-stores">
-                    <h2>Featured Stores</h2>
-                    <div className="featured-store-masonry">
-                        {featuredStoreImages.map((image, index) => (
-                        <a key={index} href={image.link} target="_blank" className="featured-store-card">
-                            <img src={image.src} alt={`Store ${index}`} />
-                        </a>
-                        ))}
-                    </div>
                 </div>
             </section>
         </div>
