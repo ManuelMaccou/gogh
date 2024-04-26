@@ -171,7 +171,6 @@ const HomePage = () => {
             <Header />
             <section className="hero-section">
                 <h1 className="title">Buy and sell products on Farcaster</h1>
-                <div className="create-listing-container">
                     {!authenticated ? (
                     <>
                         <button
@@ -192,8 +191,7 @@ const HomePage = () => {
                         </div>
                     </>
 
-                )};
-                </div>
+                )}
             </section>
             <section className="submitted-products">
                 <div className="marketplace-products-grid">

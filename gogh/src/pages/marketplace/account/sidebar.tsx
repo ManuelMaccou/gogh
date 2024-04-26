@@ -8,8 +8,9 @@ const Sidebar: React.FC = () => {
                 <h2>Gogh Shopping</h2>
                 <nav>
                     <ul>
-                        <li><Link to="/profile/purchases">Purchases</Link></li>
-                        <li><Link to="/profile/listings">Listings</Link></li>
+                        <li><Link to="/account/create-listing">Create Listing</Link></li>
+                        <li><Link to="/profile/purchases">View Purchases</Link></li>
+                        <li><Link to="/profile/listings">View Listings</Link></li>
                     </ul>
                 </nav>
             </div>

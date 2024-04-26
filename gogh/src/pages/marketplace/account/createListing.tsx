@@ -91,6 +91,10 @@ const CreateListing = () => {
         }
     }, [ready, window.location.search]);
 
+    const handleBackClick = () => {
+        navigate(-1); // Navigates back to the previous page
+    };
+
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const target = event.target as HTMLInputElement;
@@ -103,7 +107,7 @@ const CreateListing = () => {
                 setFeaturedImagePreview(URL.createObjectURL(file));
             } else if (name === 'additionalImages' && files) {
                 const newFiles = Array.from(files as FileList);
-                const spaceAvailable = 3 - additionalFiles.length;
+                const spaceAvailable = 4 - additionalFiles.length;
                 const filesToAdd = newFiles.slice(0, spaceAvailable);
     
                 if (filesToAdd.length) {
@@ -115,7 +119,7 @@ const CreateListing = () => {
                 }
     
                 if (newFiles.length > spaceAvailable) {
-                    setFormError(`Only 3 photos can be added. You tried to add ${newFiles.length}`);
+                    setFormError(`Only 4 photos can be added. You tried to add ${newFiles.length}`);
                 }
             }
         } else if (type === 'checkbox') {
@@ -255,110 +259,133 @@ const CreateListing = () => {
     return (
         <div>
             <Header />
-            <Sidebar />
-            <div className="create-listing-container">
-                <button className='back-button'>
-                    {/*Placeholder for arrow and navigation back to last page*/}
-                    Back</button>
-
+            <div className="create-listing-page">
+                <Sidebar />
+                <div className="create-listing-container">
+                    <button className="back-button" onClick={handleBackClick}>
+                        <i className="fa-solid fa-arrow-left-long"></i>
+                        <span>Create Listing</span>
+                    </button>
                     <form className='create-listing-form' onSubmit={handleSubmit}>
 
-                    <div className="create-listing-section">
-                        <div className="create-listing-subsection-row">
-                            <input name="title" type="text" value={formData.title} onChange={handleChange} placeholder="Title" required />
-                            <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="Price in $USD" />
+                        <div className="create-listing-section">
+                            <div className="create-listing-subsection-row">
+                            <div className="input-group">
+                                <label htmlFor="title">Title</label>
+                                <input name="title" type="text" value={formData.title} onChange={handleChange} required />
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="price">Price</label>
+                                <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="$USD" />
+                            </div>
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="description">Description</label>
+                                <textarea name="description" value={formData.description} onChange={handleChange} required />
+                            </div>
                         </div>
-                        <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
-                    </div>
-                    <div className="create-listing-subsection-row">
-                    <input 
-                            name="location" 
-                            type="text" 
-                            value={formData.location} 
-                            onChange={handleChange} 
-                            placeholder="Enter your city, state or city, country" 
-                            required 
-                        />
-                        <p className="helper-text">
-                            'City, State' or 'City, Country'
-                        </p>
-                        <label htmlFor="shipping" className='checkbox-container'>
-                            <input
-                                name="shipping"
-                                type="checkbox"
-                                id="shipping"
-                                checked={formData.shipping === true}
-                                onChange={handleChange}
-                            />
-                            Will offer shipping
-                        </label>
-                    </div>
-                    <div className="create-listing-section">
-                        {/* Hidden file input */}
-                        <input
-                            name="featuredImage"
-                            type="file"
-                            ref={featuredImageInputRef}
-                            onChange={handleChange}
-                            style={{ display: 'none' }}
-                        />
-                        
-                        {featuredImagePreview && (
-                            <img src={featuredImagePreview} alt="Featured product image" style={{ width: '70px', height: 'auto' }} />
-                        )}
-                        <input
-                            name="additionalImages"
-                            type="file"
-                            multiple
-                            ref={additionalImagesInputRef}
-                            onChange={handleChange}
-                            style={{ display: 'none' }}
-                        />
-                        <button 
-                        className='upload-featured-image-button'
-                        type="button"
-                        onClick={() => {
-                            featuredImageInputRef.current?.click()}}>
-                            Upload Featured Image
-                        </button>
-
-                        <div>
-                            {additionalImagesPreview.map((previewUrl, index) => (
-                                <div key={index} style={{ position: 'relative', display: 'inline-block', marginRight: '5px' }}>
-                                    <img src={previewUrl} alt={`Additional product ${index + 1}`} style={{ width: '70px', height: 'auto' }} />
+                        <div className="create-listing-section">
+                            <div className="create-listing-subsection-row">
+                                <div className="input-group">
+                                <label htmlFor="description">Location</label>
+                                    <input 
+                                        name="location" 
+                                        type="text" 
+                                        value={formData.location} 
+                                        onChange={handleChange} 
+                                        required 
+                                    />
+                                    <p className="helper-text">
+                                        'City, State' or 'City, Country'
+                                    </p>
+                                </div>
+                                <label htmlFor="shipping" className='checkbox-container'>
+                                    <input
+                                        name="shipping"
+                                        type="checkbox"
+                                        id="shipping"
+                                        checked={formData.shipping === true}
+                                        onChange={handleChange}
+                                    />
+                                    Will offer shipping
+                                </label>
+                                
+                            </div>
+                        </div>
+                        <div className="create-listing-section">
+                            <div className='add-images'>
+                                <div className='featured-image'>
+                                    {/* Hidden file input */}
+                                    <input
+                                        name="featuredImage"
+                                        type="file"
+                                        ref={featuredImageInputRef}
+                                        onChange={handleChange}
+                                        style={{ display: 'none' }}
+                                    />
+                                    
+                                    {featuredImagePreview && (
+                                        <img src={featuredImagePreview} alt="Featured product image" />
+                                    )}
+                                    <input
+                                        name="additionalImages"
+                                        type="file"
+                                        multiple
+                                        ref={additionalImagesInputRef}
+                                        onChange={handleChange}
+                                        style={{ display: 'none' }}
+                                    />
                                     <button 
-                                        onClick={() => handleRemoveImage(index)} 
-                                        style={{ position: 'absolute', top: 0, right: 0, cursor: 'pointer', background: 'red', color: 'white', border: 'none'}}>
-                                        x
+                                    className='upload-featured-image-button'
+                                    type="button"
+                                    onClick={() => {
+                                        featuredImageInputRef.current?.click()}}>
+                                        Upload Featured Image
                                     </button>
                                 </div>
-                            ))}
+                                <div className='additional-images'>
+                                    <div className='images'>
+                                        {additionalImagesPreview.map((previewUrl, index) => (
+                                            <div key={index}>
+                                                <img src={previewUrl} alt={`Additional product ${index + 1}`} />
+                                                <button 
+                                                    onClick={() => handleRemoveImage(index)} 
+                                                    style={{ position: 'absolute', top: 0, right: 0, cursor: 'pointer', background: 'red', color: 'white', border: 'none'}}>
+                                                    x
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {featuredImagePreview && (
+                                    <button
+                                    className='upload-additional-image-button'
+                                    type="button"
+                                    onClick={() => additionalImagesInputRef.current?.click()}>
+                                        Add up to 4 more images
+                                    </button>
+                                    )}
+
+                                    {/* Custom button that users see and interact with */}
+                                </div>
+                            </div>
                         </div>
-
-                        {featuredImagePreview && (
-                        <button
-                        className='upload-additional-image-button'
-                        type="button"
-                        onClick={() => additionalImagesInputRef.current?.click()}>
-                            Add up to 3 more images
+                        <div className="create-listing-section">
+                            <div className="input-group">
+                                <label htmlFor="walletAddress">Wallet address</label>
+                                <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x address to receive payment." required />
+                            </div>
+                        </div>
+                        <button className="submit-button" type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <>
+                                        <span className="spinner"></span> {/* Assuming you have CSS for this spinner */}
+                                        Submitting...
+                                    </>
+                                ) : "Submit"}
                         </button>
-                        )}
-
-                        {/* Custom button that users see and interact with */}
-                    </div>
-                    <div className="create-listing-section">
-                        <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x Wallet address to receive payment." required />
-                    </div>
-                    <button className="submit-button" type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? (
-                                <>
-                                    <span className="spinner"></span> {/* Assuming you have CSS for this spinner */}
-                                    Submitting...
-                                </>
-                            ) : "Submit"}
-                    </button>
-                    {formError && <p className="form-error">{formError}</p>}
-                </form>           
+                        {formError && <p className="form-error">{formError}</p>}
+                    </form>       
+                </div>    
             </div>
         </div>
     );
