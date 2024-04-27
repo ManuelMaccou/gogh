@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { useUser } from '../../../contexts/userContext';
 import axios from 'axios';
-import Header from '../../header';
-import Sidebar from './sidebar';
 
 interface User {
     privyId: string;
@@ -40,10 +38,6 @@ interface FormDataState {
     price: string;
     walletAddress: string;
     email: string;
-}
-
-interface CreateListingHandles {
-    openCreateListingModal: () => void;
 }
 
 const CreateListing = () => {
@@ -90,11 +84,6 @@ const CreateListing = () => {
             setFormData(initialData);
         }
     }, [ready, window.location.search]);
-
-    const handleBackClick = () => {
-        navigate(-1); // Navigates back to the previous page
-    };
-
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const target = event.target as HTMLInputElement;
@@ -257,136 +246,126 @@ const CreateListing = () => {
 
 
     return (
-        <div>
-            <Header />
-            <div className="create-listing-page">
-                <Sidebar />
-                <div className="create-listing-container">
-                    <button className="back-button" onClick={handleBackClick}>
-                        <i className="fa-solid fa-arrow-left-long"></i>
-                        <span>Create Listing</span>
-                    </button>
-                    <form className='create-listing-form' onSubmit={handleSubmit}>
+        <div className="create-listing-container">
+            <form className='create-listing-form' onSubmit={handleSubmit}>
 
-                        <div className="create-listing-section">
-                            <div className="create-listing-subsection-row">
-                            <div className="input-group">
-                                <label htmlFor="title">Title</label>
-                                <input name="title" type="text" value={formData.title} onChange={handleChange} required />
-                            </div>
-                            <div className="input-group">
-                                <label htmlFor="price">Price</label>
-                                <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="$USD" />
-                            </div>
-                            </div>
-                            <div className="input-group">
-                                <label htmlFor="description">Description</label>
-                                <textarea name="description" value={formData.description} onChange={handleChange} required />
-                            </div>
+                <div className="create-listing-section">
+                    <div className="create-listing-subsection-row">
+                        <div className="input-group">
+                            <label htmlFor="title">Title</label>
+                            <input name="title" type="text" value={formData.title} onChange={handleChange} required />
                         </div>
-                        <div className="create-listing-section">
-                            <div className="create-listing-subsection-row">
-                                <div className="input-group">
-                                <label htmlFor="description">Location</label>
-                                    <input 
-                                        name="location" 
-                                        type="text" 
-                                        value={formData.location} 
-                                        onChange={handleChange} 
-                                        required 
-                                    />
-                                    <p className="helper-text">
-                                        'City, State' or 'City, Country'
-                                    </p>
-                                </div>
-                                <label htmlFor="shipping" className='checkbox-container'>
-                                    <input
-                                        name="shipping"
-                                        type="checkbox"
-                                        id="shipping"
-                                        checked={formData.shipping === true}
-                                        onChange={handleChange}
-                                    />
-                                    Will offer shipping
-                                </label>
-                                
-                            </div>
+                        <div className="input-group">
+                            <label htmlFor="price">Price</label>
+                            <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="$USD" />
                         </div>
-                        <div className="create-listing-section">
-                            <div className='add-images'>
-                                <div className='featured-image'>
-                                    {/* Hidden file input */}
-                                    <input
-                                        name="featuredImage"
-                                        type="file"
-                                        ref={featuredImageInputRef}
-                                        onChange={handleChange}
-                                        style={{ display: 'none' }}
-                                    />
-                                    
-                                    {featuredImagePreview && (
-                                        <img src={featuredImagePreview} alt="Featured product image" />
-                                    )}
-                                    <input
-                                        name="additionalImages"
-                                        type="file"
-                                        multiple
-                                        ref={additionalImagesInputRef}
-                                        onChange={handleChange}
-                                        style={{ display: 'none' }}
-                                    />
-                                    <button 
-                                    className='upload-featured-image-button'
-                                    type="button"
-                                    onClick={() => {
-                                        featuredImageInputRef.current?.click()}}>
-                                        Upload Featured Image
-                                    </button>
-                                </div>
-                                <div className='additional-images'>
-                                    <div className='images'>
-                                        {additionalImagesPreview.map((previewUrl, index) => (
-                                            <div key={index}>
-                                                <img src={previewUrl} alt={`Additional product ${index + 1}`} />
-                                                <button 
-                                                    onClick={() => handleRemoveImage(index)} 
-                                                    style={{ position: 'absolute', top: 0, right: 0, cursor: 'pointer', background: 'red', color: 'white', border: 'none'}}>
-                                                    x
-                                                </button>
-                                            </div>
-                                        ))}
+                    </div>
+                    <div className="input-group">
+                        <label htmlFor="description">Description</label>
+                        <textarea name="description" value={formData.description} onChange={handleChange} required />
+                    </div>
+                </div>
+                <div className="create-listing-section">
+                    <div className="create-listing-subsection-row">
+                        <div className="input-group">
+                        <label htmlFor="description">Location</label>
+                            <input 
+                                name="location" 
+                                type="text" 
+                                value={formData.location} 
+                                onChange={handleChange} 
+                                required 
+                            />
+                            <p className="helper-text">
+                                'City, State' or 'City, Country'
+                            </p>
+                        </div>
+                        <label htmlFor="shipping" className='checkbox-container'>
+                            <input
+                                name="shipping"
+                                type="checkbox"
+                                id="shipping"
+                                checked={formData.shipping === true}
+                                onChange={handleChange}
+                            />
+                            Will offer shipping
+                        </label>
+                        
+                    </div>
+                </div>
+                <div className="create-listing-section">
+                    <div className='add-images'>
+                        <div className='featured-image'>
+                            {/* Hidden file input */}
+                            <input
+                                name="featuredImage"
+                                type="file"
+                                ref={featuredImageInputRef}
+                                onChange={handleChange}
+                                style={{ display: 'none' }}
+                            />
+                            
+                            {featuredImagePreview && (
+                                <img src={featuredImagePreview} alt="Featured product image" />
+                            )}
+                            <input
+                                name="additionalImages"
+                                type="file"
+                                multiple
+                                ref={additionalImagesInputRef}
+                                onChange={handleChange}
+                                style={{ display: 'none' }}
+                            />
+                            <button 
+                            className='upload-featured-image-button'
+                            type="button"
+                            onClick={() => {
+                                featuredImageInputRef.current?.click()}}>
+                                Upload Featured Image
+                            </button>
+                        </div>
+                        <div className='additional-images'>
+                            <div className='images'>
+                                {additionalImagesPreview.map((previewUrl, index) => (
+                                    <div key={index}>
+                                        <img src={previewUrl} alt={`Additional product ${index + 1}`} />
+                                        <button 
+                                            onClick={() => handleRemoveImage(index)} 
+                                            style={{ position: 'absolute', top: 0, right: 0, cursor: 'pointer', background: 'red', color: 'white', border: 'none'}}>
+                                            x
+                                        </button>
                                     </div>
-                                    {featuredImagePreview && (
-                                    <button
-                                    className='upload-additional-image-button'
-                                    type="button"
-                                    onClick={() => additionalImagesInputRef.current?.click()}>
-                                        Add up to 4 more images
-                                    </button>
-                                    )}
+                                ))}
+                            </div>
+                            {featuredImagePreview && (
+                            <button
+                            className='upload-additional-image-button'
+                            type="button"
+                            onClick={() => additionalImagesInputRef.current?.click()}>
+                                Add up to 4 more images
+                            </button>
+                            )}
 
-                                    {/* Custom button that users see and interact with */}
-                                </div>
-                            </div>
+                            {/* Custom button that users see and interact with */}
                         </div>
-                        <div className="create-listing-section">
-                            <div className="input-group">
-                                <label htmlFor="walletAddress">Wallet address</label>
-                                <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x address to receive payment." required />
-                            </div>
-                        </div>
-                        <button className="submit-button" type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? (
-                                    <>
-                                        <span className="spinner"></span> {/* Assuming you have CSS for this spinner */}
-                                        Submitting...
-                                    </>
-                                ) : "Submit"}
-                        </button>
-                        {formError && <p className="form-error">{formError}</p>}
-                    </form>       
-                </div>    
-            </div>
+                    </div>
+                </div>
+                <div className="create-listing-section">
+                    <div className="input-group">
+                        <label htmlFor="walletAddress">Wallet address</label>
+                        <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x address to receive payment." required />
+                    </div>
+                </div>
+                <button className="submit-button" type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <span className="spinner"></span> {/* Assuming you have CSS for this spinner */}
+                                Submitting...
+                            </>
+                        ) : "Submit"}
+                </button>
+                {formError && <p className="form-error">{formError}</p>}
+            </form>       
         </div>
     );
 };

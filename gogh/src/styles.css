@@ -198,12 +198,12 @@
     border-radius: 8px;
 }
 
-.create-listing-page {
+.account-page {
     display: flex;
     flex-direction: row;
 }
 
-.create-listing-container {
+.account-main-container {
     background: #f0f0f0;
     flex-grow: 1;
     display: flex;
@@ -211,7 +211,7 @@
     padding: 100px 200px;
 }
 
-.create-listing-container .back-button {
+.account-main-container .back-button {
     width: fit-content;
     display: flex;
     margin-bottom: 20px;
