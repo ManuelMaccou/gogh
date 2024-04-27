@@ -325,6 +325,7 @@
 
 .input-group input[type="text"] {
     height: 30px;
+    padding: 0px 10px;
 }
 
 .input-group textarea {
