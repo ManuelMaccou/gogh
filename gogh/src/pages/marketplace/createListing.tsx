@@ -278,12 +278,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                     <div className="create-listing">
                         <button className="create-listing-button" onClick={handleButtonClick}>Create Listing</button>
                     </div>
-                <Modal 
-                isOpen={showForm} 
-                onRequestClose={handleCloseModal}
-                className="add-product-modal"
-                overlayClassName="modal-overlay"
-                >
                     <button className="close-button" onClick={handleCloseModal}>&times;</button>
                     <h2>Add Product</h2>
                     <p>If your product is sold, you will receive an email with the buyer's information. Please coordinate with them for pickup, dropoff, shipping. </p>
@@ -385,7 +379,6 @@ const CreateListing = forwardRef<CreateListingHandles, CreateListingProps>(({
                         </button>
                         {formError && <p className="form-error">{formError}</p>}
                     </form>
-                </Modal>
                 </>
             )}
             </div>
