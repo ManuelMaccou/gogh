@@ -52,17 +52,15 @@ const UserListings = () => {
             <Header />
             <h2>Your Listings</h2>
             {listings.length > 0 ? (
-                <ul>
-                    {listings.map((listing) => (
-                        <li key={listing._id}>
+                    listings.map((listing) => (
+                        <div key={listing._id}>
                             <h3>{listing.title}</h3>
                             <p>{listing.description}</p>
                             <img src={listing.featuredImage} alt={listing.title} style={{ width: '100px', height: '100px' }} />
                             <p>Price: {listing.price}</p>
                             {/* Add more fields as necessary */}
-                        </li>
-                    ))}
-                </ul>
+                        </div>
+                    ))
             ) : (
                 <p>No listings found.</p>
             )}
