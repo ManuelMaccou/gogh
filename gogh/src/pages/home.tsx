@@ -264,7 +264,7 @@ const HomePage = () => {
                             <img src={product.featuredImage} alt={product.title} className='marketplace-img'/>
                             <h3>{product.title}</h3>
                             <p>Location: {product.location}</p>
-                            <p>Price: {product.price}</p>
+                            <p>$Price: {product.price}</p>
                         </div>
                         <div className='profile-card'>
                             {product.user && (
