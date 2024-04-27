@@ -1,10 +1,12 @@
 import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes } from 'react-router-dom';
 import { UserProvider } from './contexts/userContext';
+import ProtectedRoute from './protectedRoute';
 import HomePage from './pages/home';
 import ManageStore from './pages/manageStore';
 import ManageShopifyStore from './pages/shopify/manageStore'
 import Listing from './pages/marketplace/listing'
+import UserListings from './pages/marketplace/account/userListings';
 import Success from './pages/marketplace/success'
 
 const App: React.FC = () => {
@@ -18,7 +20,11 @@ const App: React.FC = () => {
                             <Route path="/manage-store" element={<ManageStore />} />
                             <Route path="/manage-shopify-store" element={<ManageShopifyStore />} />
                             <Route path="/listing/:productId" element={<Listing />} />
-                            <Route path="/success/:transactionHash" element={<Success />} />
+                            <Route element={<ProtectedRoute />}>
+                                <Route path="/success/:transactionHash" element={<Success />} />
+                                <Route path="/account/listings" element={<UserListings />} />
+                            </Route>
+                            
                         </Routes>
                     </UserProvider>
                 </HelmetProvider>

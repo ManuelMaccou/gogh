@@ -1,5 +1,4 @@
 import React from 'react';
-// Assuming Privy provides hooks for authentication, adjust import paths as necessary
 import { usePrivy } from '@privy-io/react-auth';
 import { useUser } from '../contexts/userContext';
 import LoginButton from '../loginButton';

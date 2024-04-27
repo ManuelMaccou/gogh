@@ -1264,6 +1264,35 @@
     cursor: pointer;
 }
 
+.sidebar {
+    flex: 0 0 250px; /* Do not grow, do not shrink, base width 250px */
+    background-color: #ffffff;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.sidebar-content {
+    padding: 20px;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 10px;
+    transition: background-color 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background-color: #ddd;
+}
+
 @media (max-width: 768px) {
     .navigation {
         height: 50px;
