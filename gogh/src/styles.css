@@ -208,7 +208,7 @@
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    padding: 100px 200px;
+    padding: 30px 200px;
 }
 
 .account-main-container .back-button {
@@ -266,6 +266,8 @@
 .create-listing-section .featured-image {
     display: flex;
     flex-direction: column;
+    max-height: 100%;
+    overflow: hidden;
 }
 
 .featured-image {
@@ -275,6 +277,8 @@
 .featured-image img {
     max-width: 350px;
     height: auto;
+    object-fit: contain;
+    max-height: 190px;
 }
 
 .additional-images {
@@ -333,6 +337,26 @@
     border: 1px solid #ababab;
     border-radius: 7px;
     height: 120px;
+}
+
+.listing-card {
+    display: flex;
+    flex-direction: row;
+    padding: 30px;
+    background-color: #FFFFFF;
+    border: 1px solid #d6d6d6;
+    border-radius: 5px;
+    box-shadow: 2px 2px 2px 1px rgb(189 189 189 / 18%);
+    cursor: pointer;
+}
+
+.listing-featured-image {
+    margin-right: 20px;
+}
+
+.listing-featured-image img {
+    max-width: 150px;
+    height: auto;
 }
 
 .submitted-products {

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import Header from '../../header';
-import Sidebar from './sidebar';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 interface MarketplaceProduct {
@@ -17,8 +16,8 @@ const UserListings = () => {
     const [listings, setListings] = useState<MarketplaceProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
     const { getAccessToken } = usePrivy();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchListings = async () => {
@@ -39,6 +38,10 @@ const UserListings = () => {
         fetchListings();
     }, []);
 
+    const handleEdit = (listingId: string) => {
+        navigate(`/account/edit-listing/${listingId}`);
+      };
+
     if (loading) {
         return <div>Loading...</div>;
     }
@@ -49,16 +52,17 @@ const UserListings = () => {
 
     return (
         <div>
-            <Header />
-            <h2>Your Listings</h2>
             {listings.length > 0 ? (
                     listings.map((listing) => (
-                        <div key={listing._id}>
-                            <h3>{listing.title}</h3>
-                            <p>{listing.description}</p>
-                            <img src={listing.featuredImage} alt={listing.title} style={{ width: '100px', height: '100px' }} />
-                            <p>Price: {listing.price}</p>
-                            {/* Add more fields as necessary */}
+                        <div className='listing-card' key={listing._id} onClick={() => handleEdit(listing._id)}>
+                            <div className='listing-featured-image'>
+                                <img src={listing.featuredImage} alt={listing.title} />
+                            </div>
+                            <div className='listing-details'>
+                                <h3>{listing.title}</h3>
+                                <p>{listing.description}</p>
+                                <p>Price: {listing.price}</p>
+                            </div>
                         </div>
                     ))
             ) : (

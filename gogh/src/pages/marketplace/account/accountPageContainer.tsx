@@ -12,8 +12,7 @@ const AccountPageContainer = () => {
 
     const buttonTexts: ButtonTextMap = {
         '/account/create-listing': 'Create Listing',
-        '/profile/purchases': 'View Purchases',
-        '/profile/listings': 'View Listings'
+        '/account/listings': 'View Listings'
     };
 
     const handleBackClick = () => {
@@ -33,8 +32,7 @@ const AccountPageContainer = () => {
                         <nav>
                             <ul>
                                 <li><Link to="/account/create-listing">Create Listing</Link></li>
-                                <li><Link to="/profile/purchases">View Purchases</Link></li>
-                                <li><Link to="/profile/listings">View Listings</Link></li>
+                                <li><Link to="/account/listings">View Listings</Link></li>
                             </ul>
                         </nav>
                     </div>

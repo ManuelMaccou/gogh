@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 import { useLocation } from 'react-router-dom';
-import CreateListing from './marketplace/account/createListing';
+import CreateListing from './marketplace/account/manageListing';
 import { usePrivy, useLogin } from '@privy-io/react-auth';
 import { useUser } from '../contexts/userContext';
 import Header from './header';

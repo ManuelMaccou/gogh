@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent, FormEvent, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { useUser } from '../../../contexts/userContext';
 import axios from 'axios';
@@ -18,6 +18,7 @@ interface User {
 
 interface Product {
     _id: string;
+    listing: string;
     shipping: boolean;
     location: string;
     title: string;
@@ -40,8 +41,9 @@ interface FormDataState {
     email: string;
 }
 
-const CreateListing = () => {
+const ManageListing = ({ mode = 'create' }) => {
     const navigate = useNavigate();
+    const { listingId } = useParams();
     const { ready, authenticated, getAccessToken} = usePrivy();
     const { user } = useUser();
     const [formData, setFormData] = useState({
@@ -70,20 +72,52 @@ const CreateListing = () => {
     };
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (ready) {
-            const initialData = {
-                location: params.get('location') || '',
-                shipping: params.get('shipping') === 'true',
-                title: params.get('title') || '',
-                description: params.get('description') || '',
-                price: params.get('price') || '',
-                walletAddress: params.get('walletAddress') || '',
-                email: params.get('email') || '',
-            };
-            setFormData(initialData);
-        }
-    }, [ready, window.location.search]);
+        const fetchListing = async () => {
+            if (mode === 'edit' && listingId) {
+                try {
+                    const accessToken = await getAccessToken();
+                    const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/user/listings/single/${listingId}`, {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    });
+                    const listing = response.data;
+
+                    console.log('listing data:', listing);
+                    
+                    setFormData({
+                        shipping: listing.shipping,
+                        location: listing.location,
+                        title: listing.title,
+                        description: listing.description,
+                        price: listing.price,
+                        walletAddress: listing.walletAddress,
+                        email: listing.email,
+                    });
+                    setFeaturedImagePreview(listing.featuredImage);
+                    setAdditionalImagesPreview(listing.additionalImages);
+                } catch (error) {
+                    console.error('Error fetching listing data:', error);
+                }
+            } else {
+                const params = new URLSearchParams(window.location.search);
+                if (ready) {
+                const initialData = {
+                    location: params.get('location') || '',
+                    shipping: params.get('shipping') === 'true',
+                    title: params.get('title') || '',
+                    description: params.get('description') || '',
+                    price: params.get('price') || '',
+                    walletAddress: params.get('walletAddress') || '',
+                    email: params.get('email') || '',
+                };
+                setFormData(initialData);
+                }
+            }
+        };
+    
+        fetchListing();
+      }, [mode, listingId, ready, getAccessToken]);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const target = event.target as HTMLInputElement;
@@ -136,37 +170,54 @@ const CreateListing = () => {
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
+    
         const accessToken = await getAccessToken();
+
+        console.log('Access token:', accessToken);
+        console.log('mode:', mode);
+
         if (!accessToken) {
-            setFormError('Authentication failed. Please log in again.');
-            return;
+          setFormError('Authentication failed. Please log in again.');
+          return;
         }
-
+    
         if (!validateFormData()) return;
-
+    
         const data = buildFormData();
 
+        console.log('Form data:', data);
+    
         try {
-            setIsSubmitting(true);
+          setIsSubmitting(true);
+          if (mode === 'edit') {
+
+            console.log('Updating product:', listingId);
+
+            await axios.put(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/update/${listingId}`, data, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            });
+            navigate(`/listing/${listingId}`);
+          } else {
             const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, data, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-              });
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            });
     
             if (response.status === 201) {
-                // Assuming openListingPage redirects or updates the UI to the new product page
-                openListingPage(response.data);
-                resetForm(); // Reset form on successful submission
+              openListingPage(response.data);
+              resetForm();
             } else {
-                throw new Error('Product creation failed');
+              throw new Error('Product creation failed');
             }
+          }
         } catch (error: any) {
-            const message = error instanceof Error ? error.message : "An unknown error occurred";
-            setFormError(message);
+          const message = error instanceof Error ? error.message : 'An unknown error occurred';
+          setFormError(message);
         } finally {
-            setIsSubmitting(false);
+          setIsSubmitting(false);
         }
     };
 
@@ -174,18 +225,21 @@ const CreateListing = () => {
         const { price, walletAddress } = formData;
         const priceRegex = /^\$?\d+(\.\d{1,2})?$/;
     
-        if (!featuredImage) {
+        if (!featuredImage && !(mode === 'edit' && featuredImagePreview)) {
             setFormError("Please upload a featured image.");
+            console.log("issue with featured image");
             return false;
         }
     
         if (!priceRegex.test(price) && price !== '') {
             setFormError("Please use this format for the price: $xxx.xx or xxx.xx");
+            console.log("issue with featured price");
             return false;
         }
     
         if (!walletAddress.startsWith('0x')) {
             setFormError('Wallet address must start with "0x".');
+            console.log("issue with featured wallet address");
             return false;
         }
     
@@ -203,11 +257,23 @@ const CreateListing = () => {
     
         if (featuredImage) {
             data.append('featuredImage', featuredImage);
+        } else if (mode === 'edit' && featuredImagePreview) {
+            // If in edit mode and no new featured image is selected,
+            // include the existing featured image URL in the form data
+            data.append('existingFeaturedImage', featuredImagePreview);
         }
     
-        additionalFiles.forEach(file => {
-            data.append('images', file);
-        });
+        if (additionalFiles.length > 0) {
+            additionalFiles.forEach(file => {
+                data.append('images', file);
+            });
+        } else if (mode === 'edit' && additionalImagesPreview.length > 0) {
+            // If in edit mode and no new additional images are selected,
+            // include the existing additional image URLs in the form data
+            additionalImagesPreview.forEach(url => {
+                data.append('existingAdditionalImages', url);
+            });
+        }
     
         return data;
     }
@@ -357,12 +423,12 @@ const CreateListing = () => {
                     </div>
                 </div>
                 <button className="submit-button" type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                            <>
-                                <span className="spinner"></span> {/* Assuming you have CSS for this spinner */}
-                                Submitting...
-                            </>
-                        ) : "Submit"}
+                    {isSubmitting ? (
+                        <>
+                        <span className="spinner"></span>
+                        {mode === 'edit' ? 'Updating...' : 'Submitting...'}
+                        </>
+                    ) : mode === 'edit' ? 'Update Listing' : 'Submit'}
                 </button>
                 {formError && <p className="form-error">{formError}</p>}
             </form>       
@@ -370,4 +436,4 @@ const CreateListing = () => {
     );
 };
 
-export default CreateListing;
+export default ManageListing;

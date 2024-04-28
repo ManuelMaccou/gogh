@@ -8,7 +8,7 @@ import ManageShopifyStore from './pages/shopify/manageStore'
 import Listing from './pages/marketplace/listing'
 import Success from './pages/marketplace/success'
 import AccountPageContainer from './pages/marketplace/account/accountPageContainer';
-import CreateListing from './pages/marketplace/account/createListing';
+import ManageListing from './pages/marketplace/account/manageListing';
 import UserListings from './pages/marketplace/account/userListings';
 
 const App: React.FC = () => {
@@ -24,10 +24,11 @@ const App: React.FC = () => {
                             <Route path="/listing/:productId" element={<Listing />} />
                             <Route element={<ProtectedRoute />}>
                             <Route path="/success/:transactionHash" element={<Success />} />
-                                <Route path="account" element={<AccountPageContainer />}>
-                                    <Route index element={<CreateListing />} />
-                                    <Route path="/account/create-listing" element={<CreateListing />} />
-                                    <Route path="/account/listings" element={<UserListings />} />
+                                <Route path="/account" element={<AccountPageContainer />}>
+                                    <Route index element={<UserListings />} />
+                                    <Route path="create-listing" element={<ManageListing />} />
+                                    <Route path="edit-listing/:listingId" element={<ManageListing mode="edit" />} />
+                                    <Route path="listings" element={<UserListings />} />
                                     // Add other account-related routes here
                                 </Route>
                             </Route>

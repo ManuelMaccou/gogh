@@ -114,4 +114,23 @@ router.get('/listings', auth, async (req, res) => {
     }
 });
 
+router.get('/listings/single/:productId', auth, async (req, res) => {
+    const userIdFromToken = req.user;
+    const productId = req.params.productId;
+     
+
+    try {
+      const user = await User.findOne({ privyId: userIdFromToken }).exec();
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+      const product = await MarketplaceProduct.findOne({ _id: productId })
+    
+      res.json(product);
+    } catch (error) {
+      console.error("Failed to get transactions:", error);
+      res.status(500).send("Internal Server Error");
+    }
+});
+
 export default router;

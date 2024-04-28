@@ -102,6 +102,93 @@ router.post('/add', auth, upload.fields([
     }
 });
 
+router.put('/update/:id', auth, upload.fields([
+    { name: 'featuredImage', maxCount: 1 },
+    { name: 'images', maxCount: 3 }
+  ]), async (req, res) => {
+    if (!req.user) {
+      return res.status(401).send('User not authenticated');
+    }
+  
+    const listingId = req.params.id;
+  
+    try {
+        const { location, status, shipping, title, description, price, walletAddress, email } = req.body;
+  
+        const updatedProduct = await MarketplaceProduct.findById(listingId);
+        console.log("product to update:", updatedProduct);
+    
+        if (!updatedProduct) {
+            return res.status(404).send('Product not found');
+        }
+    
+        updatedProduct.shipping = shipping;
+        updatedProduct.location = location;
+        updatedProduct.title = title;
+        updatedProduct.description = description;
+        updatedProduct.price = price;
+        updatedProduct.walletAddress = walletAddress;
+        updatedProduct.email = email;
+  
+        if (req.files['featuredImage'] && req.files['featuredImage'].length > 0) {
+            const featuredImageFile = req.files['featuredImage'][0];
+            const processedFeaturedImageBuffer = await sharp(featuredImageFile.buffer)
+            .rotate()
+            .resize(800, 800, { fit: sharp.fit.inside, withoutEnlargement: true })
+            .jpeg()
+            .toBuffer();
+            const processedFeaturedImage = await storeImage(processedFeaturedImageBuffer, 'image/jpeg');
+            const featuredImage = `${process.env.BASE_URL}/images/${processedFeaturedImage}.jpg`;
+            updatedProduct.featuredImage = featuredImage;
+        } else if (req.body.existingFeaturedImage) {
+                // If no new featured image is provided, use the existing featured image URL
+                updatedProduct.featuredImage = req.body.existingFeaturedImage;
+        }
+  
+        // Create sharable frame with the featured image
+        const generatedProductFrameBuffer = await createMarketplaceProductFrame(
+            updatedProduct.location,
+            updatedProduct.shipping,
+            updatedProduct.title,
+            updatedProduct.description,
+            updatedProduct.price,
+            updatedProduct.featuredImage
+        );
+        const productImageId = await storeImage(generatedProductFrameBuffer, 'image/jpeg');
+        const productFrame = `${process.env.BASE_URL}/images/${productImageId}.jpg`;
+        updatedProduct.productFrame = productFrame;
+      
+  
+      if (req.files['images']) {
+        const additionalImageUrls = [];
+        for (const file of req.files['images']) {
+          const processedImageBuffer = await sharp(file.buffer)
+            .rotate()
+            .resize(800, 800, { fit: sharp.fit.inside, withoutEnlargement: true })
+            .jpeg()
+            .toBuffer();
+          const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
+          const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;
+          additionalImageUrls.push(imageUrl);
+        }
+        updatedProduct.additionalImages = additionalImageUrls;
+      } else if (req.body.existingAdditionalImages) {
+        // If no new additional images are provided, use the existing additional image URLs
+        updatedProduct.additionalImages = Array.isArray(req.body.existingAdditionalImages)
+            ? req.body.existingAdditionalImages
+            : [req.body.existingAdditionalImages];
+        }
+  
+      await updatedProduct.save();
+  
+      res.status(200).json(updatedProduct);
+    } catch (error) {
+      const errorMessage = error.response ? (error.response.data.message || "Failed to update product.") : error.message;
+      console.error('Failed to update product:', errorMessage);
+      res.status(500).json({ error: 'Failed to update product' });
+    }
+});
+
 router.get('/', async (req, res) => {
     try {
         const { status } = req.query;
