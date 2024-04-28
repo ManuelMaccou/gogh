@@ -9,7 +9,6 @@ const Sidebar: React.FC = () => {
                 <nav>
                     <ul>
                         <li><Link to="/account/create-listing">Create Listing</Link></li>
-                        <li><Link to="/profile/purchases">View Purchases</Link></li>
                         <li><Link to="/account/listings">View Listings</Link></li>
                     </ul>
                 </nav>

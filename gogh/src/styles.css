@@ -5,6 +5,7 @@
 .helper-text {
     font-size: 12px;
     font-style: italic;
+    margin-top: -5px;
 }
 
 .site-header {
@@ -196,9 +197,142 @@
     display: block;
     border-radius: 8px;
 }
-  
-.create-listing {
+
+.account-page {
+    display: flex;
+    flex-direction: row;
+}
+
+.account-main-container {
+    background: #f0f0f0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 100px 200px;
+}
+
+.account-main-container .back-button {
+    width: fit-content;
+    display: flex;
     margin-bottom: 20px;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    color: inherit;
+}
+
+.back-button i {
+    margin-right: 8px;
+}
+
+
+.create-listing-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.create-listing-form .submit-button {
+    width: fit-content;
+    padding: 10px 40px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+  
+.create-listing-section {
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    background-color: #FFFFFF;
+    border: 1px solid #d6d6d6;
+    border-radius: 5px;
+    box-shadow: 2px 2px 2px 1px rgb(189 189 189 / 18%);
+}
+
+.create-listing-section .add-images {
+    display: flex;
+    flex-direction: row;
+    max-height: 250px;
+}
+
+.create-listing-section .featured-image {
+    display: flex;
+    flex-direction: column;
+}
+
+.featured-image {
+    margin-right: 20px
+}
+
+.featured-image img {
+    max-width: 350px;
+    height: auto;
+}
+
+.additional-images {
+    display: flex;
+    flex-direction: column;
+}
+
+.additional-images .images div {
+    position: relative; /* Establishes a positioning context */
+    display: inline-block; /* Ensures the container behaves as a block while aligning inline */
+}
+
+.additional-images .images {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px;
+    width: 100%;
+    margin: auto;
+}
+
+.additional-images img {
+    max-width: 150px;
+    height: auto;
+}
+
+.create-listing-subsection-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px; 
+}
+
+.input-group label {
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+.input-group input {
+    margin-bottom: 8px;
+    border: 1px solid #ababab;
+    border-radius: 7px;
+}
+
+.input-group input[type="text"] {
+    height: 30px;
+    padding: 0px 10px;
+}
+
+.input-group textarea {
+    margin-bottom: 8px;
+    border: 1px solid #ababab;
+    border-radius: 7px;
+    height: 120px;
 }
 
 .submitted-products {
@@ -698,22 +832,22 @@
     box-sizing: border-box;
 }
 
-.checkbox-container {
+.createListing-form .checkbox-container {
     display: flex;
     align-items: center;
     width: 100%;
-  }
+}
   
-  .checkbox-container input[type="checkbox"] {
+.checkbox-container input[type="checkbox"] {
     width: fit-content;
     margin-right: 8px;
     flex-shrink: 0;
-  }
+}
   
-  .checkbox-label {
+.checkbox-label {
     flex-grow: 1;
     text-align: left
-  }
+}
 
 .upload-featured-image-button {
     width: 100%;
@@ -741,18 +875,6 @@
     font-family: Arial, Helvetica, sans-serif;
     font-size: 13px;
     cursor: pointer;
-}
-
-.createListing-form .submit-button {
-    width: fit-content;
-    padding: 10px 40px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
 }
 
 .submit-button[disabled] {
