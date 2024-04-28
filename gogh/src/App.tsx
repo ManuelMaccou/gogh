@@ -9,6 +9,7 @@ import Listing from './pages/marketplace/listing'
 import Success from './pages/marketplace/success'
 import AccountPageContainer from './pages/marketplace/account/accountPageContainer';
 import CreateListing from './pages/marketplace/account/createListing';
+import UserListings from './pages/marketplace/account/userListings';
 
 const App: React.FC = () => {
 
@@ -26,6 +27,7 @@ const App: React.FC = () => {
                                 <Route path="account" element={<AccountPageContainer />}>
                                     <Route index element={<CreateListing />} />
                                     <Route path="/account/create-listing" element={<CreateListing />} />
+                                    <Route path="/account/listings" element={<UserListings />} />
                                     // Add other account-related routes here
                                 </Route>
                             </Route>
