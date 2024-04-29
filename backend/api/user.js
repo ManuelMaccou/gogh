@@ -48,6 +48,23 @@ router.post('/create', auth, async (req, res) => {
     }
 });
 
+router.get('/me', auth, async (req, res) => {
+    const userIdFromToken = req.user;
+
+    try {
+        const user = await User.findOne({ privyId: userIdFromToken });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (error) {
+        console.error('Error fetching user details:', error.message);
+        res.status(500).send('Server error');
+    }
+});
+
 router.post('/lookup', auth, async (req, res) => {
     const { privyId, fc_username, fc_fname, fc_bio } = req.body;
     const userIdFromToken = req.user;

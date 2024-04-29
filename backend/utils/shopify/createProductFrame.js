@@ -3,7 +3,6 @@ import { createCanvas, loadImage } from 'canvas';
 import Jimp from 'jimp';
 
 async function createProductFrame(product) {
-    console.log('Starting product frame generation.')
     try {
         const canvasWidth = 1450;
         const canvasHeight = 760;

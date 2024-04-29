@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
+import axios from 'axios';
 
 interface User {
     privyId: string;
@@ -21,6 +23,28 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const { ready, authenticated, getAccessToken } = usePrivy();
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (ready && authenticated) {
+                try {
+                    const accessToken = await getAccessToken();
+                    const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/api/user/me`, {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    });
+                    const userData = response.data;
+                    setUser(userData);
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                }
+            }
+        };
+
+        fetchUserData();
+    }, [ready, authenticated, getAccessToken]);
 
     return (
         <UserContext.Provider value={{ user, setUser }}>

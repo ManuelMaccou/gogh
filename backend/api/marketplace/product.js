@@ -26,7 +26,7 @@ async function storeImage(imageBuffer, contentType) {
 
 router.post('/add', auth, upload.fields([
     { name: 'featuredImage', maxCount: 1 },
-    { name: 'images', maxCount: 3 }
+    { name: 'images', maxCount: 4 }
 ]), async (req, res) => {
     if (!req.user) {
         return res.status(401).send('User not authenticated');
@@ -76,6 +76,17 @@ router.post('/add', auth, upload.fields([
         }
 
         const user = await User.findOne({ privyId: req.user });
+        try {
+            if (!user) {
+              throw new Error('User not found');
+            }
+            user.walletAddress = walletAddress;
+            user.email = email;
+            await user.save();
+          } catch (error) {
+            console.error('Failed to update user:', error.message);
+            throw error;
+          }
         
         const product = new MarketplaceProduct({
             location,
@@ -88,8 +99,6 @@ router.post('/add', auth, upload.fields([
             featuredImage,
             additionalImages: additionalImageUrls,
             price,
-            walletAddress,
-            email,
             user,
         });
 
@@ -104,7 +113,7 @@ router.post('/add', auth, upload.fields([
 
 router.put('/update/:id', auth, upload.fields([
     { name: 'featuredImage', maxCount: 1 },
-    { name: 'images', maxCount: 3 }
+    { name: 'images', maxCount: 4 }
   ]), async (req, res) => {
     if (!req.user) {
       return res.status(401).send('User not authenticated');
@@ -113,7 +122,7 @@ router.put('/update/:id', auth, upload.fields([
     const listingId = req.params.id;
   
     try {
-        const { location, status, shipping, title, description, price, walletAddress, email } = req.body;
+        const { location, shipping, title, description, price, walletAddress, email } = req.body;
   
         const updatedProduct = await MarketplaceProduct.findById(listingId);
         console.log("product to update:", updatedProduct);
@@ -127,8 +136,6 @@ router.put('/update/:id', auth, upload.fields([
         updatedProduct.title = title;
         updatedProduct.description = description;
         updatedProduct.price = price;
-        updatedProduct.walletAddress = walletAddress;
-        updatedProduct.email = email;
   
         if (req.files['featuredImage'] && req.files['featuredImage'].length > 0) {
             const featuredImageFile = req.files['featuredImage'][0];
@@ -159,33 +166,46 @@ router.put('/update/:id', auth, upload.fields([
         updatedProduct.productFrame = productFrame;
       
   
-      if (req.files['images']) {
-        const additionalImageUrls = [];
-        for (const file of req.files['images']) {
-          const processedImageBuffer = await sharp(file.buffer)
-            .rotate()
-            .resize(800, 800, { fit: sharp.fit.inside, withoutEnlargement: true })
-            .jpeg()
-            .toBuffer();
-          const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
-          const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;
-          additionalImageUrls.push(imageUrl);
-        }
-        updatedProduct.additionalImages = additionalImageUrls;
-      } else if (req.body.existingAdditionalImages) {
-        // If no new additional images are provided, use the existing additional image URLs
-        updatedProduct.additionalImages = Array.isArray(req.body.existingAdditionalImages)
-            ? req.body.existingAdditionalImages
-            : [req.body.existingAdditionalImages];
-        }
-  
-      await updatedProduct.save();
-  
-      res.status(200).json(updatedProduct);
+        if (req.files['images']) {
+            const additionalImageUrls = [];
+            for (const file of req.files['images']) {
+            const processedImageBuffer = await sharp(file.buffer)
+                .rotate()
+                .resize(800, 800, { fit: sharp.fit.inside, withoutEnlargement: true })
+                .jpeg()
+                .toBuffer();
+            const processedImage = await storeImage(processedImageBuffer, 'image/jpeg');
+            const imageUrl = `${process.env.BASE_URL}/images/${processedImage}.jpg`;
+            additionalImageUrls.push(imageUrl);
+            }
+            updatedProduct.additionalImages = additionalImageUrls;
+        } else if (req.body.existingAdditionalImages) {
+            // If no new additional images are provided, use the existing additional image URLs
+            updatedProduct.additionalImages = Array.isArray(req.body.existingAdditionalImages)
+                ? req.body.existingAdditionalImages
+                : [req.body.existingAdditionalImages];
+            }
+
+            await updatedProduct.save();
+
+            try {
+                const user = await User.findOne({ privyId: req.user });
+                if (!user) {
+                  throw new Error('User not found');
+                }
+                user.walletAddress = walletAddress;
+                user.email = email;
+                await user.save();
+              } catch (error) {
+                console.error('Failed to update user:', error.message);
+                throw error;
+              }
+
+        res.status(200).json(updatedProduct);
     } catch (error) {
-      const errorMessage = error.response ? (error.response.data.message || "Failed to update product.") : error.message;
-      console.error('Failed to update product:', errorMessage);
-      res.status(500).json({ error: 'Failed to update product' });
+        const errorMessage = error.response ? (error.response.data.message || "Failed to update product.") : error.message;
+        console.error('Failed to update product:', errorMessage);
+        res.status(500).json({ error: 'Failed to update product' });
     }
 });
 

@@ -308,12 +308,16 @@
 .create-listing-subsection-row {
     display: flex;
     flex-direction: row;
+    width: 100%;
+    gap: 20px;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
     margin-right: 20px; 
+    margin-bottom: 10px;
+
 }
 
 .input-group label {
@@ -335,8 +339,20 @@
 .input-group textarea {
     margin-bottom: 8px;
     border: 1px solid #ababab;
+    padding: 10px 10px;
     border-radius: 7px;
     height: 120px;
+    font-family: inherit;
+}
+
+.input-group#title-input-group {
+    flex-grow: 1; /* Takes the remaining space */
+}
+
+.input-group#price-input-group {
+    flex-grow: 0; /* Does not grow */
+    flex-shrink: 0; /* Does not shrink */
+    max-width: 150px; /* Maximum width for price input */
 }
 
 .listing-card {

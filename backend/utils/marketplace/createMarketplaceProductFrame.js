@@ -2,7 +2,6 @@ import { createCanvas, loadImage } from 'canvas';
 import Jimp from 'jimp';
 
 async function createProductFrame(location, shipping, title, description, price, imageUrl) {
-    console.log('Starting product frame generation.');
     try {
         const canvasWidth = 1450;
         const canvasHeight = 760;
@@ -59,7 +58,6 @@ async function createProductFrame(location, shipping, title, description, price,
         currentY += 60; // Adjust space before the description
 
         // Draw "shipping available" if shipping is true
-        console.log('shipping:', shipping, 'Type of shipping:', typeof shipping);
         if (shipping === true || shipping === 'true') {
             ctx.font = 'bold italic 30px Arial'; // You can change the font size and style as needed
             ctx.textAlign = 'left'; // Align text to the left

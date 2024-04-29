@@ -26,8 +26,6 @@ interface Product {
     featuredImage: string;
     additionalImages: string [];
     price: string;
-    walletAddress: string;
-    email: string;
     user: User;
 }
   
@@ -45,7 +43,7 @@ const ManageListing = ({ mode = 'create' }) => {
     const navigate = useNavigate();
     const { listingId } = useParams();
     const { ready, authenticated, getAccessToken} = usePrivy();
-    const { user } = useUser();
+    const { user, setUser } = useUser();
     const [formData, setFormData] = useState({
         shipping: false,
         location: '',
@@ -72,6 +70,8 @@ const ManageListing = ({ mode = 'create' }) => {
     };
 
     useEffect(() => {
+        
+
         const fetchListing = async () => {
             if (mode === 'edit' && listingId) {
                 try {
@@ -83,16 +83,14 @@ const ManageListing = ({ mode = 'create' }) => {
                     });
                     const listing = response.data;
 
-                    console.log('listing data:', listing);
-                    
                     setFormData({
                         shipping: listing.shipping,
                         location: listing.location,
                         title: listing.title,
                         description: listing.description,
                         price: listing.price,
-                        walletAddress: listing.walletAddress,
-                        email: listing.email,
+                        walletAddress: user?.walletAddress || '',
+                        email: user?.email || '',
                     });
                     setFeaturedImagePreview(listing.featuredImage);
                     setAdditionalImagesPreview(listing.additionalImages);
@@ -108,8 +106,8 @@ const ManageListing = ({ mode = 'create' }) => {
                     title: params.get('title') || '',
                     description: params.get('description') || '',
                     price: params.get('price') || '',
-                    walletAddress: params.get('walletAddress') || '',
-                    email: params.get('email') || '',
+                    walletAddress: user?.walletAddress || '',
+                    email: user?.email || '',
                 };
                 setFormData(initialData);
                 }
@@ -117,7 +115,7 @@ const ManageListing = ({ mode = 'create' }) => {
         };
     
         fetchListing();
-      }, [mode, listingId, ready, getAccessToken]);
+    }, [mode, listingId, ready, getAccessToken, user]);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const target = event.target as HTMLInputElement;
@@ -173,46 +171,45 @@ const ManageListing = ({ mode = 'create' }) => {
     
         const accessToken = await getAccessToken();
 
-        console.log('Access token:', accessToken);
-        console.log('mode:', mode);
-
         if (!accessToken) {
           setFormError('Authentication failed. Please log in again.');
           return;
         }
     
         if (!validateFormData()) return;
-    
+        
         const data = buildFormData();
-
-        console.log('Form data:', data);
     
         try {
-          setIsSubmitting(true);
-          if (mode === 'edit') {
+            setIsSubmitting(true);
+            setUser(prevUser => ({
+                ...prevUser!,
+                walletAddress: formData.walletAddress,
+                email: formData.email,
+            }));
 
-            console.log('Updating product:', listingId);
+            if (mode === 'edit') {
 
-            await axios.put(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/update/${listingId}`, data, {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            });
-            navigate(`/listing/${listingId}`);
-          } else {
-            const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, data, {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            });
-    
-            if (response.status === 201) {
-              openListingPage(response.data);
-              resetForm();
+                await axios.put(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/update/${listingId}`, data, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                });
+                navigate(`/listing/${listingId}`);
             } else {
-              throw new Error('Product creation failed');
+                const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/api/marketplace/product/add`, data, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                });
+        
+                if (response.status === 201) {
+                openListingPage(response.data);
+                resetForm();
+                } else {
+                throw new Error('Product creation failed');
+                }
             }
-          }
         } catch (error: any) {
           const message = error instanceof Error ? error.message : 'An unknown error occurred';
           setFormError(message);
@@ -227,23 +224,20 @@ const ManageListing = ({ mode = 'create' }) => {
     
         if (!featuredImage && !(mode === 'edit' && featuredImagePreview)) {
             setFormError("Please upload a featured image.");
-            console.log("issue with featured image");
             return false;
         }
     
         if (!priceRegex.test(price) && price !== '') {
             setFormError("Please use this format for the price: $xxx.xx or xxx.xx");
-            console.log("issue with featured price");
             return false;
         }
     
         if (!walletAddress.startsWith('0x')) {
             setFormError('Wallet address must start with "0x".');
-            console.log("issue with featured wallet address");
             return false;
         }
     
-        return true; // All validations passed
+        return true;
     }
 
     function buildFormData() {
@@ -310,6 +304,12 @@ const ManageListing = ({ mode = 'create' }) => {
         };
     }, []); // Empty dependency array to run only on unmount
 
+    useEffect(() => {
+        return () => {
+          resetForm();
+        };
+      }, [listingId]);
+
 
     return (
         <div className="create-listing-container">
@@ -317,13 +317,13 @@ const ManageListing = ({ mode = 'create' }) => {
 
                 <div className="create-listing-section">
                     <div className="create-listing-subsection-row">
-                        <div className="input-group">
+                        <div className="input-group" id="title-input-group">
                             <label htmlFor="title">Title</label>
-                            <input name="title" type="text" value={formData.title} onChange={handleChange} required />
+                            <input name="title" type="text" id='create-title-field' value={formData.title} onChange={handleChange} required />
                         </div>
-                        <div className="input-group">
+                        <div className="input-group" id="price-input-group">
                             <label htmlFor="price">Price</label>
-                            <input name="price" type="text" value={formData.price} onChange={handleChange} placeholder="$USD" />
+                            <input name="price" type="text" id='create-price-field' value={formData.price} onChange={handleChange} placeholder="$USD" />
                         </div>
                     </div>
                     <div className="input-group">
@@ -332,20 +332,20 @@ const ManageListing = ({ mode = 'create' }) => {
                     </div>
                 </div>
                 <div className="create-listing-section">
-                    <div className="create-listing-subsection-row">
-                        <div className="input-group">
-                        <label htmlFor="description">Location</label>
-                            <input 
-                                name="location" 
-                                type="text" 
-                                value={formData.location} 
-                                onChange={handleChange} 
-                                required 
-                            />
-                            <p className="helper-text">
-                                'City, State' or 'City, Country'
-                            </p>
-                        </div>
+                    <div className="input-group">
+                    <label htmlFor="description">Location</label>
+                        <input 
+                            name="location" 
+                            type="text" 
+                            value={formData.location} 
+                            onChange={handleChange} 
+                            required 
+                        />
+                        <p className="helper-text">
+                            'City, State' or 'City, Country'
+                        </p>
+                    </div>
+                    <div className="input-group">
                         <label htmlFor="shipping" className='checkbox-container'>
                             <input
                                 name="shipping"
@@ -356,7 +356,6 @@ const ManageListing = ({ mode = 'create' }) => {
                             />
                             Will offer shipping
                         </label>
-                        
                     </div>
                 </div>
                 <div className="create-listing-section">
@@ -420,6 +419,13 @@ const ManageListing = ({ mode = 'create' }) => {
                     <div className="input-group">
                         <label htmlFor="walletAddress">Wallet address</label>
                         <input name="walletAddress" type="text" value={formData.walletAddress} onChange={handleChange} placeholder="0x address to receive payment." required />
+                    </div>
+                    <div className="input-group">
+                        <label htmlFor="email">Email</label>
+                        <input name="email" type="text" value={formData.email} onChange={handleChange} placeholder="Email address" required />
+                        <p className="helper-text">
+                            For transaction information after a purchase.
+                        </p>
                     </div>
                 </div>
                 <button className="submit-button" type="submit" disabled={isSubmitting}>
