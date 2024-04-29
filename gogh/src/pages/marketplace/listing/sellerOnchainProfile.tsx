@@ -143,20 +143,20 @@ const GET_SOCIAL_QUERY = `
   }`;
   
 
-  const SellerOnchainProfile = ({ sellerIdentity }: { sellerIdentity: string }) => {
-    const { data, loading, error } = useQuery<Data>(GET_SOCIAL_QUERY, { identity: `fc_fname:${sellerIdentity}` }, { cache: true });
+  const SellerOnchainProfile = ({ fcFname, onchainId }: { fcFname: string, onchainId: string }) => {
+    const { data, loading, error } = useQuery<Data>(GET_SOCIAL_QUERY, { identity: onchainId }, { cache: true });
     const [currentView, setCurrentView] = useState('Farcaster');
     const [icebreakerData, setIcebreakerData] = useState<IcebreakerData | null>(null);
 
     useEffect(() => {
       const fetchSocialData = async () => {
-        if (!sellerIdentity) {
+        if (!onchainId) {
           console.log("No seller identity provided");
           return;
         }
         
         try {
-          const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/fname/${sellerIdentity}`);
+          const response = await fetch(`${process.env.REACT_APP_BASE_URL}/api/fname/${fcFname}`);
           if (!response.ok) throw new Error('Bad network repsonse.');
           const jsonData = await response.json();
           console.log("API Data:", jsonData);
@@ -167,7 +167,7 @@ const GET_SOCIAL_QUERY = `
         }
       };
       fetchSocialData();
-    }, [sellerIdentity]);
+    }, [fcFname, onchainId]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error.message}</div>;

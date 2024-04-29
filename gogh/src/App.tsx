@@ -29,7 +29,6 @@ const App: React.FC = () => {
                                     <Route path="create-listing" element={<ManageListing />} />
                                     <Route path="edit-listing/:listingId" element={<ManageListing mode="edit" />} />
                                     <Route path="listings" element={<UserListings />} />
-                                    // Add other account-related routes here
                                 </Route>
                             </Route>
                         </Routes>

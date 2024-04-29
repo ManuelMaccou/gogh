@@ -11,6 +11,7 @@ const userSchema = new Schema({
     fc_url: { type: String },
     email: { type: String },
     walletAddress: { type: String },
+    onchainIdentity: { type: String },
 });
 
 const User = model('User', userSchema);

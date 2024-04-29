@@ -34,6 +34,7 @@ interface User {
     fc_url?: string;
     email?: string;
     walletAddress?: string;
+    onchainIdentity?: string;
 }
 
 interface TransactionDetails {
@@ -562,10 +563,13 @@ const Listing = () => {
                             </button>
                         )}
                     </div>
-                    {product.user?.fid && product.user.fc_fname && (
+                    {product.user?.fc_fname && product.user?.onchainIdentity && (
                         <div className='seller-section'>
                             <h2>Meet the seller</h2>
-                            <SellerOnchainProfile sellerIdentity={product.user?.fc_fname} />
+                            <SellerOnchainProfile
+                            fcFname={product.user.fc_fname}
+                            onchainId={product.user.onchainIdentity}
+                            />
                         </div>
                     )}
                 </div>
