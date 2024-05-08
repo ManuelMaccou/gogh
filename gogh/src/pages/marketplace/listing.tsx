@@ -557,7 +557,7 @@ const Listing = () => {
                         {shipProduct === true && <ShippingForm onSaveShippingDetails={saveShippingDetails} />}
 
                         {((!product?.shipping || shipProduct === false) || (shipProduct === true && shippingDetailsComplete)) && (
-                            <button className='buy-button' onClick={buyProduct} disabled={!shippingDetailsComplete && shipProduct === true}>
+                            <button className='buy-button' onClick={initiatePurchase} disabled={!shippingDetailsComplete && shipProduct === true}>
                                 Buy now
                             </button>
                         )}
