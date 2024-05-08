@@ -368,6 +368,7 @@
 
 .listing-featured-image {
     margin-right: 20px;
+    align-self: center;
 }
 
 .listing-featured-image img {
